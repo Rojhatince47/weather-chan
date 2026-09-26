@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.core.ui.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,8 @@ fun HomeHeader(title: String, description: String, modifier: Modifier = Modifier
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = title,
@@ -33,11 +35,22 @@ fun HomeHeader(title: String, description: String, modifier: Modifier = Modifier
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeHeaderPreview() {
+private fun HomeHeaderShortTextPreview() {
     HavaTheme {
         HomeHeader(
             title = "Weather-chan",
             description = "Şehirlerin havasını sevimli takip et"
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeHeaderLongTextPreview() {
+    HavaTheme {
+        HomeHeader(
+            title = "Çok uzun bir başlık örneği için preview",
+            description = "Bu açıklama metni, uzun metinlerin bile okunabilir ve düzenli kalmasını sağlamak için kullanılır."
         )
     }
 }
