@@ -16,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetFore
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -182,40 +183,71 @@ class MainViewModelTest {
 
     @Test
     fun `loadData emits loading then success`() = runTest {
+        val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(
-                WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())
-            ),
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.loadState.test {
-            assertEquals(LoadState.Success, awaitItem())
-
-            viewModel.loadData()
             assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.loadGate.complete(Unit)
+            assertEquals(LoadState.Success, awaitItem())
+        }
+
+        fakeRepository.loadGate = CompletableDeferred()
+        viewModel.loadData()
+        viewModel.loadState.test {
+            assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.loadGate.complete(Unit)
             assertEquals(LoadState.Success, awaitItem())
         }
     }
 
     @Test
-    fun `retry uses loadData`() = runTest {
+    fun `cancellation is not presented as error`() = runTest {
+        val fakeRepository = FakeWeatherRepository().apply {
+            throwCancellation = true
+        }
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(
-                WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())
-            ),
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.content is UiState.Loading)
+        }
+        viewModel.loadState.test {
+            assertEquals(LoadState.Loading, awaitItem())
+        }
+    }
+
+    @Test
+    fun `retry uses loadData`() = runTest {
+        val fakeRepository = FakeWeatherRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.loadState.test {
-            assertEquals(LoadState.Success, awaitItem())
-
-            viewModel.onRetry()
             assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.loadGate.complete(Unit)
+            assertEquals(LoadState.Success, awaitItem())
+        }
+
+        fakeRepository.loadGate = CompletableDeferred()
+        viewModel.onRetry()
+        viewModel.loadState.test {
+            assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.loadGate.complete(Unit)
             assertEquals(LoadState.Success, awaitItem())
         }
     }

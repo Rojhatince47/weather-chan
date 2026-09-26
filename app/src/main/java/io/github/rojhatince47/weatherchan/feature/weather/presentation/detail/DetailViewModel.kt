@@ -17,6 +17,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetFore
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,38 +70,43 @@ class DetailViewModel @Inject constructor(
     }
 
     fun loadData() {
-        _loadState.update { LoadState.Loading }
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
-            val city = city
-            if (city == null) {
+            _loadState.update { LoadState.Loading }
+            try {
+                val city = city
+                if (city == null) {
+                    _uiState.update {
+                        it.copy(
+                            content = UiState.Error(
+                                UiText.Dynamic("Şehir bilgisi bulunamadı")
+                            )
+                        )
+                    }
+                    _loadState.update { _uiState.value.content.toLoadState() }
+                    return@launch
+                }
+                val result = getForecast(city.id)
+                val unit = unitRepository.unit.value
                 _uiState.update {
                     it.copy(
-                        content = UiState.Error(
-                            UiText.Dynamic("Şehir bilgisi bulunamadı")
-                        )
+                        content = when (result) {
+                            is AppResult.Success -> UiState.Success(
+                                uiMapper.toForecastDetailUiModel(
+                                    forecast = result.data,
+                                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
+                                    unit = unit
+                                )
+                            )
+                            is AppResult.Failure -> UiState.Error(result.error.toUiText())
+                        }
                     )
                 }
                 _loadState.update { _uiState.value.content.toLoadState() }
-                return@launch
+            } catch (e: CancellationException) {
+                // İptal bir hata değildir; hata durumu olarak sunulmaz.
+                throw e
             }
-            val result = getForecast(city.id)
-            val unit = unitRepository.unit.value
-            _uiState.update {
-                it.copy(
-                    content = when (result) {
-                        is AppResult.Success -> UiState.Success(
-                            uiMapper.toForecastDetailUiModel(
-                                forecast = result.data,
-                                isFavorite = city.id in favoriteRepository.favoriteIds.value,
-                                unit = unit
-                            )
-                        )
-                        is AppResult.Failure -> UiState.Error(result.error.toUiText())
-                    }
-                )
-            }
-            _loadState.update { _uiState.value.content.toLoadState() }
         }
     }
 

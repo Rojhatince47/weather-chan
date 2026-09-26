@@ -15,6 +15,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCity
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,10 +80,15 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadData() {
-        _loadState.update { LoadState.Loading }
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
-            filter(_uiState.value.query)
+            _loadState.update { LoadState.Loading }
+            try {
+                filter(_uiState.value.query)
+            } catch (e: CancellationException) {
+                // İptal bir hata değildir; hata durumu olarak sunulmaz.
+                throw e
+            }
         }
     }
 

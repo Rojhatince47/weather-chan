@@ -11,6 +11,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeath
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -111,28 +113,37 @@ class DetailViewModelTest {
     fun `loadData emits error state for unknown city`() = runTest {
         val savedStateHandle = SavedStateHandle(
             mapOf(
-                "cityId" to 999L,
-                "name" to "Bilinmeyen",
-                "region" to null,
-                "country" to null,
-                "latitude" to 0.0,
-                "longitude" to 0.0
+                "cityId" to 1L,
+                "name" to "İstanbul",
+                "region" to "Marmara",
+                "country" to "Türkiye",
+                "latitude" to 41.01,
+                "longitude" to 28.98
             )
         )
+        val fakeRepository = FakeWeatherRepository().apply {
+            failForecast = true
+        }
 
         val viewModel = DetailViewModel(
             savedStateHandle = savedStateHandle,
-            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.loadState.test {
-            assertTrue(awaitItem() is LoadState.Error)
-
-            viewModel.loadData()
             assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.forecastGate.complete(Unit)
+            assertTrue(awaitItem() is LoadState.Error)
+        }
+
+        fakeRepository.forecastGate = CompletableDeferred()
+        viewModel.loadData()
+        viewModel.loadState.test {
+            assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.forecastGate.complete(Unit)
             assertTrue(awaitItem() is LoadState.Error)
         }
     }
