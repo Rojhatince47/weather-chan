@@ -13,14 +13,17 @@ class HomeHeaderTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun homeHeaderShowsTitleAndDescription() {
+    fun homeHeaderShowsProvidedTitleAndDescription() {
         composeRule.setContent {
             HavaTheme {
-                HomeHeader()
+                HomeHeader(
+                    title = "Test Title",
+                    description = "Test Description"
+                )
             }
         }
 
-        composeRule.onNodeWithText("Weather-chan").assertIsDisplayed()
-        composeRule.onNodeWithText("Şehirlerin havasını sevimli takip et").assertIsDisplayed()
+        composeRule.onNodeWithText("Test Title").assertIsDisplayed()
+        composeRule.onNodeWithText("Test Description").assertIsDisplayed()
     }
 }

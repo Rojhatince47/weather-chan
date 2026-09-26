@@ -7,26 +7,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 
 @Composable
-fun HomeHeader(modifier: Modifier = Modifier) {
+fun HomeHeader(title: String, description: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Text(
-            text = stringResource(R.string.home_title),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = stringResource(R.string.home_description),
+            text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -37,6 +35,9 @@ fun HomeHeader(modifier: Modifier = Modifier) {
 @Composable
 private fun HomeHeaderPreview() {
     HavaTheme {
-        HomeHeader()
+        HomeHeader(
+            title = "Weather-chan",
+            description = "Şehirlerin havasını sevimli takip et"
+        )
     }
 }
