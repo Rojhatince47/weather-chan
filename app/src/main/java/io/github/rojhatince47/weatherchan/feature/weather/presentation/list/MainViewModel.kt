@@ -2,7 +2,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -47,11 +49,15 @@ class MainViewModel @Inject constructor(
     fun findCity(cityId: Long): City? = loadedCities[cityId]
 
     fun onQueryChange(query: String) {
-        filter(query = query)
+        viewModelScope.launch {
+            filter(query = query)
+        }
     }
 
     fun onFavoritesOnlyChange(showFavoritesOnly: Boolean) {
-        filter(showFavoritesOnly = showFavoritesOnly)
+        viewModelScope.launch {
+            filter(showFavoritesOnly = showFavoritesOnly)
+        }
     }
 
     fun onRetry() {
@@ -74,8 +80,19 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun filter(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
-        val cityWeathers: List<CityWeather> = getCityWeathers()
+    private suspend fun filter(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
+        val result = getCityWeathers()
+        if (result is AppResult.Failure) {
+            _uiState.update {
+                it.copy(
+                    query = query,
+                    showFavoritesOnly = showFavoritesOnly,
+                    content = UiState.Error(result.error.toUiText())
+                )
+            }
+            return
+        }
+        val cityWeathers = (result as AppResult.Success).data
         loadedCities.clear()
         loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
 

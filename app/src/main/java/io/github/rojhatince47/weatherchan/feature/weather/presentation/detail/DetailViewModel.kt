@@ -3,8 +3,10 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -75,26 +77,20 @@ class DetailViewModel @Inject constructor(
                 }
                 return@launch
             }
-            val result = runCatching { getForecast(city.id) }
+            val result = getForecast(city.id)
             val unit = unitRepository.unit.value
             _uiState.update {
                 it.copy(
-                    content = result.fold(
-                        onSuccess = { forecast ->
-                            UiState.Success(
-                                uiMapper.toForecastDetailUiModel(
-                                    forecast = forecast,
-                                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
-                                    unit = unit
-                                )
+                    content = when (result) {
+                        is AppResult.Success -> UiState.Success(
+                            uiMapper.toForecastDetailUiModel(
+                                forecast = result.data,
+                                isFavorite = city.id in favoriteRepository.favoriteIds.value,
+                                unit = unit
                             )
-                        },
-                        onFailure = {
-                            UiState.Error(
-                                UiText.Dynamic("Tahmin yüklenemedi")
-                            )
-                        }
-                    )
+                        )
+                        is AppResult.Failure -> UiState.Error(result.error.toUiText())
+                    }
                 )
             }
         }
