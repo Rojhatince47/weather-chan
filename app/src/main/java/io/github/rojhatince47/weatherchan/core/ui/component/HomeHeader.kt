@@ -54,3 +54,14 @@ private fun HomeHeaderLongTextPreview() {
         )
     }
 }
+
+@Preview(showBackground = true, widthDp = 320, fontScale = 1.5f)
+@Composable
+private fun HomeHeaderNarrowScreenLargeFontPreview() {
+    HavaTheme {
+        HomeHeader(
+            title = "Çok uzun bir başlık örneği için preview",
+            description = "Bu açıklama metni, uzun metinlerin bile okunabilir ve düzenli kalmasını sağlamak için kullanılır."
+        )
+    }
+}
