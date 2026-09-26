@@ -10,14 +10,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
@@ -41,64 +51,84 @@ fun MainScreen(
     onToggleUnit: () -> Unit,
     onFavoritesOnlyChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
     // kaydırma konumu korunur.
     listState: LazyListState = rememberSaveable(saver = LazyListState.Saver) {
         LazyListState()
     }
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        HomeHeader(
-            title = "Weather-chan",
-            description = "Şehirlerin havasını sevimli takip et"
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilterChip(
-                selected = uiState.showFavoritesOnly,
-                onClick = { onFavoritesOnlyChange(!uiState.showFavoritesOnly) },
-                label = { Text(text = "Favoriler") }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            HomeHeader(
+                title = "Weather-chan",
+                description = "Şehirlerin havasını sevimli takip et"
             )
-            TextButton(onClick = onToggleUnit) {
-                Text(
-                    text = if (unit.unit == TemperatureUnit.CELSIUS) {
-                        "°C"
-                    } else {
-                        "°F"
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = uiState.showFavoritesOnly,
+                    onClick = { onFavoritesOnlyChange(!uiState.showFavoritesOnly) },
+                    label = { Text(text = "Favoriler") }
+                )
+                IconButton(onClick = onRefresh) {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Yenile"
+                    )
+                }
+                TextButton(onClick = onToggleUnit) {
+                    Text(
+                        text = if (unit.unit == TemperatureUnit.CELSIUS) {
+                            "°C"
+                        } else {
+                            "°F"
+                        }
+                    )
+                }
+            }
+            CitySearchField(
+                value = uiState.query,
+                onValueChange = onQueryChange
+            )
+            // Yenileme sırasında mevcut içerik korunur; yalnızca ince
+            // ilerleme çubuğu gösterilir. Tam ekran Loading sadece ilk
+            // yüklemede (içerik yokken) gösterilir.
+            if (uiState.isRefreshing) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().testTag("refresh_indicator")
                 )
             }
-        }
-        CitySearchField(
-            value = uiState.query,
-            onValueChange = onQueryChange
-        )
-        when (val content = uiState.content) {
-            is UiState.Loading -> CircularProgressIndicator(
-                modifier = Modifier.padding(24.dp)
-            )
-            is UiState.Empty -> Text(
-                text = "Sonuç bulunamadı",
-                modifier = Modifier.padding(24.dp)
-            )
-            is UiState.Error -> Text(
-                text = content.message.asString(),
-                modifier = Modifier.padding(24.dp)
-            )
-            is UiState.Success -> LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(content.data, key = { it.cityId }) { cityWeather ->
-                    CityWeatherCard(
-                        cityWeather = cityWeather,
-                        onClick = { onCityClick(cityWeather.cityId) },
-                        onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
-                    )
+            when (val content = uiState.content) {
+                is UiState.Loading -> CircularProgressIndicator(
+                    modifier = Modifier.padding(24.dp)
+                )
+                is UiState.Empty -> Text(
+                    text = "Sonuç bulunamadı",
+                    modifier = Modifier.padding(24.dp)
+                )
+                is UiState.Error -> Text(
+                    text = content.message.asString(),
+                    modifier = Modifier.padding(24.dp)
+                )
+                is UiState.Success -> LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(content.data, key = { it.cityId }) { cityWeather ->
+                        CityWeatherCard(
+                            cityWeather = cityWeather,
+                            onClick = { onCityClick(cityWeather.cityId) },
+                            onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
+                        )
+                    }
                 }
             }
         }

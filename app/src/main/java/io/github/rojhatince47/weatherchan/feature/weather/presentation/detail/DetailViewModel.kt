@@ -14,14 +14,18 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.Tem
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -40,6 +44,11 @@ class DetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
+
+    private val _events = Channel<DetailEvent>(Channel.BUFFERED)
+
+    /** Tek seferlik UI olayları (snackbar). State'e konmaz. */
+    val events: Flow<DetailEvent> = _events.receiveAsFlow()
 
     private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
@@ -65,7 +74,31 @@ class DetailViewModel @Inject constructor(
     }
 
     fun onRefresh() {
-        loadData()
+        // İçerik varsa mevcut tahminin üzerinde yenile; yoksa tam yükleme yap.
+        if (_uiState.value.content !is UiState.Success) {
+            loadData()
+            return
+        }
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            try {
+                val content = loadForecast()
+                when (content) {
+                    is UiState.Success -> _uiState.update {
+                        it.copy(content = content, isRefreshing = false)
+                    }
+                    is UiState.Error -> {
+                        _uiState.update { it.copy(isRefreshing = false) }
+                        _events.send(DetailEvent.ShowSnackbar(content.message))
+                    }
+                    else -> _uiState.update { it.copy(isRefreshing = false) }
+                }
+            } catch (e: CancellationException) {
+                // İptal bir hata değildir; hata durumu olarak sunulmaz.
+                throw e
+            }
+        }
     }
 
     fun onFavoriteClick() {
@@ -80,39 +113,30 @@ class DetailViewModel @Inject constructor(
             _uiState.update { it.copy(content = UiState.Loading) }
             _loadState.update { LoadState.Loading }
             try {
-                val city = city
-                if (city == null) {
-                    _uiState.update {
-                        it.copy(
-                            content = UiState.Error(
-                                UiText.Dynamic("Şehir bilgisi bulunamadı")
-                            )
-                        )
-                    }
-                    _loadState.update { _uiState.value.content.toLoadState() }
-                    return@launch
-                }
-                val result = getForecast(city.id)
-                val unit = unitRepository.unit.value
-                _uiState.update {
-                    it.copy(
-                        content = when (result) {
-                            is AppResult.Success -> UiState.Success(
-                                uiMapper.toForecastDetailUiModel(
-                                    forecast = result.data,
-                                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
-                                    unit = unit
-                                )
-                            )
-                            is AppResult.Failure -> UiState.Error(result.error.toUiText())
-                        }
-                    )
-                }
+                val content = loadForecast()
+                _uiState.update { it.copy(content = content) }
                 _loadState.update { _uiState.value.content.toLoadState() }
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e
             }
+        }
+    }
+
+    private suspend fun loadForecast(): UiState<ForecastDetailUiModel> {
+        val city = city
+            ?: return UiState.Error(UiText.Dynamic("Şehir bilgisi bulunamadı"))
+        val result = getForecast(city.id)
+        val unit = unitRepository.unit.value
+        return when (result) {
+            is AppResult.Success -> UiState.Success(
+                uiMapper.toForecastDetailUiModel(
+                    forecast = result.data,
+                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
+                    unit = unit
+                )
+            )
+            is AppResult.Failure -> UiState.Error(result.error.toUiText())
         }
     }
 

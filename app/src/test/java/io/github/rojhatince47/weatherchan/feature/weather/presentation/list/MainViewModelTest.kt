@@ -365,4 +365,77 @@ class MainViewModelTest {
             )
         }
     }
+
+    @Test
+    fun `refresh keeps content and toggles refreshing flag`() = runTest {
+        val fakeRepository = FakeWeatherRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem().content is UiState.Loading)
+            fakeRepository.completeAllCityWeathersGates()
+            val loaded = awaitItem()
+            assertTrue(loaded.content is UiState.Success)
+            assertTrue(loaded.isRefreshing.not())
+        }
+
+        viewModel.onRefresh()
+        viewModel.uiState.test {
+            val refreshing = awaitItem()
+            assertTrue(refreshing.isRefreshing)
+            assertTrue(refreshing.content is UiState.Success)
+
+            fakeRepository.completeAllCityWeathersGates()
+            val refreshed = awaitItem()
+            assertTrue(refreshed.isRefreshing.not())
+            assertEquals(
+                5,
+                ((refreshed.content as UiState.Success).data.size)
+            )
+        }
+    }
+
+    @Test
+    fun `failed refresh keeps old content and emits snackbar event`() = runTest {
+        val fakeRepository = FakeWeatherRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem().content is UiState.Loading)
+            fakeRepository.completeAllCityWeathersGates()
+            assertTrue(awaitItem().content is UiState.Success)
+        }
+
+        fakeRepository.failCityWeathers = true
+        viewModel.onRefresh()
+        viewModel.uiState.test {
+            val refreshing = awaitItem()
+            assertTrue(refreshing.isRefreshing)
+            assertTrue(refreshing.content is UiState.Success)
+
+            fakeRepository.completeAllCityWeathersGates()
+            val failed = awaitItem()
+            assertTrue(failed.isRefreshing.not())
+            assertTrue(failed.content is UiState.Success)
+            assertEquals(
+                5,
+                ((failed.content as UiState.Success).data.size)
+            )
+        }
+
+        viewModel.events.test {
+            val event = awaitItem()
+            assertTrue(event is MainEvent.ShowSnackbar)
+        }
+    }
 }

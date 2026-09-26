@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
@@ -10,11 +11,13 @@ import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import org.junit.Rule
 import org.junit.Test
 
@@ -121,5 +124,35 @@ class DetailScreenTest {
 
         composeRule.onNodeWithText("°C").performClick()
         assert(toggled)
+    }
+
+    @Test
+    fun detailScreenRefreshKeepsContentAndShowsIndicator() {
+        val mapper = WeatherUiMapper()
+        val forecast = mapper.toForecastDetailUiModel(
+            SampleWeatherDataSource().forecast(cityId = 1L),
+            isFavorite = false
+        )
+
+        composeRule.setContent {
+            HavaTheme {
+                DetailScreen(
+                    uiState = DetailUiState(
+                        content = UiState.Success(forecast),
+                        isRefreshing = true
+                    ),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    onBack = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
+        composeRule.onNodeWithText("Saatlik Tahmin").assertIsDisplayed()
+        composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
     }
 }

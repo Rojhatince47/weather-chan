@@ -16,6 +16,7 @@ class FakeWeatherRepository(
     var forecastGate = CompletableDeferred<Unit>()
     var throwCancellation = false
     var failForecast = false
+    var failCityWeathers = false
     var finishedCityWeathersCalls = 0
         private set
 
@@ -38,6 +39,9 @@ class FakeWeatherRepository(
         cityWeathersGates.addLast(gate)
         gate.await()
         finishedCityWeathersCalls++
+        if (failCityWeathers) {
+            return AppResult.Failure(AppError.Network)
+        }
         return AppResult.Success(dataSource.cityWeathers)
     }
 

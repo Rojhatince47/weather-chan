@@ -12,14 +12,18 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.Tem
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,6 +40,11 @@ class MainViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private val _events = Channel<MainEvent>(Channel.BUFFERED)
+
+    /** Tek seferlik UI olayları (snackbar). State'e konmaz. */
+    val events: Flow<MainEvent> = _events.receiveAsFlow()
 
     private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
@@ -69,7 +78,34 @@ class MainViewModel @Inject constructor(
     }
 
     fun onRefresh() {
-        loadData()
+        // İçerik varsa mevcut listenin üzerinde yenile; yoksa tam yükleme yap.
+        if (_uiState.value.content !is UiState.Success) {
+            loadData()
+            return
+        }
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            try {
+                val content = loadContent(
+                    _uiState.value.query,
+                    _uiState.value.showFavoritesOnly
+                )
+                when (content) {
+                    is UiState.Success -> _uiState.update {
+                        it.copy(content = content, isRefreshing = false)
+                    }
+                    is UiState.Error -> {
+                        _uiState.update { it.copy(isRefreshing = false) }
+                        _events.send(MainEvent.ShowSnackbar(content.message))
+                    }
+                    else -> _uiState.update { it.copy(isRefreshing = false) }
+                }
+            } catch (e: CancellationException) {
+                // İptal bir hata değildir; hata durumu olarak sunulmaz.
+                throw e
+            }
+        }
     }
 
     fun onFavoriteClick(cityId: Long) {
@@ -106,17 +142,21 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun filter(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
+        val content = loadContent(query, showFavoritesOnly)
+        _uiState.update {
+            it.copy(
+                query = query,
+                showFavoritesOnly = showFavoritesOnly,
+                content = content
+            )
+        }
+        _loadState.update { _uiState.value.content.toLoadState() }
+    }
+
+    private suspend fun loadContent(query: String, showFavoritesOnly: Boolean): UiState<List<CityWeatherUiModel>> {
         val result = getCityWeathers()
         if (result is AppResult.Failure) {
-            _uiState.update {
-                it.copy(
-                    query = query,
-                    showFavoritesOnly = showFavoritesOnly,
-                    content = UiState.Error(result.error.toUiText())
-                )
-            }
-            _loadState.update { _uiState.value.content.toLoadState() }
-            return
+            return UiState.Error(result.error.toUiText())
         }
         val cityWeathers = (result as AppResult.Success).data
         loadedCities.clear()
@@ -134,25 +174,18 @@ class MainViewModel @Inject constructor(
                 !showFavoritesOnly || cityWeather.city.id in favorites
             }
 
-        _uiState.update {
-            it.copy(
-                query = query,
-                showFavoritesOnly = showFavoritesOnly,
-                content = if (filtered.isEmpty()) {
-                    UiState.Empty
-                } else {
-                    UiState.Success(
-                        filtered.map { cityWeather ->
-                            uiMapper.toCityWeatherUiModel(
-                                cityWeather,
-                                isFavorite = cityWeather.city.id in favoriteRepository.favoriteIds.value,
-                                unit = unitRepository.unit.value
-                            )
-                        }
+        return if (filtered.isEmpty()) {
+            UiState.Empty
+        } else {
+            UiState.Success(
+                filtered.map { cityWeather ->
+                    uiMapper.toCityWeatherUiModel(
+                        cityWeather,
+                        isFavorite = cityWeather.city.id in favoriteRepository.favoriteIds.value,
+                        unit = unitRepository.unit.value
                     )
                 }
             )
         }
-        _loadState.update { _uiState.value.content.toLoadState() }
     }
 }

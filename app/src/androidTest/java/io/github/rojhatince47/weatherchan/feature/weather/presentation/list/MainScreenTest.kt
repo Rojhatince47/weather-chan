@@ -3,6 +3,8 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
@@ -157,5 +159,38 @@ class MainScreenTest {
 
         composeRule.onNodeWithText("°C").performClick()
         assert(toggled)
+    }
+
+    @Test
+    fun mainScreenRefreshKeepsContentAndShowsIndicator() {
+        var refreshed = false
+        val mapper = WeatherUiMapper()
+        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers),
+                        isRefreshing = true
+                    ),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = { refreshed = true },
+                    onToggleUnit = {},
+                    onFavoritesOnlyChange = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
+        composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Yenile").performClick()
+        assert(refreshed)
     }
 }

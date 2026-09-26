@@ -147,4 +147,94 @@ class DetailViewModelTest {
             assertTrue(awaitItem() is LoadState.Error)
         }
     }
+
+    @Test
+    fun `refresh keeps content and toggles refreshing flag`() = runTest {
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "cityId" to 1L,
+                "name" to "İstanbul",
+                "region" to "Marmara",
+                "country" to "Türkiye",
+                "latitude" to 41.01,
+                "longitude" to 28.98
+            )
+        )
+        val fakeRepository = FakeWeatherRepository()
+
+        val viewModel = DetailViewModel(
+            savedStateHandle = savedStateHandle,
+            getForecast = GetForecastUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem().content is UiState.Loading)
+            fakeRepository.forecastGate.complete(Unit)
+            assertTrue(awaitItem().content is UiState.Success)
+        }
+
+        fakeRepository.forecastGate = CompletableDeferred()
+        viewModel.onRefresh()
+        viewModel.uiState.test {
+            val refreshing = awaitItem()
+            assertTrue(refreshing.isRefreshing)
+            assertTrue(refreshing.content is UiState.Success)
+
+            fakeRepository.forecastGate.complete(Unit)
+            val refreshed = awaitItem()
+            assertTrue(refreshed.isRefreshing.not())
+            assertTrue(refreshed.content is UiState.Success)
+        }
+    }
+
+    @Test
+    fun `failed refresh keeps old content and emits snackbar event`() = runTest {
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "cityId" to 1L,
+                "name" to "İstanbul",
+                "region" to "Marmara",
+                "country" to "Türkiye",
+                "latitude" to 41.01,
+                "longitude" to 28.98
+            )
+        )
+        val fakeRepository = FakeWeatherRepository()
+
+        val viewModel = DetailViewModel(
+            savedStateHandle = savedStateHandle,
+            getForecast = GetForecastUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem().content is UiState.Loading)
+            fakeRepository.forecastGate.complete(Unit)
+            assertTrue(awaitItem().content is UiState.Success)
+        }
+
+        fakeRepository.failForecast = true
+        fakeRepository.forecastGate = CompletableDeferred()
+        viewModel.onRefresh()
+        viewModel.uiState.test {
+            val refreshing = awaitItem()
+            assertTrue(refreshing.isRefreshing)
+            assertTrue(refreshing.content is UiState.Success)
+
+            fakeRepository.forecastGate.complete(Unit)
+            val failed = awaitItem()
+            assertTrue(failed.isRefreshing.not())
+            assertTrue(failed.content is UiState.Success)
+        }
+
+        viewModel.events.test {
+            val event = awaitItem()
+            assertTrue(event is DetailEvent.ShowSnackbar)
+        }
+    }
 }
