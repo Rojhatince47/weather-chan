@@ -15,28 +15,25 @@ class OpenMeteoWeatherDataSource @Inject constructor(
     private val errorMapper: ErrorMapper
 ) {
 
-    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> =
-        errorMapper.runCatchingApp {
-            cities.map { city ->
-                val dto = api.forecast(
-                    latitude = city.coordinates.latitude.toString(),
-                    longitude = city.coordinates.longitude.toString()
-                )
-                mapper.toCityWeather(city, dto)
-            }
-        }
-
-    suspend fun forecast(city: City): AppResult<Forecast> =
-        errorMapper.runCatchingApp {
+    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.runCatchingApp {
+        cities.map { city ->
             val dto = api.forecast(
                 latitude = city.coordinates.latitude.toString(),
                 longitude = city.coordinates.longitude.toString()
             )
-            mapper.toForecast(city, dto)
+            mapper.toCityWeather(city, dto)
         }
+    }
 
-    suspend fun searchCities(query: String): AppResult<List<City>> =
-        errorMapper.runCatchingApp {
-            geocodingApi.search(name = query).results.map(mapper::toCity)
-        }
+    suspend fun forecast(city: City): AppResult<Forecast> = errorMapper.runCatchingApp {
+        val dto = api.forecast(
+            latitude = city.coordinates.latitude.toString(),
+            longitude = city.coordinates.longitude.toString()
+        )
+        mapper.toForecast(city, dto)
+    }
+
+    suspend fun searchCities(query: String): AppResult<List<City>> = errorMapper.runCatchingApp {
+        geocodingApi.search(name = query).results.map(mapper::toCity)
+    }
 }

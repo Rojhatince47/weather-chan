@@ -14,26 +14,22 @@ class WttrInWeatherDataSource @Inject constructor(
     private val errorMapper: ErrorMapper
 ) {
 
-    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> =
-        errorMapper.runCatchingApp {
-            cities.map { city ->
-                val dto = api.weather(locationOf(city))
-                mapper.toCityWeather(city, dto)
-            }
-        }
-
-    suspend fun forecast(city: City): AppResult<Forecast> =
-        errorMapper.runCatchingApp {
+    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.runCatchingApp {
+        cities.map { city ->
             val dto = api.weather(locationOf(city))
-            mapper.toForecast(city, dto)
+            mapper.toCityWeather(city, dto)
         }
+    }
 
-    suspend fun searchCities(query: String): AppResult<List<City>> =
-        errorMapper.runCatchingApp {
-            val dto = api.weather(location = query.trim())
-            listOf(mapper.toCity(dto, fallbackName = query.trim()))
-        }
+    suspend fun forecast(city: City): AppResult<Forecast> = errorMapper.runCatchingApp {
+        val dto = api.weather(locationOf(city))
+        mapper.toForecast(city, dto)
+    }
 
-    private fun locationOf(city: City): String =
-        "${city.coordinates.latitude},${city.coordinates.longitude}"
+    suspend fun searchCities(query: String): AppResult<List<City>> = errorMapper.runCatchingApp {
+        val dto = api.weather(location = query.trim())
+        listOf(mapper.toCity(dto, fallbackName = query.trim()))
+    }
+
+    private fun locationOf(city: City): String = "${city.coordinates.latitude},${city.coordinates.longitude}"
 }

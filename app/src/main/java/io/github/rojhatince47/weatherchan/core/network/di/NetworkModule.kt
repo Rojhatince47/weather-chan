@@ -36,19 +36,16 @@ object NetworkModule {
     @Provides
     @Singleton
     @OpenMeteoRetrofit
-    fun provideOpenMeteoRetrofit(client: OkHttpClient): Retrofit =
-        retrofit(client, "https://api.open-meteo.com/")
+    fun provideOpenMeteoRetrofit(client: OkHttpClient): Retrofit = retrofit(client, "https://api.open-meteo.com/")
 
     @Provides
     @Singleton
     @WttrInRetrofit
-    fun provideWttrInRetrofit(client: OkHttpClient): Retrofit =
-        retrofit(client, "https://wttr.in/")
+    fun provideWttrInRetrofit(client: OkHttpClient): Retrofit = retrofit(client, "https://wttr.in/")
 
     @Provides
     @Singleton
-    fun provideOpenMeteoApi(@OpenMeteoRetrofit retrofit: Retrofit): OpenMeteoApi =
-        retrofit.create(OpenMeteoApi::class.java)
+    fun provideOpenMeteoApi(@OpenMeteoRetrofit retrofit: Retrofit): OpenMeteoApi = retrofit.create(OpenMeteoApi::class.java)
 
     @Provides
     @Singleton
@@ -57,13 +54,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideWttrInApi(@WttrInRetrofit retrofit: Retrofit): WttrInApi =
-        retrofit.create(WttrInApi::class.java)
+    fun provideWttrInApi(@WttrInRetrofit retrofit: Retrofit): WttrInApi = retrofit.create(WttrInApi::class.java)
 
-    private fun retrofit(client: OkHttpClient, baseUrl: String): Retrofit =
-        Retrofit.Builder()
-            .client(client)
-            .baseUrl(baseUrl)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
+    private fun retrofit(client: OkHttpClient, baseUrl: String): Retrofit = Retrofit.Builder()
+        .client(client)
+        .baseUrl(baseUrl)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
 }

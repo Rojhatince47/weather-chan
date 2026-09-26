@@ -73,8 +73,7 @@ class WttrInWeatherMapper @Inject constructor() {
         )
     }
 
-    private fun stableId(name: String, country: String?): Long =
-        "$name|$country".hashCode().toLong()
+    private fun stableId(name: String, country: String?): Long = "$name|$country".hashCode().toLong()
 
     internal fun toCondition(code: Int?): WeatherCondition = when (code) {
         113 -> WeatherCondition.CLEAR

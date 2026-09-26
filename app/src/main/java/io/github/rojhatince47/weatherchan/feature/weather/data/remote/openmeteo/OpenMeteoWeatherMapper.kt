@@ -57,8 +57,7 @@ class OpenMeteoWeatherMapper @Inject constructor() {
         humidityPercent = dto.humidity
     )
 
-    private fun hourOf(isoTime: String?): Int =
-        isoTime?.substringAfter('T', "")?.substringBefore(':')?.toIntOrNull() ?: 0
+    private fun hourOf(isoTime: String?): Int = isoTime?.substringAfter('T', "")?.substringBefore(':')?.toIntOrNull() ?: 0
 
     internal fun toCondition(code: Int?): WeatherCondition = when (code) {
         0 -> WeatherCondition.CLEAR

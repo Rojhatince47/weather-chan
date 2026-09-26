@@ -6,7 +6,5 @@ import retrofit2.http.Path
 interface WttrInApi {
 
     @GET("{location}?format=j1")
-    suspend fun weather(
-        @Path("location") location: String
-    ): WttrInDto
+    suspend fun weather(@Path("location") location: String): WttrInDto
 }
