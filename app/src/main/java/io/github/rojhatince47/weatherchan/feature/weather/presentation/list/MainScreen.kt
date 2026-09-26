@@ -3,15 +3,19 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,6 +23,7 @@ import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 @Composable
@@ -29,6 +34,7 @@ fun MainScreen(
     onFavoriteClick: (Long) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
+    onToggleUnit: () -> Unit,
     modifier: Modifier = Modifier,
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
     // kaydırma konumu korunur.
@@ -41,6 +47,21 @@ fun MainScreen(
             title = "Weather-chan",
             description = "Şehirlerin havasını sevimli takip et"
         )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onToggleUnit) {
+                Text(
+                    text = if (uiState.unit.unit == TemperatureUnit.CELSIUS) {
+                        "°C"
+                    } else {
+                        "°F"
+                    }
+                )
+            }
+        }
         CitySearchField(
             value = uiState.query,
             onValueChange = onQueryChange
@@ -84,7 +105,8 @@ private fun MainScreenCompactPreview() {
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
-            onRefresh = {}
+            onRefresh = {},
+            onToggleUnit = {}
         )
     }
 }
@@ -99,7 +121,8 @@ private fun MainScreenMediumPreview() {
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
-            onRefresh = {}
+            onRefresh = {},
+            onToggleUnit = {}
         )
     }
 }
@@ -114,7 +137,8 @@ private fun MainScreenExpandedPreview() {
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
-            onRefresh = {}
+            onRefresh = {},
+            onToggleUnit = {}
         )
     }
 }

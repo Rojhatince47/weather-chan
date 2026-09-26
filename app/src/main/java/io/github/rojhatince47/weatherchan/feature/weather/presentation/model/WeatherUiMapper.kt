@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
@@ -8,18 +9,26 @@ import javax.inject.Inject
 
 class WeatherUiMapper @Inject constructor() {
 
-    fun toCityWeatherUiModel(cityWeather: CityWeather, isFavorite: Boolean): CityWeatherUiModel = CityWeatherUiModel(
+    fun toCityWeatherUiModel(
+        cityWeather: CityWeather,
+        isFavorite: Boolean,
+        unit: TemperatureUnit = TemperatureUnit.CELSIUS
+    ): CityWeatherUiModel = CityWeatherUiModel(
         cityId = cityWeather.city.id,
         name = cityWeather.city.name,
         region = cityWeather.city.region,
         country = cityWeather.city.country,
-        temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius),
+        temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
         conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
         conditionLabel = labelFor(cityWeather.currentWeather.condition),
         isFavorite = isFavorite
     )
 
-    fun toForecastDetailUiModel(forecast: Forecast, isFavorite: Boolean): ForecastDetailUiModel = ForecastDetailUiModel(
+    fun toForecastDetailUiModel(
+        forecast: Forecast,
+        isFavorite: Boolean,
+        unit: TemperatureUnit = TemperatureUnit.CELSIUS
+    ): ForecastDetailUiModel = ForecastDetailUiModel(
         city = CityUiModel(
             id = forecast.city.id,
             name = forecast.city.name,
@@ -29,7 +38,7 @@ class WeatherUiMapper @Inject constructor() {
             longitude = forecast.city.coordinates.longitude
         ),
         currentWeather = CurrentWeatherUiModel(
-            temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius),
+            temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
             conditionEmoji = emojiFor(forecast.currentWeather.condition),
             conditionLabel = labelFor(forecast.currentWeather.condition),
             windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
@@ -38,7 +47,7 @@ class WeatherUiMapper @Inject constructor() {
         hourlyForecast = forecast.hourlyForecast.map { hourly ->
             HourlyForecastUiModel(
                 timeText = formatHour(hourly.hourOfDay),
-                temperatureText = formatTemperature(hourly.temperatureCelsius),
+                temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
                 conditionEmoji = emojiFor(hourly.condition),
                 precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
             )
@@ -46,15 +55,18 @@ class WeatherUiMapper @Inject constructor() {
         dailyForecast = forecast.dailyForecast.map { daily ->
             DailyForecastUiModel(
                 dateText = if (daily.dayOffset == 0) "Bugün" else "+${daily.dayOffset} gün",
-                minTemperatureText = formatTemperature(daily.minTemperatureCelsius),
-                maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius),
+                minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
+                maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
                 conditionEmoji = emojiFor(daily.condition)
             )
         },
         isFavorite = isFavorite
     )
 
-    private fun formatTemperature(value: Int): String = "$value°C"
+    private fun formatTemperature(celsius: Int, unit: TemperatureUnit): String = when (unit) {
+        TemperatureUnit.CELSIUS -> "$celsius°C"
+        TemperatureUnit.FAHRENHEIT -> "${celsius * 9 / 5 + 32}°F"
+    }
 
     private fun formatHour(hour: Int): String = "%02d:00".format(hour)
 

@@ -1,44 +1,43 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor() : ViewModel() {
+class SettingsViewModel @Inject constructor(
+    private val repository: TemperatureUnitRepository
+) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<UiState<TemperatureUnitUiModel>> =
-        MutableStateFlow(UiState.Success(toUiModel(TemperatureUnit.CELSIUS)))
-
-    val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = _uiState.asStateFlow()
+    val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = repository.unit
+        .map<TemperatureUnit, UiState<TemperatureUnitUiModel>> { unit ->
+            UiState.Success(unit.toUiModel())
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = UiState.Success(repository.unit.value.toUiModel())
+        )
 
     fun onToggleUnit() {
-        val current = (_uiState.value as? UiState.Success)?.data?.unit
-            ?: TemperatureUnit.CELSIUS
-        val next = when (current) {
+        val next = when (repository.unit.value) {
             TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
             TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
         }
-        _uiState.update { UiState.Success(toUiModel(next)) }
+        repository.setUnit(next)
     }
 
     fun onUnitSelected(unit: TemperatureUnit) {
-        _uiState.update { UiState.Success(toUiModel(unit)) }
+        repository.setUnit(unit)
     }
-
-    private fun toUiModel(unit: TemperatureUnit): TemperatureUnitUiModel = TemperatureUnitUiModel(
-        unit = unit,
-        label = when (unit) {
-            TemperatureUnit.CELSIUS -> UiText.Dynamic("Santigrat (°C)")
-            TemperatureUnit.FAHRENHEIT -> UiText.Dynamic("Fahrenayt (°F)")
-        }
-    )
 }

@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
@@ -21,7 +24,8 @@ import kotlinx.coroutines.launch
 class DetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getForecast: GetForecastUseCase,
-    private val uiMapper: WeatherUiMapper
+    private val uiMapper: WeatherUiMapper,
+    private val unitRepository: TemperatureUnitRepository
 ) : ViewModel() {
 
     // Geçersiz/eksik navigation parametresi uygulamayı çökertmemeli;
@@ -35,6 +39,11 @@ class DetailViewModel @Inject constructor(
 
     init {
         load()
+        viewModelScope.launch {
+            unitRepository.unit.collect {
+                load()
+            }
+        }
     }
 
     fun onRetry() {
@@ -48,6 +57,14 @@ class DetailViewModel @Inject constructor(
     fun onFavoriteClick() {
         isFavorite.update { !it }
         load()
+    }
+
+    fun onToggleUnit() {
+        val next = when (unitRepository.unit.value) {
+            TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
+            TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
+        }
+        unitRepository.setUnit(next)
     }
 
     private fun load() {
@@ -65,14 +82,17 @@ class DetailViewModel @Inject constructor(
                 return@launch
             }
             val result = runCatching { getForecast(city.id) }
+            val unit = unitRepository.unit.value
             _uiState.update {
                 it.copy(
+                    unit = unit.toUiModel(),
                     content = result.fold(
                         onSuccess = { forecast ->
                             UiState.Success(
                                 uiMapper.toForecastDetailUiModel(
                                     forecast = forecast,
-                                    isFavorite = isFavorite.value
+                                    isFavorite = isFavorite.value,
+                                    unit = unit
                                 )
                             )
                         },

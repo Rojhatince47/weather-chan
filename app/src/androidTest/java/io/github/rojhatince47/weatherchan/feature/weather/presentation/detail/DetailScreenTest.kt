@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
@@ -63,7 +64,8 @@ class DetailScreenTest {
                     onBack = {},
                     onFavoriteClick = {},
                     onRetry = {},
-                    onRefresh = {}
+                    onRefresh = {},
+                    onToggleUnit = {}
                 )
             }
         }
@@ -84,7 +86,8 @@ class DetailScreenTest {
                     onBack = {},
                     onFavoriteClick = {},
                     onRetry = {},
-                    onRefresh = {}
+                    onRefresh = {},
+                    onToggleUnit = {}
                 )
             }
         }
@@ -92,5 +95,26 @@ class DetailScreenTest {
         composeRule.onNodeWithText("Şehir bilgisi bulunamadı").assertIsDisplayed()
         composeRule.onNodeWithText("Tekrar dene").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Geri").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailScreenShowsUnitToggleAndNotifiesClick() {
+        var toggled = false
+
+        composeRule.setContent {
+            HavaTheme {
+                DetailScreen(
+                    uiState = DetailUiState(content = UiState.Loading),
+                    onBack = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = { toggled = true }
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("°C").performClick()
+        assert(toggled)
     }
 }

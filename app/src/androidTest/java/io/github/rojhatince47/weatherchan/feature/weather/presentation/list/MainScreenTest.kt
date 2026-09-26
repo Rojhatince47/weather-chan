@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
@@ -32,7 +33,8 @@ class MainScreenTest {
                     onCityClick = {},
                     onFavoriteClick = {},
                     onRetry = {},
-                    onRefresh = {}
+                    onRefresh = {},
+                    onToggleUnit = {}
                 )
             }
         }
@@ -51,7 +53,8 @@ class MainScreenTest {
                     onCityClick = {},
                     onFavoriteClick = {},
                     onRetry = {},
-                    onRefresh = {}
+                    onRefresh = {},
+                    onToggleUnit = {}
                 )
             }
         }
@@ -77,11 +80,40 @@ class MainScreenTest {
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
+                    onToggleUnit = {},
                     listState = LazyListState(firstVisibleItemIndex = 3)
                 )
             }
         }
 
         composeRule.onNodeWithText("Antalya").assertIsDisplayed()
+    }
+
+    @Test
+    fun mainScreenShowsUnitToggleAndNotifiesClick() {
+        var toggled = false
+        val mapper = WeatherUiMapper()
+        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers)
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = { toggled = true }
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("°C").performClick()
+        assert(toggled)
     }
 }

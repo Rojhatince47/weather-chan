@@ -18,6 +18,7 @@ fun MainRoute(onCityClick: (City) -> Unit, modifier: Modifier = Modifier, viewMo
         onFavoriteClick = viewModel::onFavoriteClick,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
+        onToggleUnit = viewModel::onToggleUnit,
         modifier = modifier
     )
 }

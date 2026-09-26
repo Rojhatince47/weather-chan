@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 
@@ -36,6 +38,7 @@ fun DetailScreen(
     onFavoriteClick: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
+    onToggleUnit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -55,6 +58,17 @@ fun DetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Geri"
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onToggleUnit) {
+                        Text(
+                            text = if (uiState.unit.unit == TemperatureUnit.CELSIUS) {
+                                "°C"
+                            } else {
+                                "°F"
+                            }
                         )
                     }
                 }
@@ -172,7 +186,8 @@ private fun DetailScreenPreview() {
             onBack = {},
             onFavoriteClick = {},
             onRetry = {},
-            onRefresh = {}
+            onRefresh = {},
+            onToggleUnit = {}
         )
     }
 }

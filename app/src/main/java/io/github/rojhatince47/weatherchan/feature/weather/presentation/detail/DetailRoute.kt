@@ -16,6 +16,7 @@ fun DetailRoute(onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: De
         onFavoriteClick = viewModel::onFavoriteClick,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
+        onToggleUnit = viewModel::onToggleUnit,
         modifier = modifier
     )
 }

@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +32,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `initial state is celsius`() = runTest {
-        val viewModel = SettingsViewModel()
+        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
 
         viewModel.uiState.test {
             val state = awaitItem()
@@ -45,7 +46,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggle switches between celsius and fahrenheit`() = runTest {
-        val viewModel = SettingsViewModel()
+        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
 
         viewModel.uiState.test {
             assertEquals(
@@ -69,7 +70,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `selecting a unit emits it`() = runTest {
-        val viewModel = SettingsViewModel()
+        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
 
         viewModel.uiState.test {
             awaitItem()

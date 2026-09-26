@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
@@ -36,7 +37,8 @@ class MainViewModelTest {
     fun `initial state is success with cities`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
-            uiMapper = WeatherUiMapper()
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
         )
 
         viewModel.uiState.test {
@@ -53,7 +55,8 @@ class MainViewModelTest {
     fun `search filters cities`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
-            uiMapper = WeatherUiMapper()
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
         )
 
         viewModel.onQueryChange("Ankara")
@@ -64,6 +67,32 @@ class MainViewModelTest {
             assertTrue(
                 (state.content as UiState.Success).data.all {
                     it.name.contains("Ankara")
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `toggle unit converts temperatures to fahrenheit`() = runTest {
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
+        )
+
+        viewModel.uiState.test {
+            val celsiusState = awaitItem()
+            assertTrue(
+                ((celsiusState.content as UiState.Success).data.first().temperatureText)
+                    .endsWith("°C")
+            )
+
+            viewModel.onToggleUnit()
+            val fahrenheitState = awaitItem()
+            assertTrue(fahrenheitState.content is UiState.Success)
+            assertTrue(
+                (fahrenheitState.content as UiState.Success).data.all {
+                    it.temperatureText.endsWith("°F")
                 }
             )
         }

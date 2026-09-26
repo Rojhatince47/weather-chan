@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
@@ -48,7 +49,8 @@ class DetailViewModelTest {
         val viewModel = DetailViewModel(
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
-            uiMapper = WeatherUiMapper()
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
         )
 
         viewModel.uiState.test {
@@ -62,7 +64,8 @@ class DetailViewModelTest {
         val viewModel = DetailViewModel(
             savedStateHandle = SavedStateHandle(),
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
-            uiMapper = WeatherUiMapper()
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
         )
 
         viewModel.uiState.test {
@@ -87,7 +90,8 @@ class DetailViewModelTest {
         val viewModel = DetailViewModel(
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
-            uiMapper = WeatherUiMapper()
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository()
         )
 
         viewModel.uiState.test {

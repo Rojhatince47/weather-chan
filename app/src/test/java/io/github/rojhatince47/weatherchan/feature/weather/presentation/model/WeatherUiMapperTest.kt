@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -29,5 +30,18 @@ class WeatherUiMapperTest {
         assertEquals(24, uiModel.hourlyForecast.size)
         assertEquals(7, uiModel.dailyForecast.size)
         assertTrue(uiModel.currentWeather.temperatureText.endsWith("°C"))
+    }
+
+    @Test
+    fun `converts temperatures to fahrenheit`() {
+        val cityWeather = dataSource.cityWeathers.first()
+        val uiModel = mapper.toCityWeatherUiModel(
+            cityWeather,
+            isFavorite = false,
+            unit = TemperatureUnit.FAHRENHEIT
+        )
+        val expected = cityWeather.currentWeather.temperatureCelsius * 9 / 5 + 32
+
+        assertEquals("$expected°F", uiModel.temperatureText)
     }
 }

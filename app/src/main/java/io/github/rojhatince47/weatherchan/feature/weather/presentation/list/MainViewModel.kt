@@ -3,6 +3,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
@@ -18,7 +21,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
-    private val uiMapper: WeatherUiMapper
+    private val uiMapper: WeatherUiMapper,
+    private val unitRepository: TemperatureUnitRepository
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
@@ -29,6 +33,11 @@ class MainViewModel @Inject constructor(
 
     init {
         load()
+        viewModelScope.launch {
+            unitRepository.unit.collect {
+                filter(_uiState.value.query)
+            }
+        }
     }
 
     fun findCity(cityId: Long): City? = loadedCities[cityId]
@@ -47,13 +56,21 @@ class MainViewModel @Inject constructor(
     }
 
     fun onFavoriteClick(cityId: Long) {
-        val city = loadedCities[cityId] ?: return
+        if (cityId !in loadedCities) return
         if (favoriteIds.contains(cityId)) {
             favoriteIds.remove(cityId)
         } else {
             favoriteIds.add(cityId)
         }
         filter(_uiState.value.query)
+    }
+
+    fun onToggleUnit() {
+        val next = when (unitRepository.unit.value) {
+            TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
+            TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
+        }
+        unitRepository.setUnit(next)
     }
 
     private fun load() {
@@ -78,6 +95,7 @@ class MainViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
+                unit = unitRepository.unit.value.toUiModel(),
                 content = if (filtered.isEmpty()) {
                     UiState.Empty
                 } else {
@@ -85,7 +103,8 @@ class MainViewModel @Inject constructor(
                         filtered.map { cityWeather ->
                             uiMapper.toCityWeatherUiModel(
                                 cityWeather,
-                                isFavorite = cityWeather.city.id in favoriteIds
+                                isFavorite = cityWeather.city.id in favoriteIds,
+                                unit = unitRepository.unit.value
                             )
                         }
                     )
