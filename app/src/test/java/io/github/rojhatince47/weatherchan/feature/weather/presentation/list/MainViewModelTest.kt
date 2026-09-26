@@ -2,15 +2,12 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import io.github.rojhatince47.weatherchan.core.common.error.DefaultErrorMapper
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
-import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
@@ -46,7 +43,7 @@ class MainViewModelTest {
     @Test
     fun `initial state is success with cities`() = runTest {
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
@@ -88,7 +85,7 @@ class MainViewModelTest {
     @Test
     fun `search filters cities`() = runTest {
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
@@ -110,7 +107,7 @@ class MainViewModelTest {
     @Test
     fun `empty search shows empty state`() = runTest {
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
@@ -128,7 +125,7 @@ class MainViewModelTest {
     fun `unit change from shared source converts temperatures to fahrenheit`() = runTest {
         val unitRepository = InMemoryTemperatureUnitRepository()
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             favoriteRepository = InMemoryFavoriteRepository()
@@ -157,7 +154,7 @@ class MainViewModelTest {
         val unitRepository = InMemoryTemperatureUnitRepository()
         val settingsViewModel = SettingsViewModel(unitRepository)
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             favoriteRepository = InMemoryFavoriteRepository()
@@ -287,7 +284,7 @@ class MainViewModelTest {
     fun `favorite selection is shared between list and detail view models`() = runTest {
         val favoriteRepository = InMemoryFavoriteRepository()
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = favoriteRepository
@@ -303,7 +300,7 @@ class MainViewModelTest {
                     "longitude" to 28.98
                 )
             ),
-            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = favoriteRepository
@@ -334,7 +331,7 @@ class MainViewModelTest {
     @Test
     fun `favorites only filter derives list from existing state`() = runTest {
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()

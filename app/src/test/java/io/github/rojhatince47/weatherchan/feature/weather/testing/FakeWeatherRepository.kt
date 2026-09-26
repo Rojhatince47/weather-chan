@@ -17,6 +17,7 @@ class FakeWeatherRepository(
     var throwCancellation = false
     var failForecast = false
     var failCityWeathers = false
+    var autoCompleteGates = false
     var finishedCityWeathersCalls = 0
         private set
 
@@ -35,9 +36,11 @@ class FakeWeatherRepository(
         if (throwCancellation) {
             throw CancellationException("Test iptali")
         }
-        val gate = CompletableDeferred<Unit>()
-        cityWeathersGates.addLast(gate)
-        gate.await()
+        if (!autoCompleteGates) {
+            val gate = CompletableDeferred<Unit>()
+            cityWeathersGates.addLast(gate)
+            gate.await()
+        }
         finishedCityWeathersCalls++
         if (failCityWeathers) {
             return AppResult.Failure(AppError.Network)
@@ -46,7 +49,9 @@ class FakeWeatherRepository(
     }
 
     override suspend fun forecast(cityId: Long): AppResult<Forecast> {
-        forecastGate.await()
+        if (!autoCompleteGates) {
+            forecastGate.await()
+        }
         if (failForecast) {
             return AppResult.Failure(AppError.NotFound)
         }

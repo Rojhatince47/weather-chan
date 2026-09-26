@@ -2,13 +2,10 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import io.github.rojhatince47.weatherchan.core.common.error.DefaultErrorMapper
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
-import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
@@ -54,7 +51,7 @@ class DetailViewModelTest {
 
         val viewModel = DetailViewModel(
             savedStateHandle = savedStateHandle,
-            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
@@ -70,7 +67,7 @@ class DetailViewModelTest {
     fun `missing navigation params shows error instead of crashing`() = runTest {
         val viewModel = DetailViewModel(
             savedStateHandle = SavedStateHandle(),
-            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
@@ -97,7 +94,12 @@ class DetailViewModelTest {
 
         val viewModel = DetailViewModel(
             savedStateHandle = savedStateHandle,
-            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            getForecast = GetForecastUseCase(
+                FakeWeatherRepository().apply {
+                    autoCompleteGates = true
+                    failForecast = true
+                }
+            ),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             favoriteRepository = InMemoryFavoriteRepository()
