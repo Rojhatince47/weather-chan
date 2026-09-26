@@ -33,6 +33,7 @@ fun MainRoute(
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,
+        onFavoritesOnlyChange = viewModel::onFavoritesOnlyChange,
         modifier = modifier
     )
 }

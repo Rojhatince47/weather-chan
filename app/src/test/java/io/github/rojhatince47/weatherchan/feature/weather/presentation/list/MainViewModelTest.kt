@@ -184,4 +184,39 @@ class MainViewModelTest {
             )
         }
     }
+
+    @Test
+    fun `favorites only filter derives list from existing state`() = runTest {
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertEquals(
+                5,
+                ((initial.content as UiState.Success).data.size)
+            )
+
+            viewModel.onFavoriteClick(2L)
+            awaitItem()
+
+            viewModel.onFavoritesOnlyChange(true)
+            val filtered = awaitItem()
+            assertTrue(filtered.showFavoritesOnly)
+            val data = (filtered.content as UiState.Success).data
+            assertEquals(1, data.size)
+            assertEquals(2L, data.first().cityId)
+
+            viewModel.onFavoritesOnlyChange(false)
+            val restored = awaitItem()
+            assertEquals(
+                5,
+                ((restored.content as UiState.Success).data.size)
+            )
+        }
+    }
 }

@@ -47,8 +47,11 @@ class MainViewModel @Inject constructor(
     fun findCity(cityId: Long): City? = loadedCities[cityId]
 
     fun onQueryChange(query: String) {
-        _uiState.update { it.copy(query = query) }
-        filter(query)
+        filter(query = query)
+    }
+
+    fun onFavoritesOnlyChange(showFavoritesOnly: Boolean) {
+        filter(showFavoritesOnly = showFavoritesOnly)
     }
 
     fun onRetry() {
@@ -71,21 +74,27 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun filter(query: String) {
+    private fun filter(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
         val cityWeathers: List<CityWeather> = getCityWeathers()
         loadedCities.clear()
         loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
 
-        val filtered = if (query.isBlank()) {
-            cityWeathers
-        } else {
-            cityWeathers.filter { cityWeather ->
-                cityWeather.city.name.contains(query, ignoreCase = true)
+        // Sonuç ayrı bir state olarak saklanmaz; her seferinde mevcut
+        // seçimlerden (sorgu + favori filtresi) türetilir.
+        val favorites = favoriteRepository.favoriteIds.value
+        val filtered = cityWeathers
+            .filter { cityWeather ->
+                query.isBlank() ||
+                    cityWeather.city.name.contains(query, ignoreCase = true)
             }
-        }
+            .filter { cityWeather ->
+                !showFavoritesOnly || cityWeather.city.id in favorites
+            }
 
         _uiState.update {
             it.copy(
+                query = query,
+                showFavoritesOnly = showFavoritesOnly,
                 content = if (filtered.isEmpty()) {
                     UiState.Empty
                 } else {

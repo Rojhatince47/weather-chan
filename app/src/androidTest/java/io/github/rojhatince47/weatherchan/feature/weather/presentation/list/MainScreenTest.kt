@@ -37,6 +37,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
@@ -58,6 +59,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
@@ -85,6 +87,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     listState = LazyListState(firstVisibleItemIndex = 3)
                 )
@@ -92,6 +95,38 @@ class MainScreenTest {
         }
 
         composeRule.onNodeWithText("Antalya").assertIsDisplayed()
+    }
+
+    @Test
+    fun mainScreenShowsFavoritesFilterAndNotifiesChange() {
+        var filterChangedTo: Boolean? = null
+        val mapper = WeatherUiMapper()
+        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers)
+                    ),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onFavoritesOnlyChange = { showFavoritesOnly ->
+                        filterChangedTo = showFavoritesOnly
+                    }
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Favoriler").performClick()
+        assert(filterChangedTo == true)
     }
 
     @Test
@@ -114,6 +149,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = { toggled = true },
+                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
