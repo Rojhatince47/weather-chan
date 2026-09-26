@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,7 +29,12 @@ fun MainScreen(
     onFavoriteClick: (Long) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // rememberSaveable: detay ekranından geri dönüldüğünde liste
+    // kaydırma konumu korunur.
+    listState: LazyListState = rememberSaveable(saver = LazyListState.Saver) {
+        LazyListState()
+    }
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         HomeHeader(
@@ -51,6 +58,7 @@ fun MainScreen(
                 modifier = Modifier.padding(24.dp)
             )
             is UiState.Success -> LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -66,27 +74,12 @@ fun MainScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 360)
 @Composable
-private fun MainScreenPreview() {
+private fun MainScreenCompactPreview() {
     HavaTheme {
         MainScreen(
-            uiState = MainUiState(
-                content = UiState.Success(
-                    listOf(
-                        CityWeatherUiModel(
-                            cityId = 1L,
-                            name = "İstanbul",
-                            region = "Marmara",
-                            country = "Türkiye",
-                            temperatureText = "21°C",
-                            conditionEmoji = "☀️",
-                            conditionLabel = UiText.Dynamic("Açık"),
-                            isFavorite = false
-                        )
-                    )
-                )
-            ),
+            uiState = sampleMainUiState(),
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
@@ -95,3 +88,50 @@ private fun MainScreenPreview() {
         )
     }
 }
+
+@Preview(showBackground = true, widthDp = 600)
+@Composable
+private fun MainScreenMediumPreview() {
+    HavaTheme {
+        MainScreen(
+            uiState = sampleMainUiState(),
+            onQueryChange = {},
+            onCityClick = {},
+            onFavoriteClick = {},
+            onRetry = {},
+            onRefresh = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 840)
+@Composable
+private fun MainScreenExpandedPreview() {
+    HavaTheme {
+        MainScreen(
+            uiState = sampleMainUiState(),
+            onQueryChange = {},
+            onCityClick = {},
+            onFavoriteClick = {},
+            onRetry = {},
+            onRefresh = {}
+        )
+    }
+}
+
+private fun sampleMainUiState(): MainUiState = MainUiState(
+    content = UiState.Success(
+        listOf(
+            CityWeatherUiModel(
+                cityId = 1L,
+                name = "İstanbul",
+                region = "Marmara",
+                country = "Türkiye",
+                temperatureText = "21°C",
+                conditionEmoji = "☀️",
+                conditionLabel = UiText.Dynamic("Açık"),
+                isFavorite = false
+            )
+        )
+    )
+)

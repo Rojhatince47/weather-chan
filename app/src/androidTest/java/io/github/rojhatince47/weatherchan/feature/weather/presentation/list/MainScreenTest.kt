@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -56,5 +57,31 @@ class MainScreenTest {
         }
 
         composeRule.onNodeWithText("Sonuç bulunamadı").assertIsDisplayed()
+    }
+
+    @Test
+    fun mainScreenRestoresScrollPositionFromListState() {
+        val mapper = WeatherUiMapper()
+        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers)
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    listState = LazyListState(firstVisibleItemIndex = 3)
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Antalya").assertIsDisplayed()
     }
 }
