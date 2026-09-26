@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 
@@ -34,6 +36,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Hou
 @Composable
 fun DetailScreen(
     uiState: DetailUiState,
+    unit: TemperatureUnitUiModel,
     onBack: () -> Unit,
     onFavoriteClick: () -> Unit,
     onRetry: () -> Unit,
@@ -64,7 +67,7 @@ fun DetailScreen(
                 actions = {
                     TextButton(onClick = onToggleUnit) {
                         Text(
-                            text = if (uiState.unit.unit == TemperatureUnit.CELSIUS) {
+                            text = if (unit.unit == TemperatureUnit.CELSIUS) {
                                 "°C"
                             } else {
                                 "°F"
@@ -183,6 +186,7 @@ private fun DetailScreenPreview() {
     HavaTheme {
         DetailScreen(
             uiState = DetailUiState(content = UiState.Loading),
+            unit = TemperatureUnit.CELSIUS.toUiModel(),
             onBack = {},
             onFavoriteClick = {},
             onRetry = {},

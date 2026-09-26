@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
-import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
@@ -59,14 +57,6 @@ class DetailViewModel @Inject constructor(
         load()
     }
 
-    fun onToggleUnit() {
-        val next = when (unitRepository.unit.value) {
-            TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
-            TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
-        }
-        unitRepository.setUnit(next)
-    }
-
     private fun load() {
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
@@ -85,7 +75,6 @@ class DetailViewModel @Inject constructor(
             val unit = unitRepository.unit.value
             _uiState.update {
                 it.copy(
-                    unit = unit.toUiModel(),
                     content = result.fold(
                         onSuccess = { forecast ->
                             UiState.Success(

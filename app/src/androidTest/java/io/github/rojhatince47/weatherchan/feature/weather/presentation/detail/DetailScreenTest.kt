@@ -8,6 +8,8 @@ import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
@@ -61,6 +63,7 @@ class DetailScreenTest {
             HavaTheme {
                 DetailScreen(
                     uiState = DetailUiState(content = UiState.Success(forecast)),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
                     onFavoriteClick = {},
                     onRetry = {},
@@ -83,6 +86,7 @@ class DetailScreenTest {
                     uiState = DetailUiState(
                         content = UiState.Error(UiText.Dynamic("Şehir bilgisi bulunamadı"))
                     ),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
                     onFavoriteClick = {},
                     onRetry = {},
@@ -105,6 +109,7 @@ class DetailScreenTest {
             HavaTheme {
                 DetailScreen(
                     uiState = DetailUiState(content = UiState.Loading),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
                     onFavoriteClick = {},
                     onRetry = {},

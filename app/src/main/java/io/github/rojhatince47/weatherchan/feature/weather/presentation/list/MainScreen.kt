@@ -24,11 +24,14 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 @Composable
 fun MainScreen(
     uiState: MainUiState,
+    unit: TemperatureUnitUiModel,
     onQueryChange: (String) -> Unit,
     onCityClick: (Long) -> Unit,
     onFavoriteClick: (Long) -> Unit,
@@ -54,7 +57,7 @@ fun MainScreen(
         ) {
             TextButton(onClick = onToggleUnit) {
                 Text(
-                    text = if (uiState.unit.unit == TemperatureUnit.CELSIUS) {
+                    text = if (unit.unit == TemperatureUnit.CELSIUS) {
                         "°C"
                     } else {
                         "°F"
@@ -101,6 +104,7 @@ private fun MainScreenCompactPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
+            unit = TemperatureUnit.CELSIUS.toUiModel(),
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
@@ -117,6 +121,7 @@ private fun MainScreenMediumPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
+            unit = TemperatureUnit.CELSIUS.toUiModel(),
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
@@ -133,6 +138,7 @@ private fun MainScreenExpandedPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
+            unit = TemperatureUnit.CELSIUS.toUiModel(),
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},

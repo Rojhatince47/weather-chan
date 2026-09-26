@@ -65,14 +65,6 @@ class MainViewModel @Inject constructor(
         filter(_uiState.value.query)
     }
 
-    fun onToggleUnit() {
-        val next = when (unitRepository.unit.value) {
-            TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
-            TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
-        }
-        unitRepository.setUnit(next)
-    }
-
     private fun load() {
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
@@ -95,7 +87,6 @@ class MainViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                unit = unitRepository.unit.value.toUiModel(),
                 content = if (filtered.isEmpty()) {
                     UiState.Empty
                 } else {

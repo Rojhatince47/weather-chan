@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import org.junit.Rule
@@ -34,7 +36,8 @@ class MainScreenTest {
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
-                    onToggleUnit = {}
+                    onToggleUnit = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
         }
@@ -54,7 +57,8 @@ class MainScreenTest {
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
-                    onToggleUnit = {}
+                    onToggleUnit = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
         }
@@ -81,6 +85,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
                     listState = LazyListState(firstVisibleItemIndex = 3)
                 )
             }
@@ -108,7 +113,8 @@ class MainScreenTest {
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
-                    onToggleUnit = { toggled = true }
+                    onToggleUnit = { toggled = true },
+                    unit = TemperatureUnit.CELSIUS.toUiModel()
                 )
             }
         }
