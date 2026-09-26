@@ -3,7 +3,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
@@ -32,8 +34,11 @@ class MainViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+
     init {
-        load()
+        loadData()
         viewModelScope.launch {
             unitRepository.unit.collect {
                 filter(_uiState.value.query)
@@ -61,11 +66,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun onRetry() {
-        load()
+        loadData()
     }
 
     fun onRefresh() {
-        load()
+        loadData()
     }
 
     fun onFavoriteClick(cityId: Long) {
@@ -73,7 +78,8 @@ class MainViewModel @Inject constructor(
         favoriteRepository.toggleFavorite(cityId)
     }
 
-    private fun load() {
+    fun loadData() {
+        _loadState.update { LoadState.Loading }
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
             filter(_uiState.value.query)
@@ -90,6 +96,7 @@ class MainViewModel @Inject constructor(
                     content = UiState.Error(result.error.toUiText())
                 )
             }
+            _loadState.update { _uiState.value.content.toLoadState() }
             return
         }
         val cityWeathers = (result as AppResult.Success).data
@@ -127,5 +134,6 @@ class MainViewModel @Inject constructor(
                 }
             )
         }
+        _loadState.update { _uiState.value.content.toLoadState() }
     }
 }

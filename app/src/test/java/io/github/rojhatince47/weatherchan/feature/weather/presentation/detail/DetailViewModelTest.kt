@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.common.error.DefaultErrorMapper
+import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -102,6 +104,36 @@ class DetailViewModelTest {
         viewModel.uiState.test {
             val state = awaitItem()
             assertTrue(state.content is UiState.Error)
+        }
+    }
+
+    @Test
+    fun `loadData emits error state for unknown city`() = runTest {
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "cityId" to 999L,
+                "name" to "Bilinmeyen",
+                "region" to null,
+                "country" to null,
+                "latitude" to 0.0,
+                "longitude" to 0.0
+            )
+        )
+
+        val viewModel = DetailViewModel(
+            savedStateHandle = savedStateHandle,
+            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.loadState.test {
+            assertTrue(awaitItem() is LoadState.Error)
+
+            viewModel.loadData()
+            assertEquals(LoadState.Loading, awaitItem())
+            assertTrue(awaitItem() is LoadState.Error)
         }
     }
 }

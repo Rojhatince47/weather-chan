@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.common.error.DefaultErrorMapper
+import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
@@ -176,6 +177,46 @@ class MainViewModelTest {
                     it.temperatureText.endsWith("°F")
                 }
             )
+        }
+    }
+
+    @Test
+    fun `loadData emits loading then success`() = runTest {
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(
+                WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())
+            ),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.loadState.test {
+            assertEquals(LoadState.Success, awaitItem())
+
+            viewModel.loadData()
+            assertEquals(LoadState.Loading, awaitItem())
+            assertEquals(LoadState.Success, awaitItem())
+        }
+    }
+
+    @Test
+    fun `retry uses loadData`() = runTest {
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(
+                WeatherRepositoryImpl(SampleWeatherDataSource(), DefaultErrorMapper())
+            ),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        viewModel.loadState.test {
+            assertEquals(LoadState.Success, awaitItem())
+
+            viewModel.onRetry()
+            assertEquals(LoadState.Loading, awaitItem())
+            assertEquals(LoadState.Success, awaitItem())
         }
     }
 
