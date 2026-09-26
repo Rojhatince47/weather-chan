@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Hava</string>
+    <string name="home_title">Weather-chan</string>
+    <string name="home_description">Şehirlerin havasını sevimli takip et</string>
 </resources>
