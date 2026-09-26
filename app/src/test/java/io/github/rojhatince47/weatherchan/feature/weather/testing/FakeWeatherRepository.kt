@@ -12,16 +12,32 @@ class FakeWeatherRepository(
     private val dataSource: SampleWeatherDataSource = SampleWeatherDataSource()
 ) : WeatherRepository {
 
-    var loadGate = CompletableDeferred<Unit>()
+    private val cityWeathersGates = ArrayDeque<CompletableDeferred<Unit>>()
     var forecastGate = CompletableDeferred<Unit>()
     var throwCancellation = false
     var failForecast = false
+    var finishedCityWeathersCalls = 0
+        private set
+
+    val cityWeathersCallCount: Int
+        get() = cityWeathersGates.size
+
+    fun gateForCityWeathersCall(index: Int): CompletableDeferred<Unit> = cityWeathersGates[index]
+
+    fun completeAllCityWeathersGates() {
+        cityWeathersGates
+            .filterNot { it.isCompleted }
+            .forEach { it.complete(Unit) }
+    }
 
     override suspend fun cityWeathers(): AppResult<List<CityWeather>> {
         if (throwCancellation) {
             throw CancellationException("Test iptali")
         }
-        loadGate.await()
+        val gate = CompletableDeferred<Unit>()
+        cityWeathersGates.addLast(gate)
+        gate.await()
+        finishedCityWeathersCalls++
         return AppResult.Success(dataSource.cityWeathers)
     }
 

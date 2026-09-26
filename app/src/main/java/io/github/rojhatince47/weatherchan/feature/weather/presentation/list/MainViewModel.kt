@@ -16,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Wea
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
+    private var loadJob: Job? = null
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -42,12 +44,12 @@ class MainViewModel @Inject constructor(
         loadData()
         viewModelScope.launch {
             unitRepository.unit.collect {
-                filter(_uiState.value.query)
+                refresh()
             }
         }
         viewModelScope.launch {
             favoriteRepository.favoriteIds.collect {
-                filter(_uiState.value.query)
+                refresh()
             }
         }
     }
@@ -55,15 +57,11 @@ class MainViewModel @Inject constructor(
     fun findCity(cityId: Long): City? = loadedCities[cityId]
 
     fun onQueryChange(query: String) {
-        viewModelScope.launch {
-            filter(query = query)
-        }
+        refresh(query = query)
     }
 
     fun onFavoritesOnlyChange(showFavoritesOnly: Boolean) {
-        viewModelScope.launch {
-            filter(showFavoritesOnly = showFavoritesOnly)
-        }
+        refresh(showFavoritesOnly = showFavoritesOnly)
     }
 
     fun onRetry() {
@@ -80,11 +78,26 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadData() {
-        viewModelScope.launch {
+        // Önceki yükleme varsa iptal edilir; yeniden deneme her zaman
+        // yeni bir çağrı başlatır ve eşzamanlı yinelenen istek oluşmaz.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
             _loadState.update { LoadState.Loading }
             try {
                 filter(_uiState.value.query)
+            } catch (e: CancellationException) {
+                // İptal bir hata değildir; hata durumu olarak sunulmaz.
+                throw e
+            }
+        }
+    }
+
+    private fun refresh(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            try {
+                filter(query, showFavoritesOnly)
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e

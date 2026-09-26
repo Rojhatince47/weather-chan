@@ -75,7 +75,7 @@ class MainViewModelTest {
         viewModel.uiState.test {
             assertTrue(awaitItem().content is UiState.Loading)
 
-            fakeRepository.loadGate.complete(Unit)
+            fakeRepository.completeAllCityWeathersGates()
             val loaded = awaitItem()
             assertTrue(loaded.content is UiState.Success)
             assertEquals(
@@ -193,15 +193,14 @@ class MainViewModelTest {
 
         viewModel.loadState.test {
             assertEquals(LoadState.Loading, awaitItem())
-            fakeRepository.loadGate.complete(Unit)
+            fakeRepository.completeAllCityWeathersGates()
             assertEquals(LoadState.Success, awaitItem())
         }
 
-        fakeRepository.loadGate = CompletableDeferred()
         viewModel.loadData()
         viewModel.loadState.test {
             assertEquals(LoadState.Loading, awaitItem())
-            fakeRepository.loadGate.complete(Unit)
+            fakeRepository.completeAllCityWeathersGates()
             assertEquals(LoadState.Success, awaitItem())
         }
     }
@@ -239,17 +238,49 @@ class MainViewModelTest {
 
         viewModel.loadState.test {
             assertEquals(LoadState.Loading, awaitItem())
-            fakeRepository.loadGate.complete(Unit)
+            fakeRepository.completeAllCityWeathersGates()
             assertEquals(LoadState.Success, awaitItem())
         }
 
-        fakeRepository.loadGate = CompletableDeferred()
         viewModel.onRetry()
         viewModel.loadState.test {
             assertEquals(LoadState.Loading, awaitItem())
-            fakeRepository.loadGate.complete(Unit)
+            fakeRepository.completeAllCityWeathersGates()
             assertEquals(LoadState.Success, awaitItem())
         }
+    }
+
+    @Test
+    fun `retry cancels in-flight load and starts new call`() = runTest {
+        val fakeRepository = FakeWeatherRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        // Init başlattı; arama/sorgu yok, yalnızca depo akışları tetiklendi.
+        // Yeni çağrı askıdayken yeniden dene: önceki iptal edilir, yeni başlar.
+        viewModel.onRetry()
+        viewModel.loadState.test {
+            assertEquals(LoadState.Loading, awaitItem())
+            fakeRepository.completeAllCityWeathersGates()
+            val state = awaitItem()
+            assertEquals(LoadState.Success, state)
+        }
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.content is UiState.Success)
+            assertEquals(
+                5,
+                ((state.content as UiState.Success).data.size)
+            )
+        }
+
+        // İptal edilen çağrılar tamamlanmadı; yalnızca son çağrı sonuç üretti.
+        assertEquals(1, fakeRepository.finishedCityWeathersCalls)
     }
 
     @Test

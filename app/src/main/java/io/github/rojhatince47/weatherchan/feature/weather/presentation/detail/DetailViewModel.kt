@@ -18,6 +18,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Wea
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +43,8 @@ class DetailViewModel @Inject constructor(
 
     private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadData()
@@ -70,7 +73,10 @@ class DetailViewModel @Inject constructor(
     }
 
     fun loadData() {
-        viewModelScope.launch {
+        // Önceki yükleme varsa iptal edilir; yeniden deneme her zaman
+        // yeni bir çağrı başlatır ve eşzamanlı yinelenen istek oluşmaz.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
             _loadState.update { LoadState.Loading }
             try {
