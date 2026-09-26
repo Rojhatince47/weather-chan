@@ -3,9 +3,8 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
@@ -22,11 +21,11 @@ import kotlinx.coroutines.launch
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
     private val uiMapper: WeatherUiMapper,
-    private val unitRepository: TemperatureUnitRepository
+    private val unitRepository: TemperatureUnitRepository,
+    private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
-    private val favoriteIds = mutableSetOf<Long>()
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -35,6 +34,11 @@ class MainViewModel @Inject constructor(
         load()
         viewModelScope.launch {
             unitRepository.unit.collect {
+                filter(_uiState.value.query)
+            }
+        }
+        viewModelScope.launch {
+            favoriteRepository.favoriteIds.collect {
                 filter(_uiState.value.query)
             }
         }
@@ -57,12 +61,7 @@ class MainViewModel @Inject constructor(
 
     fun onFavoriteClick(cityId: Long) {
         if (cityId !in loadedCities) return
-        if (favoriteIds.contains(cityId)) {
-            favoriteIds.remove(cityId)
-        } else {
-            favoriteIds.add(cityId)
-        }
-        filter(_uiState.value.query)
+        favoriteRepository.toggleFavorite(cityId)
     }
 
     private fun load() {
@@ -94,7 +93,7 @@ class MainViewModel @Inject constructor(
                         filtered.map { cityWeather ->
                             uiMapper.toCityWeatherUiModel(
                                 cityWeather,
-                                isFavorite = cityWeather.city.id in favoriteIds,
+                                isFavorite = cityWeather.city.id in favoriteRepository.favoriteIds.value,
                                 unit = unitRepository.unit.value
                             )
                         }

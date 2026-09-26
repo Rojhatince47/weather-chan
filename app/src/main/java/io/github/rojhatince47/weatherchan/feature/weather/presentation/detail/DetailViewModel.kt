@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -23,14 +24,13 @@ class DetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getForecast: GetForecastUseCase,
     private val uiMapper: WeatherUiMapper,
-    private val unitRepository: TemperatureUnitRepository
+    private val unitRepository: TemperatureUnitRepository,
+    private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
     // Geçersiz/eksik navigation parametresi uygulamayı çökertmemeli;
     // bunun yerine anlaşılır bir hata durumu gösterilir.
     private val city: City? = readCity(savedStateHandle)
-
-    private val isFavorite = MutableStateFlow(false)
 
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
@@ -39,6 +39,11 @@ class DetailViewModel @Inject constructor(
         load()
         viewModelScope.launch {
             unitRepository.unit.collect {
+                load()
+            }
+        }
+        viewModelScope.launch {
+            favoriteRepository.favoriteIds.collect {
                 load()
             }
         }
@@ -53,8 +58,7 @@ class DetailViewModel @Inject constructor(
     }
 
     fun onFavoriteClick() {
-        isFavorite.update { !it }
-        load()
+        city?.let { favoriteRepository.toggleFavorite(it.id) }
     }
 
     private fun load() {
@@ -80,7 +84,7 @@ class DetailViewModel @Inject constructor(
                             UiState.Success(
                                 uiMapper.toForecastDetailUiModel(
                                     forecast = forecast,
-                                    isFavorite = isFavorite.value,
+                                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
                                     unit = unit
                                 )
                             )

@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
@@ -50,7 +51,8 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository()
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {
@@ -65,7 +67,8 @@ class DetailViewModelTest {
             savedStateHandle = SavedStateHandle(),
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository()
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {
@@ -91,7 +94,8 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository()
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {

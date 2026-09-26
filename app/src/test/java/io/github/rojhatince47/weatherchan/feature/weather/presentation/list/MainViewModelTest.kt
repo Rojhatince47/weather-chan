@@ -1,13 +1,17 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +44,8 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository()
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {
@@ -58,7 +63,8 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository()
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.onQueryChange("Ankara")
@@ -80,7 +86,8 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = unitRepository
+            unitRepository = unitRepository,
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {
@@ -108,7 +115,8 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
             uiMapper = WeatherUiMapper(),
-            unitRepository = unitRepository
+            unitRepository = unitRepository,
+            favoriteRepository = InMemoryFavoriteRepository()
         )
 
         viewModel.uiState.test {
@@ -125,6 +133,54 @@ class MainViewModelTest {
                 (fahrenheitState.content as UiState.Success).data.all {
                     it.temperatureText.endsWith("°F")
                 }
+            )
+        }
+    }
+
+    @Test
+    fun `favorite selection is shared between list and detail view models`() = runTest {
+        val favoriteRepository = InMemoryFavoriteRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = favoriteRepository
+        )
+        val detailViewModel = DetailViewModel(
+            savedStateHandle = SavedStateHandle(
+                mapOf(
+                    "cityId" to 1L,
+                    "name" to "İstanbul",
+                    "region" to "Marmara",
+                    "country" to "Türkiye",
+                    "latitude" to 41.01,
+                    "longitude" to 28.98
+                )
+            ),
+            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = favoriteRepository
+        )
+
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertTrue(
+                ((initial.content as UiState.Success).data.first().isFavorite).not()
+            )
+
+            viewModel.onFavoriteClick(1L)
+            val selected = awaitItem()
+            assertTrue(
+                ((selected.content as UiState.Success).data.first().isFavorite)
+            )
+        }
+
+        detailViewModel.uiState.test {
+            val detailState = awaitItem()
+            assertTrue(detailState.content is UiState.Success)
+            assertTrue(
+                ((detailState.content as UiState.Success).data.isFavorite)
             )
         }
     }
