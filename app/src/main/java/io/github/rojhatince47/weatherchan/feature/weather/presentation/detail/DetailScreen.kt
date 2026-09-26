@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,10 +69,15 @@ fun DetailScreen(
                 text = "Veri bulunamadı",
                 modifier = Modifier.padding(innerPadding).padding(24.dp)
             )
-            is UiState.Error -> Text(
-                text = content.message.asString(),
-                modifier = Modifier.padding(innerPadding).padding(24.dp)
-            )
+            is UiState.Error -> Column(
+                modifier = Modifier.padding(innerPadding).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(text = content.message.asString())
+                Button(onClick = onRetry) {
+                    Text(text = "Tekrar dene")
+                }
+            }
             is UiState.Success -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentPadding = PaddingValues(16.dp),

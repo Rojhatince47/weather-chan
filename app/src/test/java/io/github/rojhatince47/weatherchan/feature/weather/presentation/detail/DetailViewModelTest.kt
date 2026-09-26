@@ -56,4 +56,43 @@ class DetailViewModelTest {
             assertTrue(state.content is UiState.Success)
         }
     }
+
+    @Test
+    fun `missing navigation params shows error instead of crashing`() = runTest {
+        val viewModel = DetailViewModel(
+            savedStateHandle = SavedStateHandle(),
+            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper()
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.content is UiState.Error)
+        }
+    }
+
+    @Test
+    fun `unknown city id shows error`() = runTest {
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "cityId" to 999L,
+                "name" to "Bilinmeyen",
+                "region" to null,
+                "country" to null,
+                "latitude" to 0.0,
+                "longitude" to 0.0
+            )
+        )
+
+        val viewModel = DetailViewModel(
+            savedStateHandle = savedStateHandle,
+            getForecast = GetForecastUseCase(WeatherRepositoryImpl(SampleWeatherDataSource())),
+            uiMapper = WeatherUiMapper()
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.content is UiState.Error)
+        }
+    }
 }

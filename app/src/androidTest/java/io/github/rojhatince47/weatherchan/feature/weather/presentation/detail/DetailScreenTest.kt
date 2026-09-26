@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
@@ -70,5 +71,26 @@ class DetailScreenTest {
         composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
         composeRule.onNodeWithText("Saatlik Tahmin").assertIsDisplayed()
         composeRule.onNodeWithText("Günlük Tahmin").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailScreenErrorStateShowsMessageRetryAndBack() {
+        composeRule.setContent {
+            HavaTheme {
+                DetailScreen(
+                    uiState = DetailUiState(
+                        content = UiState.Error(UiText.Dynamic("Şehir bilgisi bulunamadı"))
+                    ),
+                    onBack = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Şehir bilgisi bulunamadı").assertIsDisplayed()
+        composeRule.onNodeWithText("Tekrar dene").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Geri").assertIsDisplayed()
     }
 }

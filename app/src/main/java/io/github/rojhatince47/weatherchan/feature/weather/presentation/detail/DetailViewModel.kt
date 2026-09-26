@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
@@ -23,16 +24,9 @@ class DetailViewModel @Inject constructor(
     private val uiMapper: WeatherUiMapper
 ) : ViewModel() {
 
-    private val city = City(
-        id = checkNotNull(savedStateHandle["cityId"]),
-        name = checkNotNull(savedStateHandle["name"]),
-        region = savedStateHandle["region"],
-        country = savedStateHandle["country"],
-        coordinates = Coordinates(
-            latitude = checkNotNull(savedStateHandle["latitude"]),
-            longitude = checkNotNull(savedStateHandle["longitude"])
-        )
-    )
+    // Geçersiz/eksik navigation parametresi uygulamayı çökertmemeli;
+    // bunun yerine anlaşılır bir hata durumu gösterilir.
+    private val city: City? = readCity(savedStateHandle)
 
     private val isFavorite = MutableStateFlow(false)
 
@@ -59,17 +53,54 @@ class DetailViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             _uiState.update { it.copy(content = UiState.Loading) }
-            val forecast = getForecast(city.id)
+            val city = city
+            if (city == null) {
+                _uiState.update {
+                    it.copy(
+                        content = UiState.Error(
+                            UiText.Dynamic("Şehir bilgisi bulunamadı")
+                        )
+                    )
+                }
+                return@launch
+            }
+            val result = runCatching { getForecast(city.id) }
             _uiState.update {
                 it.copy(
-                    content = UiState.Success(
-                        uiMapper.toForecastDetailUiModel(
-                            forecast = forecast,
-                            isFavorite = isFavorite.value
-                        )
+                    content = result.fold(
+                        onSuccess = { forecast ->
+                            UiState.Success(
+                                uiMapper.toForecastDetailUiModel(
+                                    forecast = forecast,
+                                    isFavorite = isFavorite.value
+                                )
+                            )
+                        },
+                        onFailure = {
+                            UiState.Error(
+                                UiText.Dynamic("Tahmin yüklenemedi")
+                            )
+                        }
                     )
                 )
             }
         }
+    }
+
+    private fun readCity(savedStateHandle: SavedStateHandle): City? {
+        val cityId: Long = savedStateHandle["cityId"] ?: return null
+        val name: String = savedStateHandle["name"] ?: return null
+        val latitude: Double = savedStateHandle["latitude"] ?: return null
+        val longitude: Double = savedStateHandle["longitude"] ?: return null
+        return City(
+            id = cityId,
+            name = name,
+            region = savedStateHandle["region"],
+            country = savedStateHandle["country"],
+            coordinates = Coordinates(
+                latitude = latitude,
+                longitude = longitude
+            )
+        )
     }
 }
