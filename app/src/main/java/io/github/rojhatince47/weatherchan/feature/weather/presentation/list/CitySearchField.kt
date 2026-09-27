@@ -6,7 +6,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.rojhatince47.weatherchan.R
 
 @Composable
 fun CitySearchField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -16,6 +18,6 @@ fun CitySearchField(value: String, onValueChange: (String) -> Unit, modifier: Mo
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        placeholder = { Text("Şehir ara") }
+        placeholder = { Text(stringResource(R.string.search_placeholder)) }
     )
 }

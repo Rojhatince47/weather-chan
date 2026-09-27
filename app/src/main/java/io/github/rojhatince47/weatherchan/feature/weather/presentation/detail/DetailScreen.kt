@@ -29,8 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -61,14 +63,14 @@ fun DetailScreen(
                     if (content is UiState.Success) {
                         Text(content.data.city.name)
                     } else {
-                        Text("Hava Durumu")
+                        Text(stringResource(R.string.detail_title))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Geri"
+                            contentDescription = stringResource(R.string.action_back)
                         )
                     }
                 },
@@ -76,15 +78,15 @@ fun DetailScreen(
                     IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Filled.Refresh,
-                            contentDescription = "Yenile"
+                            contentDescription = stringResource(R.string.action_refresh)
                         )
                     }
                     TextButton(onClick = onToggleUnit) {
                         Text(
                             text = if (unit.unit == TemperatureUnit.CELSIUS) {
-                                "°C"
+                                stringResource(R.string.unit_celsius)
                             } else {
-                                "°F"
+                                stringResource(R.string.unit_fahrenheit)
                             }
                         )
                     }
@@ -106,7 +108,7 @@ fun DetailScreen(
                     modifier = Modifier.padding(24.dp)
                 )
                 is UiState.Empty -> Text(
-                    text = "Veri bulunamadı",
+                    text = stringResource(R.string.state_empty_detail),
                     modifier = Modifier.padding(24.dp)
                 )
                 is UiState.Error -> Column(
@@ -115,7 +117,7 @@ fun DetailScreen(
                 ) {
                     Text(text = content.message.asString())
                     Button(onClick = onRetry) {
-                        Text(text = "Tekrar dene")
+                        Text(text = stringResource(R.string.action_retry))
                     }
                 }
                 is UiState.Success -> LazyColumn(
@@ -134,7 +136,7 @@ fun DetailScreen(
                     }
                     item {
                         Text(
-                            text = "Saatlik Tahmin",
+                            text = stringResource(R.string.section_hourly),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -143,10 +145,12 @@ fun DetailScreen(
                     }
                     item {
                         Text(
-                            text = "Günlük Tahmin",
+                            text = stringResource(R.string.section_daily),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+                    // key lambda'sı composable olmadığı için asString() çağrılamaz;
+                    // UiText equals/hashCode uyguladığı için doğrudan key olur.
                     items(content.data.dailyForecast, key = { it.dateText }) { daily ->
                         DailyForecastItem(daily)
                     }
@@ -195,7 +199,7 @@ private fun HourlyForecastItem(item: HourlyForecastUiModel) {
 private fun DailyForecastItem(item: DailyForecastUiModel) {
     Card {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = item.dateText)
+            Text(text = item.dateText.asString())
             Text(
                 text = "${item.conditionEmoji} " +
                     "${item.minTemperatureText} / ${item.maxTemperatureText}"

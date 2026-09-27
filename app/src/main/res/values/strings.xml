@@ -1,5 +1,42 @@
 <resources>
     <string name="app_name">Hava</string>
+
     <string name="home_title">Weather-chan</string>
     <string name="home_description">Şehirlerin havasını sevimli takip et</string>
+
+    <string name="action_refresh">Yenile</string>
+    <string name="action_retry">Tekrar dene</string>
+    <string name="action_back">Geri</string>
+    <string name="filter_favorites">Favoriler</string>
+    <string name="search_placeholder">Şehir ara</string>
+
+    <string name="favorite_add">Favorilere ekle</string>
+    <string name="favorite_remove">Favoriden çıkar</string>
+
+    <string name="detail_title">Hava Durumu</string>
+    <string name="section_hourly">Saatlik Tahmin</string>
+    <string name="section_daily">Günlük Tahmin</string>
+    <string name="section_current">Şu an</string>
+
+    <string name="state_empty_list">Sonuç bulunamadı</string>
+    <string name="state_empty_detail">Veri bulunamadı</string>
+    <string name="error_unexpected">Beklenmeyen bir hata oluştu</string>
+
+    <string name="unit_celsius">°C</string>
+    <string name="unit_fahrenheit">°F</string>
+
+    <string name="forecast_today">Bugün</string>
+    <string name="forecast_day_offset">+%1$d gün</string>
+
+    <string name="theme_toggle">Tema: %1$s</string>
+    <string name="theme_mode_system">Sistem</string>
+    <string name="theme_mode_light">Açık</string>
+    <string name="theme_mode_dark">Koyu</string>
+
+    <string name="condition_clear">Açık</string>
+    <string name="condition_partly_cloudy">Parçalı bulutlu</string>
+    <string name="condition_cloudy">Bulutlu</string>
+    <string name="condition_rain">Yağmurlu</string>
+    <string name="condition_snow">Kar yağışlı</string>
+    <string name="condition_thunderstorm">Gök gürültülü</string>
 </resources>

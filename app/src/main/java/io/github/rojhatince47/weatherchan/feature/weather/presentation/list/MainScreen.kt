@@ -28,8 +28,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
@@ -64,8 +66,8 @@ fun MainScreen(
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             HomeHeader(
-                title = "Weather-chan",
-                description = "Şehirlerin havasını sevimli takip et"
+                title = stringResource(R.string.home_title),
+                description = stringResource(R.string.home_description)
             )
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -75,20 +77,20 @@ fun MainScreen(
                 FilterChip(
                     selected = uiState.showFavoritesOnly,
                     onClick = { onFavoritesOnlyChange(!uiState.showFavoritesOnly) },
-                    label = { Text(text = "Favoriler") }
+                    label = { Text(text = stringResource(R.string.filter_favorites)) }
                 )
                 IconButton(onClick = onRefresh) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Yenile"
+                        contentDescription = stringResource(R.string.action_refresh)
                     )
                 }
                 TextButton(onClick = onToggleUnit) {
                     Text(
                         text = if (unit.unit == TemperatureUnit.CELSIUS) {
-                            "°C"
+                            stringResource(R.string.unit_celsius)
                         } else {
-                            "°F"
+                            stringResource(R.string.unit_fahrenheit)
                         }
                     )
                 }
@@ -110,7 +112,7 @@ fun MainScreen(
                     modifier = Modifier.padding(24.dp)
                 )
                 is UiState.Empty -> Text(
-                    text = "Sonuç bulunamadı",
+                    text = stringResource(R.string.state_empty_list),
                     modifier = Modifier.padding(24.dp)
                 )
                 is UiState.Error -> Text(

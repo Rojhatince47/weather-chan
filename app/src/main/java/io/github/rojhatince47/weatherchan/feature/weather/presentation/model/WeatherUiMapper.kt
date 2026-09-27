@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
@@ -54,7 +55,11 @@ class WeatherUiMapper @Inject constructor() {
         },
         dailyForecast = forecast.dailyForecast.map { daily ->
             DailyForecastUiModel(
-                dateText = if (daily.dayOffset == 0) "Bugün" else "+${daily.dayOffset} gün",
+                dateText = if (daily.dayOffset == 0) {
+                    UiText.Resource(R.string.forecast_today)
+                } else {
+                    UiText.Resource(R.string.forecast_day_offset, daily.dayOffset)
+                },
                 minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
                 maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
                 conditionEmoji = emojiFor(daily.condition)
@@ -79,14 +84,12 @@ class WeatherUiMapper @Inject constructor() {
         WeatherCondition.THUNDERSTORM -> "⛈️"
     }
 
-    private fun labelFor(condition: WeatherCondition): UiText = UiText.Dynamic(
-        when (condition) {
-            WeatherCondition.CLEAR -> "Açık"
-            WeatherCondition.PARTLY_CLOUDY -> "Parçalı bulutlu"
-            WeatherCondition.CLOUDY -> "Bulutlu"
-            WeatherCondition.RAIN -> "Yağmurlu"
-            WeatherCondition.SNOW -> "Kar yağışlı"
-            WeatherCondition.THUNDERSTORM -> "Gök gürültülü"
-        }
-    )
+    private fun labelFor(condition: WeatherCondition): UiText = when (condition) {
+        WeatherCondition.CLEAR -> UiText.Resource(R.string.condition_clear)
+        WeatherCondition.PARTLY_CLOUDY -> UiText.Resource(R.string.condition_partly_cloudy)
+        WeatherCondition.CLOUDY -> UiText.Resource(R.string.condition_cloudy)
+        WeatherCondition.RAIN -> UiText.Resource(R.string.condition_rain)
+        WeatherCondition.SNOW -> UiText.Resource(R.string.condition_snow)
+        WeatherCondition.THUNDERSTORM -> UiText.Resource(R.string.condition_thunderstorm)
+    }
 }

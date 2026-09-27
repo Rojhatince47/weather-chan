@@ -35,7 +35,7 @@ data class HourlyForecastUiModel(
 )
 
 data class DailyForecastUiModel(
-    val dateText: String,
+    val dateText: UiText,
     val minTemperatureText: String,
     val maxTemperatureText: String,
     val conditionEmoji: String

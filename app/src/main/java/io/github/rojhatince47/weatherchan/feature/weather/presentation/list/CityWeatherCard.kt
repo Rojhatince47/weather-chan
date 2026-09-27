@@ -15,7 +15,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 @Composable
@@ -49,9 +51,9 @@ fun CityWeatherCard(cityWeather: CityWeatherUiModel, onClick: () -> Unit, onFavo
                         Icons.Filled.FavoriteBorder
                     },
                     contentDescription = if (cityWeather.isFavorite) {
-                        "Favoriden çıkar"
+                        stringResource(R.string.favorite_remove)
                     } else {
-                        "Favorilere ekle"
+                        stringResource(R.string.favorite_add)
                     }
                 )
             }

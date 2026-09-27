@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
@@ -19,7 +20,10 @@ class WeatherUiMapperTest {
         assertEquals(cityWeather.city.id, uiModel.cityId)
         assertEquals(cityWeather.city.name, uiModel.name)
         assertTrue(uiModel.temperatureText.endsWith("°C"))
-        assertTrue(uiModel.conditionLabel is UiText.Dynamic)
+        assertEquals(
+            UiText.Resource(R.string.condition_clear),
+            uiModel.conditionLabel
+        )
     }
 
     @Test
@@ -30,6 +34,10 @@ class WeatherUiMapperTest {
         assertEquals(24, uiModel.hourlyForecast.size)
         assertEquals(7, uiModel.dailyForecast.size)
         assertTrue(uiModel.currentWeather.temperatureText.endsWith("°C"))
+        assertEquals(
+            UiText.Resource(R.string.forecast_today),
+            uiModel.dailyForecast.first().dateText
+        )
     }
 
     @Test
