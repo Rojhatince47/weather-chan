@@ -35,6 +35,9 @@ data class HourlyForecastUiModel(
 )
 
 data class DailyForecastUiModel(
+    // Liste anahtarı olarak kullanılır: Bundle'da saklanabilir bir tür olmalı,
+    // bu yüzden dateText (UiText) değil dayOffset kullanılır.
+    val dayOffset: Int,
     val dateText: UiText,
     val minTemperatureText: String,
     val maxTemperatureText: String,

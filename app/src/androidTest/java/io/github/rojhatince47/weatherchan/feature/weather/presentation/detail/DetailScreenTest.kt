@@ -53,6 +53,7 @@ class DetailScreenTest {
             ),
             dailyForecast = listOf(
                 DailyForecastUiModel(
+                    dayOffset = 0,
                     dateText = UiText.Dynamic("Bugün"),
                     minTemperatureText = "18°C",
                     maxTemperatureText = "24°C",

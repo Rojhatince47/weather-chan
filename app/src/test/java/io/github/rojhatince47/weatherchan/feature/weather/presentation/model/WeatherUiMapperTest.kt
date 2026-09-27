@@ -39,6 +39,7 @@ class WeatherUiMapperTest {
             UiText.Resource(R.string.forecast_today),
             uiModel.dailyForecast.first().dateText
         )
+        assertEquals(0, uiModel.dailyForecast.first().dayOffset)
     }
 
     @Test

@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -34,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
@@ -122,8 +126,8 @@ fun DetailScreen(
                 }
                 is UiState.Success -> LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(HavaSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.lg)
                 ) {
                     item {
                         CurrentWeatherCard(
@@ -135,23 +139,17 @@ fun DetailScreen(
                         )
                     }
                     item {
-                        Text(
-                            text = stringResource(R.string.section_hourly),
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        SectionHeader(text = stringResource(R.string.section_hourly))
                     }
                     items(content.data.hourlyForecast, key = { it.timeText }) { hourly ->
                         HourlyForecastItem(hourly)
                     }
                     item {
-                        Text(
-                            text = stringResource(R.string.section_daily),
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        SectionHeader(text = stringResource(R.string.section_daily))
                     }
-                    // key lambda'sı composable olmadığı için asString() çağrılamaz;
-                    // UiText equals/hashCode uyguladığı için doğrudan key olur.
-                    items(content.data.dailyForecast, key = { it.dateText }) { daily ->
+                    // key Bundle'da saklanabilir olmalı; UiText saklanamaz,
+                    // bu yüzden dayOffset (Int) kullanılır.
+                    items(content.data.dailyForecast, key = { it.dayOffset }) { daily ->
                         DailyForecastItem(daily)
                     }
                 }
@@ -168,26 +166,68 @@ private fun CurrentWeatherCard(
     windSpeedText: String,
     humidityText: String
 ) {
-    Card {
-        Column(modifier = Modifier.padding(16.dp)) {
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(HavaSpacing.xl),
+            verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
+        ) {
             Text(
-                text = "$conditionEmoji $temperatureText",
-                style = MaterialTheme.typography.headlineMedium
+                text = stringResource(R.string.section_current),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = conditionEmoji, style = MaterialTheme.typography.displayLarge)
+                Text(
+                    text = temperatureText,
+                    style = MaterialTheme.typography.displayLarge,
+                    modifier = Modifier.padding(start = HavaSpacing.md)
+                )
+            }
             Text(
                 text = conditionLabel,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Text(text = windSpeedText)
-            Text(text = humidityText)
+            Row(horizontalArrangement = Arrangement.spacedBy(HavaSpacing.lg)) {
+                Text(
+                    text = windSpeedText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = humidityText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
 @Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
 private fun HourlyForecastItem(item: HourlyForecastUiModel) {
-    Card {
-        Column(modifier = Modifier.padding(12.dp)) {
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(HavaSpacing.md)) {
             Text(text = item.timeText)
             Text(text = "${item.conditionEmoji} ${item.temperatureText}")
             Text(text = item.precipitationProbabilityText)
@@ -197,8 +237,13 @@ private fun HourlyForecastItem(item: HourlyForecastUiModel) {
 
 @Composable
 private fun DailyForecastItem(item: DailyForecastUiModel) {
-    Card {
-        Column(modifier = Modifier.padding(12.dp)) {
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(HavaSpacing.md)) {
             Text(text = item.dateText.asString())
             Text(
                 text = "${item.conditionEmoji} " +

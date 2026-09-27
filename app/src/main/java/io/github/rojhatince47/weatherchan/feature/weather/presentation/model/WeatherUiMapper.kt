@@ -56,6 +56,7 @@ class WeatherUiMapper @Inject constructor() {
         },
         dailyForecast = forecast.dailyForecast.map { daily ->
             DailyForecastUiModel(
+                dayOffset = daily.dayOffset,
                 dateText = if (daily.dayOffset == 0) {
                     UiText.Resource(R.string.forecast_today)
                 } else {
