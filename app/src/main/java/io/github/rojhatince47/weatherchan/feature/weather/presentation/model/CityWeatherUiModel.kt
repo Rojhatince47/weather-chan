@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 
 data class CityWeatherUiModel(
     val cityId: Long,
@@ -8,6 +9,7 @@ data class CityWeatherUiModel(
     val region: String?,
     val country: String?,
     val temperatureText: String,
+    val condition: WeatherCondition,
     val conditionEmoji: String,
     val conditionLabel: UiText,
     val isFavorite: Boolean

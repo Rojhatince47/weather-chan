@@ -20,6 +20,7 @@ class WeatherUiMapper @Inject constructor() {
         region = cityWeather.city.region,
         country = cityWeather.city.country,
         temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
+        condition = cityWeather.currentWeather.condition,
         conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
         conditionLabel = labelFor(cityWeather.currentWeather.condition),
         isFavorite = isFavorite

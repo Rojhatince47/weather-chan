@@ -39,10 +39,12 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.core.ui.theme.ThemeModeIcon
+import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 @Composable
@@ -71,6 +73,9 @@ fun MainScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
+            // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
+            val isDarkTheme = themeMode.resolveIsDark()
             val themeModeName = stringResource(
                 when (themeMode) {
                     ThemeMode.SYSTEM -> R.string.theme_mode_system
@@ -153,6 +158,7 @@ fun MainScreen(
                     items(content.data, key = { it.cityId }) { cityWeather ->
                         CityWeatherCard(
                             cityWeather = cityWeather,
+                            isDarkTheme = isDarkTheme,
                             onClick = { onCityClick(cityWeather.cityId) },
                             onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
                         )
@@ -232,6 +238,7 @@ private fun sampleMainUiState(): MainUiState = MainUiState(
                 region = "Marmara",
                 country = "Türkiye",
                 temperatureText = "21°C",
+                condition = WeatherCondition.CLEAR,
                 conditionEmoji = "☀️",
                 conditionLabel = UiText.Dynamic("Açık"),
                 isFavorite = false

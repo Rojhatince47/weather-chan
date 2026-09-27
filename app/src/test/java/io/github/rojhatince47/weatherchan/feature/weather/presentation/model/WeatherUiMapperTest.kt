@@ -20,6 +20,7 @@ class WeatherUiMapperTest {
         assertEquals(cityWeather.city.id, uiModel.cityId)
         assertEquals(cityWeather.city.name, uiModel.name)
         assertTrue(uiModel.temperatureText.endsWith("°C"))
+        assertEquals(cityWeather.currentWeather.condition, uiModel.condition)
         assertEquals(
             UiText.Resource(R.string.condition_clear),
             uiModel.conditionLabel
