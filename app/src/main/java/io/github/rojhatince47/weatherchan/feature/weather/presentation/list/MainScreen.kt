@@ -16,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -35,6 +36,8 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.core.ui.theme.ThemeModeIcon
@@ -54,6 +57,8 @@ fun MainScreen(
     onQueryChange: (String) -> Unit,
     onCityClick: (Long) -> Unit,
     onFavoriteClick: (Long) -> Unit,
+    onAddCity: (City) -> Unit,
+    onOpenCity: (City) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
@@ -123,6 +128,39 @@ fun MainScreen(
                 value = uiState.query,
                 onValueChange = onQueryChange
             )
+            // Canlı arama ana listenin altında, ayrı bir bölümde gösterilir;
+            // ana liste her durumda kendi durumunu korur.
+            when (val search = uiState.searchState) {
+                SearchUiState.Idle -> Unit
+                SearchUiState.Loading -> LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().testTag("search_indicator")
+                )
+                is SearchUiState.Failure -> Text(
+                    text = search.error.toUiText().asString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(
+                        horizontal = HavaSpacing.lg,
+                        vertical = HavaSpacing.sm
+                    )
+                )
+                is SearchUiState.Success -> {
+                    if (search.results.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = HavaSpacing.lg),
+                            verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
+                        ) {
+                            search.results.forEach { result ->
+                                SearchResultRow(
+                                    result = result,
+                                    onAddClick = { onAddCity(result.city) },
+                                    onOpenClick = { onOpenCity(result.city) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             // Yenileme sırasında mevcut içerik korunur; yalnızca ince
             // ilerleme çubuğu gösterilir. Tam ekran Loading sadece ilk
             // yüklemede (içerik yokken) gösterilir.
@@ -173,6 +211,8 @@ private fun MainScreenCompactPreview() {
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
+            onAddCity = {},
+            onOpenCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
@@ -192,6 +232,8 @@ private fun MainScreenMediumPreview() {
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
+            onAddCity = {},
+            onOpenCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
@@ -211,6 +253,8 @@ private fun MainScreenExpandedPreview() {
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
+            onAddCity = {},
+            onOpenCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},

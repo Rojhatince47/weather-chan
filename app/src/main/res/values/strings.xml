@@ -8,6 +8,9 @@
     <string name="action_retry">Tekrar dene</string>
     <string name="action_back">Geri</string>
     <string name="search_placeholder">Şehir ara</string>
+    <string name="action_add_city">Şehri listeye ekle</string>
+    <string name="action_open_detail">Detayı aç</string>
+    <string name="search_result_in_list">Listede</string>
 
     <string name="favorite_add">Favorilere ekle</string>
     <string name="favorite_remove">Favoriden çıkar</string>

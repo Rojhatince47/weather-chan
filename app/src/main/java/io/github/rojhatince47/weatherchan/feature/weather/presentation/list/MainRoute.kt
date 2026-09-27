@@ -58,6 +58,8 @@ fun MainRoute(
         onQueryChange = viewModel::onQueryChange,
         onCityClick = { cityId -> viewModel.findCity(cityId)?.let(onCityClick) },
         onFavoriteClick = viewModel::onFavoriteClick,
+        onAddCity = viewModel::onAddCity,
+        onOpenCity = onCityClick,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,
