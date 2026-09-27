@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
@@ -39,8 +41,10 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = {},
-                    unit = TemperatureUnit.CELSIUS.toUiModel()
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
                 )
             }
         }
@@ -61,8 +65,10 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = {},
-                    unit = TemperatureUnit.CELSIUS.toUiModel()
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
                 )
             }
         }
@@ -89,8 +95,10 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
                     listState = LazyListState(firstVisibleItemIndex = 3)
                 )
             }
@@ -114,12 +122,14 @@ class MainScreenTest {
                         content = UiState.Success(cityWeathers)
                     ),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
                     onQueryChange = {},
                     onCityClick = {},
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = { showFavoritesOnly ->
                         filterChangedTo = showFavoritesOnly
                     }
@@ -151,8 +161,10 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = { toggled = true },
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = {},
-                    unit = TemperatureUnit.CELSIUS.toUiModel()
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
                 )
             }
         }
@@ -177,12 +189,14 @@ class MainScreenTest {
                         isRefreshing = true
                     ),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
                     onQueryChange = {},
                     onCityClick = {},
                     onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = { refreshed = true },
                     onToggleUnit = {},
+                    onToggleThemeMode = {},
                     onFavoritesOnlyChange = {}
                 )
             }
@@ -192,5 +206,37 @@ class MainScreenTest {
         composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Yenile").performClick()
         assert(refreshed)
+    }
+
+    @Test
+    fun themeToggleCyclesThroughAllModes() {
+        val themeMode = mutableStateOf(ThemeMode.SYSTEM)
+
+        composeRule.setContent {
+            val current = themeMode.value
+            HavaTheme(themeMode = current) {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Empty),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = current,
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = { themeMode.value = current.next() },
+                    onFavoritesOnlyChange = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Tema: Sistem").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Tema: Sistem").performClick()
+        composeRule.onNodeWithContentDescription("Tema: Açık").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Tema: Açık").performClick()
+        composeRule.onNodeWithContentDescription("Tema: Koyu").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Tema: Koyu").performClick()
+        composeRule.onNodeWithContentDescription("Tema: Sistem").assertIsDisplayed()
     }
 }

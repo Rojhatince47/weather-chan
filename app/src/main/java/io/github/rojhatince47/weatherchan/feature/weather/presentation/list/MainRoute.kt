@@ -26,6 +26,7 @@ fun MainRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val unit = (settingsState as? UiState.Success)?.data
         ?: TemperatureUnit.CELSIUS.toUiModel()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -53,12 +54,14 @@ fun MainRoute(
     MainScreen(
         uiState = uiState,
         unit = unit,
+        themeMode = themeMode,
         onQueryChange = viewModel::onQueryChange,
         onCityClick = { cityId -> viewModel.findCity(cityId)?.let(onCityClick) },
         onFavoriteClick = viewModel::onFavoriteClick,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,
+        onToggleThemeMode = settingsViewModel::onCycleThemeMode,
         onFavoritesOnlyChange = viewModel::onFavoritesOnlyChange,
         modifier = modifier,
         snackbarHostState = snackbarHostState

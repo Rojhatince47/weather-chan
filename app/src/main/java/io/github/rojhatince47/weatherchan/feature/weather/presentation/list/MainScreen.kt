@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
@@ -36,7 +38,9 @@ import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.core.ui.theme.ThemeModeIcon
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
@@ -45,12 +49,14 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Cit
 fun MainScreen(
     uiState: MainUiState,
     unit: TemperatureUnitUiModel,
+    themeMode: ThemeMode,
     onQueryChange: (String) -> Unit,
     onCityClick: (Long) -> Unit,
     onFavoriteClick: (Long) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
+    onToggleThemeMode: () -> Unit,
     onFavoritesOnlyChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -65,6 +71,15 @@ fun MainScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            val themeModeName = stringResource(
+                when (themeMode) {
+                    ThemeMode.SYSTEM -> R.string.theme_mode_system
+                    ThemeMode.LIGHT -> R.string.theme_mode_light
+                    ThemeMode.DARK -> R.string.theme_mode_dark
+                }
+            )
+            val themeLabel = stringResource(R.string.theme_toggle, themeModeName)
+
             HomeHeader(
                 title = stringResource(R.string.home_title),
                 description = stringResource(R.string.home_description)
@@ -79,6 +94,17 @@ fun MainScreen(
                     onClick = { onFavoritesOnlyChange(!uiState.showFavoritesOnly) },
                     label = { Text(text = stringResource(R.string.filter_favorites)) }
                 )
+                IconButton(
+                    onClick = onToggleThemeMode,
+                    modifier = Modifier
+                        .testTag("theme_toggle")
+                        // ThemeModeIcon bir Canvas olduğu için erişilebilirlik
+                        // etiketi düğmenin kendisine verilir. semantics bloğu
+                        // composable olmadığından metin burada önceden çözülür.
+                        .semantics { contentDescription = themeLabel }
+                ) {
+                    ThemeModeIcon(themeMode = themeMode)
+                }
                 IconButton(onClick = onRefresh) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
@@ -144,12 +170,14 @@ private fun MainScreenCompactPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             unit = TemperatureUnit.CELSIUS.toUiModel(),
+            themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
+            onToggleThemeMode = {},
             onFavoritesOnlyChange = {}
         )
     }
@@ -162,12 +190,14 @@ private fun MainScreenMediumPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             unit = TemperatureUnit.CELSIUS.toUiModel(),
+            themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
+            onToggleThemeMode = {},
             onFavoritesOnlyChange = {}
         )
     }
@@ -180,12 +210,14 @@ private fun MainScreenExpandedPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             unit = TemperatureUnit.CELSIUS.toUiModel(),
+            themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
             onFavoriteClick = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
+            onToggleThemeMode = {},
             onFavoritesOnlyChange = {}
         )
     }
