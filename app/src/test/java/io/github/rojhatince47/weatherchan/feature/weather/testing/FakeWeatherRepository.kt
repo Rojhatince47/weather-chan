@@ -41,6 +41,7 @@ class FakeWeatherRepository : WeatherRepository {
     }
 
     override suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> {
+        cityWeathersRequests.add(cities)
         if (throwCancellation) {
             throw CancellationException("Test iptali")
         }
@@ -54,6 +55,15 @@ class FakeWeatherRepository : WeatherRepository {
             return AppResult.Failure(AppError.Network)
         }
         return AppResult.Success(cities.map { it.toCityWeather() })
+    }
+
+    var searchResult: AppResult<List<City>> = AppResult.Success(emptyList())
+    val searchRequests = mutableListOf<String>()
+    val cityWeathersRequests = mutableListOf<List<City>>()
+
+    override suspend fun search(query: String): AppResult<List<City>> {
+        searchRequests.add(query)
+        return searchResult
     }
 
     override suspend fun forecast(city: City): AppResult<Forecast> {

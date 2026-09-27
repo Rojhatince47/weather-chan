@@ -24,4 +24,10 @@ class WeatherRepositoryImpl @Inject constructor(
         is AppResult.Success -> primaryResult
         is AppResult.Failure -> backup.forecast(city)
     }
+
+    override suspend fun search(query: String): AppResult<List<City>> =
+        when (val primaryResult = primary.searchCities(query)) {
+            is AppResult.Success -> primaryResult
+            is AppResult.Failure -> backup.searchCities(query)
+        }
 }

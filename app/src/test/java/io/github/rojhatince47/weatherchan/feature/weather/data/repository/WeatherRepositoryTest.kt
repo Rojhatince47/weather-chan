@@ -110,6 +110,30 @@ class WeatherRepositoryTest {
     }
 
     @Test
+    fun `search returns geocoding results via primary`() = runTest {
+        primaryServer.enqueue(MockResponse().setBody(GEOCODING_JSON))
+
+        val result = repository.search("İstanbul")
+
+        assertTrue(result is AppResult.Success)
+        val cities = (result as AppResult.Success).data
+        assertEquals(1, cities.size)
+        assertEquals("İstanbul", cities.first().name)
+        assertEquals(0, backupServer.requestCount)
+    }
+
+    @Test
+    fun `search falls back to backup when primary fails`() = runTest {
+        primaryServer.enqueue(MockResponse().setResponseCode(500).setBody("{}"))
+        backupServer.enqueue(MockResponse().setBody(WTTR_JSON))
+
+        val result = repository.search("İstanbul")
+
+        assertTrue(result is AppResult.Success)
+        assertEquals(1, (result as AppResult.Success).data.size)
+    }
+
+    @Test
     fun `both sources failing returns failure`() = runTest {
         val cities = testCities(5)
         primaryServer.enqueue(MockResponse().setResponseCode(500))
@@ -226,6 +250,21 @@ class WeatherRepositoryTest {
                       "chanceofrain": "21"
                     }
                   ]
+                }
+              ]
+            }
+        """
+
+        const val GEOCODING_JSON = """
+            {
+              "results": [
+                {
+                  "id": 745044,
+                  "name": "İstanbul",
+                  "latitude": 41.01384,
+                  "longitude": 28.94966,
+                  "country": "Türkiye Cumhuriyeti",
+                  "admin1": "İstanbul"
                 }
               ]
             }

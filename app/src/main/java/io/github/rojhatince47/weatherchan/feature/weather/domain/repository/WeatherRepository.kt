@@ -13,4 +13,7 @@ interface WeatherRepository {
     suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>>
 
     suspend fun forecast(city: City): AppResult<Forecast>
+
+    /** Canlı şehir araması (Open-Meteo geocoding, yedekli). */
+    suspend fun search(query: String): AppResult<List<City>>
 }
