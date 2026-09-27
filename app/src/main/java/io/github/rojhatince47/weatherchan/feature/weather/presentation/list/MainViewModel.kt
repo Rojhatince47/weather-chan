@@ -38,6 +38,13 @@ class MainViewModel @Inject constructor(
     private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
 
+    /**
+     * Son başarılı ağ cevabı. Sorgu ve favori filtresi bu önbellekten türetilir;
+     * her tuş vuruşunda ağa gitmek, kontrollü bir metin alanında yazılan karakteri
+     * ağ turu bitene kadar görünmez kılıyordu.
+     */
+    private var cachedCityWeathers: List<CityWeather>? = null
+
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
@@ -52,25 +59,25 @@ class MainViewModel @Inject constructor(
     init {
         loadData()
         viewModelScope.launch {
-            unitRepository.unit.collect {
-                refresh()
-            }
+            unitRepository.unit.collect { rederiveContent() }
         }
         viewModelScope.launch {
-            favoriteRepository.favoriteIds.collect {
-                refresh()
-            }
+            favoriteRepository.favoriteIds.collect { rederiveContent() }
         }
     }
 
     fun findCity(cityId: Long): City? = loadedCities[cityId]
 
     fun onQueryChange(query: String) {
-        refresh(query = query)
+        // Sorgu bir kullanıcı girdisidir, bir veri getirme işlemi değil: seçim ve
+        // türetilmiş liste TEK state yazımında güncellenir. Ayrı yazılırsa
+        // "seçim yeni, liste eski" diye bir ara kare oluşur ve metin alanı
+        // karakteri ağ turu bekliyormuş gibi görünür.
+        applySelection(query = query)
     }
 
     fun onFavoritesOnlyChange(showFavoritesOnly: Boolean) {
-        refresh(showFavoritesOnly = showFavoritesOnly)
+        applySelection(showFavoritesOnly = showFavoritesOnly)
     }
 
     fun onRetry() {
@@ -87,19 +94,17 @@ class MainViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
             try {
-                val content = loadContent(
-                    _uiState.value.query,
-                    _uiState.value.showFavoritesOnly
-                )
-                when (content) {
-                    is UiState.Success -> _uiState.update {
-                        it.copy(content = content, isRefreshing = false)
-                    }
-                    is UiState.Error -> {
+                when (val result = getCityWeathers()) {
+                    is AppResult.Success -> {
+                        applyFetchedData(result.data)
                         _uiState.update { it.copy(isRefreshing = false) }
-                        _events.send(MainEvent.ShowSnackbar(content.message))
                     }
-                    else -> _uiState.update { it.copy(isRefreshing = false) }
+                    // Yenileme başarısızsa eski içerik korunur; kullanıcı bir anda
+                    // uyarılır, ekran boşaltılmaz.
+                    is AppResult.Failure -> {
+                        _uiState.update { it.copy(isRefreshing = false) }
+                        _events.send(MainEvent.ShowSnackbar(result.error.toUiText()))
+                    }
                 }
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
@@ -121,7 +126,13 @@ class MainViewModel @Inject constructor(
             _uiState.update { it.copy(content = UiState.Loading) }
             _loadState.update { LoadState.Loading }
             try {
-                filter(_uiState.value.query)
+                when (val result = getCityWeathers()) {
+                    is AppResult.Success -> applyFetchedData(result.data)
+                    is AppResult.Failure -> _uiState.update {
+                        it.copy(content = UiState.Error(result.error.toUiText()))
+                    }
+                }
+                _loadState.update { _uiState.value.content.toLoadState() }
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e
@@ -129,20 +140,28 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun refresh(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            try {
-                filter(query, showFavoritesOnly)
-            } catch (e: CancellationException) {
-                // İptal bir hata değildir; hata durumu olarak sunulmaz.
-                throw e
-            }
-        }
+    /** Ağdan gelen veriyi önbelleğe alır ve listeyi mevcut seçimlerle türetir. */
+    private fun applyFetchedData(cityWeathers: List<CityWeather>) {
+        cachedCityWeathers = cityWeathers
+        loadedCities.clear()
+        loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
+        rederiveContent()
     }
 
-    private suspend fun filter(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
-        val content = loadContent(query, showFavoritesOnly)
+    /**
+     * Sorgu/favori seçimini ve ondan türeyen listeyi tek yazımda günceller.
+     * Ağ çağrısı yapmaz; bu yüzden yazmak anında yansır. Veri henüz yoksa yalnızca
+     * seçim yazılır, liste yükleme tamamlanınca türetilir.
+     */
+    private fun applySelection(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
+        val source = cachedCityWeathers
+        if (source == null) {
+            _uiState.update {
+                it.copy(query = query, showFavoritesOnly = showFavoritesOnly)
+            }
+            return
+        }
+        val content = deriveContent(source, query, showFavoritesOnly)
         _uiState.update {
             it.copy(
                 query = query,
@@ -153,19 +172,22 @@ class MainViewModel @Inject constructor(
         _loadState.update { _uiState.value.content.toLoadState() }
     }
 
-    private suspend fun loadContent(query: String, showFavoritesOnly: Boolean): UiState<List<CityWeatherUiModel>> {
-        val result = getCityWeathers()
-        if (result is AppResult.Failure) {
-            return UiState.Error(result.error.toUiText())
-        }
-        val cityWeathers = (result as AppResult.Success).data
-        loadedCities.clear()
-        loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
+    /**
+     * Listeyi önbellekten türetir. Ağ çağrısı yapmaz; birim ve favori değişiklikleri
+     * bu yolu tetikler. Veri henüz yoksa mevcut içeriğe dokunmaz.
+     */
+    private fun rederiveContent() {
+        val source = cachedCityWeathers ?: return
+        val state = _uiState.value
+        val content = deriveContent(source, state.query, state.showFavoritesOnly)
+        _uiState.update { it.copy(content = content) }
+        _loadState.update { _uiState.value.content.toLoadState() }
+    }
 
-        // Sonuç ayrı bir state olarak saklanmaz; her seferinde mevcut
-        // seçimlerden (sorgu + favori filtresi) türetilir.
+    private fun deriveContent(source: List<CityWeather>, query: String, showFavoritesOnly: Boolean): UiState<List<CityWeatherUiModel>> {
         val favorites = favoriteRepository.favoriteIds.value
-        val filtered = cityWeathers
+        val unit = unitRepository.unit.value
+        val filtered = source
             .filter { cityWeather ->
                 query.isBlank() ||
                     cityWeather.city.name.contains(query, ignoreCase = true)
@@ -181,8 +203,8 @@ class MainViewModel @Inject constructor(
                 filtered.map { cityWeather ->
                     uiMapper.toCityWeatherUiModel(
                         cityWeather,
-                        isFavorite = cityWeather.city.id in favoriteRepository.favoriteIds.value,
-                        unit = unitRepository.unit.value
+                        isFavorite = cityWeather.city.id in favorites,
+                        unit = unit
                     )
                 }
             )

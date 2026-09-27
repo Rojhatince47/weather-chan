@@ -105,6 +105,86 @@ class MainViewModelTest {
         }
     }
 
+    /**
+     * Regresyon: arama alanı kontrollü bir bileşendir (value = uiState.query).
+     * Sorgu, ağ cevabı geldikten sonra state'e yazıldığı için yavaş/yeni kilitli
+     * bir ağda kullanıcı yazarken hiçbir karakter ekranda görünmüyor ve her tuş
+     * vuruşu bir öncekini iptal ediyordu. Sorgu, ağdan BAĞIMSIZ anında
+     * görünür olmalı ve tuş vuruşu ağ çağrısı tetiklememeli.
+     */
+    @Test
+    fun `typing is reflected immediately without waiting for the network`() = runTest {
+        val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(repository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+
+        // İlk yükleme tamamlanır; sonrasında ağ kapılı kalır.
+        repository.completeAllCityWeathersGates()
+        assertTrue(viewModel.uiState.value.content is UiState.Success)
+        val callsAfterLoad = repository.finishedCityWeathersCalls
+
+        viewModel.onQueryChange("Ankara")
+
+        // Ağ hâlâ bekliyor olmalı; buna rağmen sorgu anında state'te.
+        assertEquals("Ankara", viewModel.uiState.value.query)
+        assertEquals(
+            "Yazmak yeni ag cagrisi tetiklememeli",
+            callsAfterLoad,
+            repository.finishedCityWeathersCalls
+        )
+    }
+
+    @Test
+    fun `typing filters already loaded cities without a new network call`() = runTest {
+        val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(repository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+        repository.completeAllCityWeathersGates()
+        val callsAfterLoad = repository.finishedCityWeathersCalls
+
+        viewModel.onQueryChange("Ankara")
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Ankara filtresi sonuc vermeli", content is UiState.Success)
+        assertEquals(
+            listOf("Ankara"),
+            (content as UiState.Success).data.map { it.name }
+        )
+        assertEquals(
+            callsAfterLoad,
+            repository.finishedCityWeathersCalls
+        )
+    }
+
+    @Test
+    fun `favorites only filter does not hit the network either`() = runTest {
+        val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(repository),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            favoriteRepository = InMemoryFavoriteRepository()
+        )
+        repository.completeAllCityWeathersGates()
+        val callsAfterLoad = repository.finishedCityWeathersCalls
+
+        viewModel.onFavoritesOnlyChange(true)
+
+        assertTrue(viewModel.uiState.value.showFavoritesOnly)
+        assertEquals(
+            callsAfterLoad,
+            repository.finishedCityWeathersCalls
+        )
+    }
+
     @Test
     fun `empty search shows empty state`() = runTest {
         val viewModel = MainViewModel(
