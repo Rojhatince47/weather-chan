@@ -127,6 +127,15 @@ class MainViewModel @Inject constructor(
         cityRepository.toggleFavorite(cityId)
     }
 
+    /**
+     * Canlı sonuçtan şehri listeye ekler. Hava durumu önbelleğe alınmalı;
+     * içerik korunarak arka planda yenilenir (onRefresh ile aynı akış).
+     */
+    fun onAddCity(city: City) {
+        cityRepository.add(city)
+        onRefresh()
+    }
+
     fun loadData() {
         // Önceki yükleme varsa iptal edilir; yeniden deneme her zaman
         // yeni bir çağrı başlatır ve eşzamanlı yinelenen istek oluşmaz.

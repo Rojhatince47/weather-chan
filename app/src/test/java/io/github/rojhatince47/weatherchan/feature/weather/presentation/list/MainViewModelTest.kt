@@ -610,4 +610,41 @@ class MainViewModelTest {
 
         assertTrue(viewModel.uiState.value.searchState is SearchUiState.Failure)
     }
+
+    @Test
+    fun `adding a city from live results stores it and fetches its weather`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+        val before = fakeWeather.cityWeathersRequests.size
+
+        val berlin = City("Berlin", "Berlin", "Almanya", Coordinates(52.52, 13.405))
+        viewModel.onAddCity(berlin)
+
+        assertTrue(fakeCities.cities.value.any { it.id == berlin.id })
+        assertTrue(fakeWeather.cityWeathersRequests.size > before)
+        assertTrue(fakeWeather.cityWeathersRequests.last().any { it.id == berlin.id })
+    }
+
+    @Test
+    fun `adding a city flips its in-list flag in live results`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val berlin = City("Berlin", "Berlin", "Almanya", Coordinates(52.52, 13.405))
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(berlin))
+        }
+        val viewModel = mainViewModel(fakeWeather)
+        viewModel.onQueryChange("ber")
+        advanceTimeBy(400)
+        runCurrent()
+        val before = viewModel.uiState.value.searchState as SearchUiState.Success
+        assertEquals(false, before.results.single().isInList)
+
+        viewModel.onAddCity(berlin)
+        runCurrent()
+
+        val after = viewModel.uiState.value.searchState as SearchUiState.Success
+        assertEquals(true, after.results.single().isInList)
+    }
 }
