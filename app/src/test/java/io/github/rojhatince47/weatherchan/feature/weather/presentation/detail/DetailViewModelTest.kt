@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
+import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
@@ -54,7 +54,7 @@ class DetailViewModelTest {
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.uiState.test {
@@ -70,7 +70,7 @@ class DetailViewModelTest {
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.uiState.test {
@@ -102,7 +102,7 @@ class DetailViewModelTest {
             ),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.uiState.test {
@@ -132,7 +132,7 @@ class DetailViewModelTest {
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.loadState.test {
@@ -169,7 +169,7 @@ class DetailViewModelTest {
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.uiState.test {
@@ -211,7 +211,7 @@ class DetailViewModelTest {
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository()
+            cityRepository = FakeCityRepository()
         )
 
         viewModel.uiState.test {

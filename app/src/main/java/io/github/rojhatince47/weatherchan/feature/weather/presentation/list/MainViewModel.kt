@@ -8,7 +8,6 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
-import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
@@ -33,7 +32,6 @@ class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
-    private val favoriteRepository: FavoriteRepository,
     private val cityRepository: CityRepository
 ) : ViewModel() {
 
@@ -41,9 +39,9 @@ class MainViewModel @Inject constructor(
     private var loadJob: Job? = null
 
     /**
-     * Son başarılı ağ cevabı. Sorgu ve favori filtresi bu önbellekten türetilir;
-     * her tuş vuruşunda ağa gitmek, kontrollü bir metin alanında yazılan karakteri
-     * ağ turu bitene kadar görünmez kılıyordu.
+     * Son başarılı ağ cevabı. Sorgu bu önbellekten türetilir; her tuş vuruşunda
+     * ağa gitmek, kontrollü bir metin alanında yazılan karakteri ağ turu bitene
+     * kadar görünmez kılıyordu.
      */
     private var cachedCityWeathers: List<CityWeather>? = null
 
@@ -64,7 +62,7 @@ class MainViewModel @Inject constructor(
             unitRepository.unit.collect { rederiveContent() }
         }
         viewModelScope.launch {
-            favoriteRepository.favoriteIds.collect { rederiveContent() }
+            cityRepository.cities.collect { rederiveContent() }
         }
     }
 
@@ -76,10 +74,6 @@ class MainViewModel @Inject constructor(
         // "seçim yeni, liste eski" diye bir ara kare oluşur ve metin alanı
         // karakteri ağ turu bekliyormuş gibi görünür.
         applySelection(query = query)
-    }
-
-    fun onFavoritesOnlyChange(showFavoritesOnly: Boolean) {
-        applySelection(showFavoritesOnly = showFavoritesOnly)
     }
 
     fun onRetry() {
@@ -117,7 +111,7 @@ class MainViewModel @Inject constructor(
 
     fun onFavoriteClick(cityId: Long) {
         if (cityId !in loadedCities) return
-        favoriteRepository.toggleFavorite(cityId)
+        cityRepository.toggleFavorite(cityId)
     }
 
     fun loadData() {
@@ -151,51 +145,47 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Sorgu/favori seçimini ve ondan türeyen listeyi tek yazımda günceller.
-     * Ağ çağrısı yapmaz; bu yüzden yazmak anında yansır. Veri henüz yoksa yalnızca
-     * seçim yazılır, liste yükleme tamamlanınca türetilir.
+     * Sorguyu ve ondan türeyen listeyi tek yazımda günceller. Ağ çağrısı yapmaz;
+     * bu yüzden yazmak anında yansır. Veri henüz yoksa yalnızca sorgu yazılır,
+     * liste yükleme tamamlanınca türetilir.
      */
-    private fun applySelection(query: String = _uiState.value.query, showFavoritesOnly: Boolean = _uiState.value.showFavoritesOnly) {
+    private fun applySelection(query: String = _uiState.value.query) {
         val source = cachedCityWeathers
         if (source == null) {
-            _uiState.update {
-                it.copy(query = query, showFavoritesOnly = showFavoritesOnly)
-            }
+            _uiState.update { it.copy(query = query) }
             return
         }
-        val content = deriveContent(source, query, showFavoritesOnly)
-        _uiState.update {
-            it.copy(
-                query = query,
-                showFavoritesOnly = showFavoritesOnly,
-                content = content
-            )
-        }
+        val content = deriveContent(source, query)
+        _uiState.update { it.copy(query = query, content = content) }
         _loadState.update { _uiState.value.content.toLoadState() }
     }
 
     /**
-     * Listeyi önbellekten türetir. Ağ çağrısı yapmaz; birim ve favori değişiklikleri
-     * bu yolu tetikler. Veri henüz yoksa mevcut içeriğe dokunmaz.
+     * Listeyi önbellekten türetir. Ağ çağrısı yapmaz; birim ve şehir listesi
+     * değişiklikleri bu yolu tetikler. Veri henüz yoksa mevcut içeriğe dokunmaz.
      */
     private fun rederiveContent() {
         val source = cachedCityWeathers ?: return
-        val state = _uiState.value
-        val content = deriveContent(source, state.query, state.showFavoritesOnly)
+        val content = deriveContent(source, _uiState.value.query)
         _uiState.update { it.copy(content = content) }
         _loadState.update { _uiState.value.content.toLoadState() }
     }
 
-    private fun deriveContent(source: List<CityWeather>, query: String, showFavoritesOnly: Boolean): UiState<List<CityWeatherUiModel>> {
-        val favorites = favoriteRepository.favoriteIds.value
+    /**
+     * Favori durumu önbellekteki değil canlı [CityRepository] durumundan okunur:
+     * ağ verisi çekildikten sonra yıldız değişirse önbellekteki City nesneleri
+     * bayat kalırdı. Sıralama favorileri en üste alır.
+     */
+    private fun deriveContent(source: List<CityWeather>, query: String): UiState<List<CityWeatherUiModel>> {
+        val citiesById = cityRepository.cities.value.associateBy { it.id }
         val unit = unitRepository.unit.value
         val filtered = source
             .filter { cityWeather ->
                 query.isBlank() ||
                     cityWeather.city.name.contains(query, ignoreCase = true)
             }
-            .filter { cityWeather ->
-                !showFavoritesOnly || cityWeather.city.id in favorites
+            .sortedByDescending { cityWeather ->
+                citiesById[cityWeather.city.id]?.isFavorite == true
             }
 
         return if (filtered.isEmpty()) {
@@ -205,7 +195,7 @@ class MainViewModel @Inject constructor(
                 filtered.map { cityWeather ->
                     uiMapper.toCityWeatherUiModel(
                         cityWeather,
-                        isFavorite = cityWeather.city.id in favorites,
+                        isFavorite = citiesById[cityWeather.city.id]?.isFavorite == true,
                         unit = unit
                     )
                 }

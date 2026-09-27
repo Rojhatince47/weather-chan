@@ -62,7 +62,6 @@ fun MainRoute(
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,
         onToggleThemeMode = settingsViewModel::onCycleThemeMode,
-        onFavoritesOnlyChange = viewModel::onFavoritesOnlyChange,
         modifier = modifier,
         snackbarHostState = snackbarHostState
     )

@@ -4,8 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
-import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
+import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -42,7 +41,6 @@ class MainViewModelTest {
      * üretim kodundaki aynı City'yi okuyarak id alır.
      */
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
-    private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
 
     @Before
     fun setUp() {
@@ -60,7 +58,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -81,7 +78,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -104,7 +100,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -135,7 +130,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -162,7 +156,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
         repository.completeAllCityWeathersGates()
@@ -183,34 +176,11 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `favorites only filter does not hit the network either`() = runTest {
-        val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
-        val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(repository),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
-            cityRepository = FakeCityRepository()
-        )
-        repository.completeAllCityWeathersGates()
-        val callsAfterLoad = repository.finishedCityWeathersCalls
-
-        viewModel.onFavoritesOnlyChange(true)
-
-        assertTrue(viewModel.uiState.value.showFavoritesOnly)
-        assertEquals(
-            callsAfterLoad,
-            repository.finishedCityWeathersCalls
-        )
-    }
-
-    @Test
     fun `empty search shows empty state`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -229,7 +199,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -259,7 +228,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -288,7 +256,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -315,7 +282,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -335,7 +301,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -360,7 +325,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -388,19 +352,57 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `favorite selection is shared between list and detail view models`() = runTest {
-        val favoriteRepository = InMemoryFavoriteRepository()
+    fun `favoriler listenin en ustunde gorunur`() = runTest {
+        val cityRepository = FakeCityRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = favoriteRepository,
-            cityRepository = FakeCityRepository()
+            cityRepository = cityRepository
+        )
+
+        viewModel.uiState.test {
+            awaitItem()
+
+            viewModel.onFavoriteClick(cityRepository.cities.value[2].id) // İzmir
+
+            val updated = awaitItem()
+            val names = (updated.content as UiState.Success).data.map { it.name }
+            assertEquals(listOf("İzmir", "İstanbul", "Ankara", "Antalya", "Trabzon"), names)
+        }
+    }
+
+    @Test
+    fun `yildiz kalici depoda saklanir`() = runTest {
+        val cityRepository = FakeCityRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            cityRepository = cityRepository
+        )
+        viewModel.uiState.test {
+            awaitItem()
+
+            viewModel.onFavoriteClick(istanbul.id)
+            awaitItem()
+
+            assertTrue(cityRepository.cities.value.first { it.id == istanbul.id }.isFavorite)
+        }
+    }
+
+    @Test
+    fun `favorite selection is shared between list and detail view models`() = runTest {
+        val cityRepository = FakeCityRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            cityRepository = cityRepository
         )
         val detailViewModel = DetailViewModel(
             savedStateHandle = SavedStateHandle(
                 mapOf(
-                    "cityId" to 1L,
                     "name" to "İstanbul",
                     "region" to "Marmara",
                     "country" to "Türkiye",
@@ -411,7 +413,7 @@ class MainViewModelTest {
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = favoriteRepository
+            cityRepository = cityRepository
         )
 
         viewModel.uiState.test {
@@ -423,7 +425,7 @@ class MainViewModelTest {
             viewModel.onFavoriteClick(istanbul.id)
             val selected = awaitItem()
             assertTrue(
-                ((selected.content as UiState.Success).data.first().isFavorite)
+                ((selected.content as UiState.Success).data.first { it.name == "İstanbul" }.isFavorite)
             )
         }
 
@@ -437,49 +439,12 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `favorites only filter derives list from existing state`() = runTest {
-        val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
-            cityRepository = FakeCityRepository()
-        )
-
-        viewModel.uiState.test {
-            val initial = awaitItem()
-            assertEquals(
-                5,
-                ((initial.content as UiState.Success).data.size)
-            )
-
-            viewModel.onFavoriteClick(ankara.id)
-            awaitItem()
-
-            viewModel.onFavoritesOnlyChange(true)
-            val filtered = awaitItem()
-            assertTrue(filtered.showFavoritesOnly)
-            val data = (filtered.content as UiState.Success).data
-            assertEquals(1, data.size)
-            assertEquals(ankara.id, data.first().cityId)
-
-            viewModel.onFavoritesOnlyChange(false)
-            val restored = awaitItem()
-            assertEquals(
-                5,
-                ((restored.content as UiState.Success).data.size)
-            )
-        }
-    }
-
-    @Test
     fun `refresh keeps content and toggles refreshing flag`() = runTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -514,7 +479,6 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
-            favoriteRepository = InMemoryFavoriteRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -545,27 +509,5 @@ class MainViewModelTest {
             val event = awaitItem()
             assertTrue(event is MainEvent.ShowSnackbar)
         }
-    }
-}
-
-private class FakeCityRepository(
-    initial: List<City> = listOf(
-        City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)),
-        City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)),
-        City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14)),
-        City("Antalya", "Akdeniz", "Türkiye", Coordinates(36.90, 30.70)),
-        City("Trabzon", "Karadeniz", "Türkiye", Coordinates(41.00, 39.72))
-    )
-) : CityRepository {
-    private val state = MutableStateFlow(initial)
-    override val cities: StateFlow<List<City>> = state.asStateFlow()
-    override fun add(city: City) {
-        state.value = state.value + city
-    }
-    override fun remove(cityId: Long) {
-        state.value = state.value.filterNot { it.id == cityId }
-    }
-    override fun toggleFavorite(cityId: Long) {
-        state.value = state.value.map { if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it }
     }
 }

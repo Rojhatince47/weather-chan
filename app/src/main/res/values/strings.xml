@@ -7,7 +7,6 @@
     <string name="action_refresh">Yenile</string>
     <string name="action_retry">Tekrar dene</string>
     <string name="action_back">Geri</string>
-    <string name="filter_favorites">Favoriler</string>
     <string name="search_placeholder">Şehir ara</string>
 
     <string name="favorite_add">Favorilere ekle</string>

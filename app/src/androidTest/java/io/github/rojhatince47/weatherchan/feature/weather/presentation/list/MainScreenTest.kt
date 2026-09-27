@@ -49,7 +49,6 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
-                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -73,7 +72,6 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
-                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -103,7 +101,6 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
-                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM,
                     listState = LazyListState(firstVisibleItemIndex = 3)
@@ -112,40 +109,6 @@ class MainScreenTest {
         }
 
         composeRule.onNodeWithText("Antalya").assertIsDisplayed()
-    }
-
-    @Test
-    fun mainScreenShowsFavoritesFilterAndNotifiesChange() {
-        var filterChangedTo: Boolean? = null
-        val mapper = WeatherUiMapper()
-        val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
-        }
-
-        composeRule.setContent {
-            HavaTheme {
-                MainScreen(
-                    uiState = MainUiState(
-                        content = UiState.Success(cityWeathers)
-                    ),
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    onQueryChange = {},
-                    onCityClick = {},
-                    onFavoriteClick = {},
-                    onRetry = {},
-                    onRefresh = {},
-                    onToggleUnit = {},
-                    onToggleThemeMode = {},
-                    onFavoritesOnlyChange = { showFavoritesOnly ->
-                        filterChangedTo = showFavoritesOnly
-                    }
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("Favoriler").performClick()
-        assert(filterChangedTo == true)
     }
 
     @Test
@@ -169,7 +132,6 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = { toggled = true },
                     onToggleThemeMode = {},
-                    onFavoritesOnlyChange = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -203,8 +165,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = { refreshed = true },
                     onToggleUnit = {},
-                    onToggleThemeMode = {},
-                    onFavoritesOnlyChange = {}
+                    onToggleThemeMode = {}
                 )
             }
         }
@@ -235,8 +196,7 @@ class MainScreenTest {
                         onRetry = {},
                         onRefresh = {},
                         onToggleUnit = {},
-                        onToggleThemeMode = {},
-                        onFavoritesOnlyChange = {}
+                        onToggleThemeMode = {}
                     )
                 }
             }
@@ -261,8 +221,7 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
-                    onToggleThemeMode = { themeMode.value = current.next() },
-                    onFavoritesOnlyChange = {}
+                    onToggleThemeMode = { themeMode.value = current.next() }
                 )
             }
         }

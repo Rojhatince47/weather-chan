@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -59,7 +58,6 @@ fun MainScreen(
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
     onToggleThemeMode: () -> Unit,
-    onFavoritesOnlyChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
@@ -91,14 +89,9 @@ fun MainScreen(
             )
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = HavaSpacing.lg),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FilterChip(
-                    selected = uiState.showFavoritesOnly,
-                    onClick = { onFavoritesOnlyChange(!uiState.showFavoritesOnly) },
-                    label = { Text(text = stringResource(R.string.filter_favorites)) }
-                )
                 IconButton(
                     onClick = onToggleThemeMode,
                     modifier = Modifier
@@ -183,8 +176,7 @@ private fun MainScreenCompactPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {},
-            onFavoritesOnlyChange = {}
+            onToggleThemeMode = {}
         )
     }
 }
@@ -203,8 +195,7 @@ private fun MainScreenMediumPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {},
-            onFavoritesOnlyChange = {}
+            onToggleThemeMode = {}
         )
     }
 }
@@ -223,8 +214,7 @@ private fun MainScreenExpandedPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {},
-            onFavoritesOnlyChange = {}
+            onToggleThemeMode = {}
         )
     }
 }

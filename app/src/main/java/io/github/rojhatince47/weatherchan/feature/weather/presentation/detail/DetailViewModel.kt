@@ -9,7 +9,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
-import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
+import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -35,7 +35,7 @@ class DetailViewModel @Inject constructor(
     private val getForecast: GetForecastUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val cityRepository: CityRepository
 ) : ViewModel() {
 
     // Geçersiz/eksik navigation parametresi uygulamayı çökertmemeli;
@@ -63,7 +63,7 @@ class DetailViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            favoriteRepository.favoriteIds.collect {
+            cityRepository.cities.collect {
                 loadData()
             }
         }
@@ -102,7 +102,7 @@ class DetailViewModel @Inject constructor(
     }
 
     fun onFavoriteClick() {
-        city?.let { favoriteRepository.toggleFavorite(it.id) }
+        city?.let { cityRepository.toggleFavorite(it.id) }
     }
 
     fun loadData() {
@@ -132,7 +132,8 @@ class DetailViewModel @Inject constructor(
             is AppResult.Success -> UiState.Success(
                 uiMapper.toForecastDetailUiModel(
                     forecast = result.data,
-                    isFavorite = city.id in favoriteRepository.favoriteIds.value,
+                    isFavorite = cityRepository.cities.value
+                        .firstOrNull { it.id == city.id }?.isFavorite == true,
                     unit = unit
                 )
             )
