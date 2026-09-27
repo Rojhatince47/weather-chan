@@ -11,8 +11,11 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.Temperat
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.core.common.error.AppError
+import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
@@ -22,8 +25,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -42,6 +48,17 @@ class MainViewModelTest {
      */
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
 
+    private fun TestScope.mainViewModel(
+        fakeWeather: FakeWeatherRepository,
+        fakeCities: FakeCityRepository = FakeCityRepository()
+    ) = MainViewModel(
+        getCityWeathers = GetCityWeathersUseCase(fakeWeather),
+        searchCities = SearchCitiesUseCase(fakeWeather),
+        uiMapper = WeatherUiMapper(),
+        unitRepository = InMemoryTemperatureUnitRepository(),
+        cityRepository = fakeCities
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
@@ -56,6 +73,7 @@ class MainViewModelTest {
     fun `initial state is success with cities`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -76,6 +94,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -98,6 +117,7 @@ class MainViewModelTest {
     fun `search filters cities`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -128,6 +148,7 @@ class MainViewModelTest {
         val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(repository),
+            searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -154,6 +175,7 @@ class MainViewModelTest {
         val repository = FakeWeatherRepository().apply { autoCompleteGates = false }
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(repository),
+            searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -179,6 +201,7 @@ class MainViewModelTest {
     fun `empty search shows empty state`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -197,6 +220,7 @@ class MainViewModelTest {
         val unitRepository = InMemoryTemperatureUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = FakeCityRepository()
@@ -226,6 +250,7 @@ class MainViewModelTest {
         val settingsViewModel = SettingsViewModel(unitRepository, InMemoryThemeModeRepository())
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = FakeCityRepository()
@@ -254,6 +279,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -280,6 +306,7 @@ class MainViewModelTest {
         }
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -299,6 +326,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -323,6 +351,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -356,6 +385,7 @@ class MainViewModelTest {
         val cityRepository = FakeCityRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = cityRepository
@@ -377,6 +407,7 @@ class MainViewModelTest {
         val cityRepository = FakeCityRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = cityRepository
@@ -396,6 +427,7 @@ class MainViewModelTest {
         val cityRepository = FakeCityRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = cityRepository
@@ -443,6 +475,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -477,6 +510,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = InMemoryTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
@@ -509,5 +543,71 @@ class MainViewModelTest {
             val event = awaitItem()
             assertTrue(event is MainEvent.ShowSnackbar)
         }
+    }
+
+    @Test
+    fun `query shorter than three characters keeps live search idle`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(fakeWeather)
+
+        viewModel.onQueryChange("an")
+
+        assertTrue(viewModel.uiState.value.searchState is SearchUiState.Idle)
+        assertEquals(emptyList<String>(), fakeWeather.searchRequests)
+    }
+
+    @Test
+    fun `live search fires after debounce`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val berlin = City("Berlin", "Berlin", "Almanya", Coordinates(52.52, 13.405))
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(berlin))
+        }
+        val viewModel = mainViewModel(fakeWeather)
+
+        viewModel.onQueryChange("ber")
+        advanceTimeBy(299)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.searchState is SearchUiState.Idle)
+
+        advanceTimeBy(1)
+        runCurrent()
+
+        val state = viewModel.uiState.value.searchState
+        assertTrue(state is SearchUiState.Success)
+        assertEquals(listOf("ber"), fakeWeather.searchRequests)
+        assertEquals(listOf(berlin), (state as SearchUiState.Success).results.map { it.city })
+    }
+
+    @Test
+    fun `typing again cancels the pending search`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(fakeWeather)
+
+        viewModel.onQueryChange("ank")
+        advanceTimeBy(200)
+        viewModel.onQueryChange("anka")
+        advanceTimeBy(400)
+        runCurrent()
+
+        assertEquals(listOf("anka"), fakeWeather.searchRequests)
+    }
+
+    @Test
+    fun `live search failure surfaces error`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Failure(AppError.Network)
+        }
+        val viewModel = mainViewModel(fakeWeather)
+
+        viewModel.onQueryChange("zzz")
+        advanceTimeBy(400)
+        runCurrent()
+
+        assertTrue(viewModel.uiState.value.searchState is SearchUiState.Failure)
     }
 }

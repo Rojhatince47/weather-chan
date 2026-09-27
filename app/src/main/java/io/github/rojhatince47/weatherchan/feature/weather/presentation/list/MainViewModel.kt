@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.Tem
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +20,7 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
+    private val searchCities: SearchCitiesUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
     private val cityRepository: CityRepository
@@ -37,6 +40,7 @@ class MainViewModel @Inject constructor(
 
     private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
+    private var searchJob: Job? = null
 
     /**
      * Son başarılı ağ cevabı. Sorgu bu önbellekten türetilir; her tuş vuruşunda
@@ -62,8 +66,16 @@ class MainViewModel @Inject constructor(
             unitRepository.unit.collect { rederiveContent() }
         }
         viewModelScope.launch {
-            cityRepository.cities.collect { rederiveContent() }
+            cityRepository.cities.collect {
+                rederiveContent()
+                refreshSearchInListFlags()
+            }
         }
+    }
+
+    companion object {
+        const val MIN_SEARCH_QUERY_LENGTH = 3
+        const val SEARCH_DEBOUNCE_MS = 300L
     }
 
     fun findCity(cityId: Long): City? = loadedCities[cityId]
@@ -74,6 +86,7 @@ class MainViewModel @Inject constructor(
         // "seçim yeni, liste eski" diye bir ara kare oluşur ve metin alanı
         // karakteri ağ turu bekliyormuş gibi görünür.
         applySelection(query = query)
+        searchLive(query)
     }
 
     fun onRetry() {
@@ -169,6 +182,60 @@ class MainViewModel @Inject constructor(
         val content = deriveContent(source, _uiState.value.query)
         _uiState.update { it.copy(content = content) }
         _loadState.update { _uiState.value.content.toLoadState() }
+    }
+
+    /**
+     * Sorgu değişiminde debounce'lu canlı arama tetiklenir. 3 karakterin
+     * altındaki sorgular ağa gitmez, bekleyen istek iptal edilir.
+     */
+    private fun searchLive(query: String) {
+        searchJob?.cancel()
+        val trimmed = query.trim()
+        if (trimmed.length < MIN_SEARCH_QUERY_LENGTH) {
+            _uiState.update { it.copy(searchState = SearchUiState.Idle) }
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            _uiState.update { it.copy(searchState = SearchUiState.Loading) }
+            when (val result = searchCities(trimmed)) {
+                is AppResult.Success -> {
+                    val cityIds = cityRepository.cities.value.map { it.id }.toSet()
+                    _uiState.update {
+                        it.copy(
+                            searchState = SearchUiState.Success(
+                                result.data.map { city ->
+                                    SearchResultUiModel(city, city.id in cityIds)
+                                }
+                            )
+                        )
+                    }
+                }
+                is AppResult.Failure -> _uiState.update {
+                    it.copy(searchState = SearchUiState.Failure(result.error))
+                }
+            }
+        }
+    }
+
+    /**
+     * Liste değişince (ekleme/çıkarma/favori) canlı sonuçlardaki
+     * "listede mi" bayrakları tazelenir; istek tekrarlanmaz.
+     */
+    private fun refreshSearchInListFlags() {
+        val state = _uiState.value.searchState
+        if (state is SearchUiState.Success) {
+            val cityIds = cityRepository.cities.value.map { it.id }.toSet()
+            _uiState.update {
+                it.copy(
+                    searchState = state.copy(
+                        results = state.results.map { result ->
+                            result.copy(isInList = result.city.id in cityIds)
+                        }
+                    )
+                )
+            }
+        }
     }
 
     /**

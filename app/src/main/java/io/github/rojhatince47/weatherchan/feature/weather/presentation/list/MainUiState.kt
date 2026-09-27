@@ -6,5 +6,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Cit
 data class MainUiState(
     val query: String = "",
     val content: UiState<List<CityWeatherUiModel>> = UiState.Loading,
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    val searchState: SearchUiState = SearchUiState.Idle
 )
