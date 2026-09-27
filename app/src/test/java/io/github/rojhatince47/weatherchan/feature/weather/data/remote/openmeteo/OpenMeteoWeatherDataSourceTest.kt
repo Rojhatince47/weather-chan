@@ -85,7 +85,6 @@ class OpenMeteoWeatherDataSourceTest {
     }
 
     private fun testCity(): City = City(
-        id = 1L,
         name = "İstanbul",
         region = "Marmara",
         country = "Türkiye",

@@ -9,6 +9,8 @@ import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMem
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
@@ -30,6 +32,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
     private val dispatcher = UnconfinedTestDispatcher()
+
+    /**
+     * City kimliği artık koordinattan türetiyor; testler sabit 1L/2L değil
+     * üretim kodundaki aynı City'yi okuyarak id alır.
+     */
+    private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+    private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
 
     @Before
     fun setUp() {
@@ -393,7 +402,7 @@ class MainViewModelTest {
                 ((initial.content as UiState.Success).data.first().isFavorite).not()
             )
 
-            viewModel.onFavoriteClick(1L)
+            viewModel.onFavoriteClick(istanbul.id)
             val selected = awaitItem()
             assertTrue(
                 ((selected.content as UiState.Success).data.first().isFavorite)
@@ -425,7 +434,7 @@ class MainViewModelTest {
                 ((initial.content as UiState.Success).data.size)
             )
 
-            viewModel.onFavoriteClick(2L)
+            viewModel.onFavoriteClick(ankara.id)
             awaitItem()
 
             viewModel.onFavoritesOnlyChange(true)
@@ -433,7 +442,7 @@ class MainViewModelTest {
             assertTrue(filtered.showFavoritesOnly)
             val data = (filtered.content as UiState.Success).data
             assertEquals(1, data.size)
-            assertEquals(2L, data.first().cityId)
+            assertEquals(ankara.id, data.first().cityId)
 
             viewModel.onFavoritesOnlyChange(false)
             val restored = awaitItem()

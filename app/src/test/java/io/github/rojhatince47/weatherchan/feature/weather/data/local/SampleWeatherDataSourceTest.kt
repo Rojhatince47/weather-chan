@@ -22,7 +22,7 @@ class SampleWeatherDataSourceTest {
 
     @Test
     fun `forecast contains twenty four hourly and seven daily items`() {
-        val forecast = dataSource.forecast(cityId = 1L)
+        val forecast = dataSource.forecast(cityId = dataSource.cities.first().id)
 
         assertEquals(24, forecast.hourlyForecast.size)
         assertEquals(7, forecast.dailyForecast.size)

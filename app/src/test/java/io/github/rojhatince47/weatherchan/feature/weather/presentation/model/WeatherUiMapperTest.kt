@@ -29,7 +29,7 @@ class WeatherUiMapperTest {
 
     @Test
     fun `maps forecast to detail ui model`() {
-        val forecast = dataSource.forecast(cityId = 1L)
+        val forecast = dataSource.forecast(cityId = dataSource.cities.first().id)
         val uiModel = mapper.toForecastDetailUiModel(forecast, isFavorite = false)
 
         assertEquals(24, uiModel.hourlyForecast.size)

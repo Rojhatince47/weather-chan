@@ -141,12 +141,10 @@ class DetailViewModel @Inject constructor(
     }
 
     private fun readCity(savedStateHandle: SavedStateHandle): City? {
-        val cityId: Long = savedStateHandle["cityId"] ?: return null
         val name: String = savedStateHandle["name"] ?: return null
         val latitude: Double = savedStateHandle["latitude"] ?: return null
         val longitude: Double = savedStateHandle["longitude"] ?: return null
         return City(
-            id = cityId,
             name = name,
             region = savedStateHandle["region"],
             country = savedStateHandle["country"],

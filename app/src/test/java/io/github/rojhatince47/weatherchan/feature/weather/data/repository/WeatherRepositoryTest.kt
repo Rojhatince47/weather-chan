@@ -107,7 +107,8 @@ class WeatherRepositoryTest {
         primaryServer.enqueue(MockResponse().setResponseCode(500))
         backupServer.enqueue(MockResponse().setBody(WTTR_JSON))
 
-        val result = repository.forecast(cityId = 1L)
+        val istanbul = SampleWeatherDataSource().cities.first()
+        val result = repository.forecast(cityId = istanbul.id)
 
         assertTrue(result is AppResult.Success)
         assertEquals(1, (result as AppResult.Success).data.hourlyForecast.size)

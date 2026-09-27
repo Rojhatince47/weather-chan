@@ -62,7 +62,6 @@ class WttrInWeatherMapper @Inject constructor() {
         val country = area.country.firstOrNull()?.value
         val region = area.region.firstOrNull()?.value
         return City(
-            id = stableId(name, country),
             name = name,
             region = region,
             country = country,
@@ -72,8 +71,6 @@ class WttrInWeatherMapper @Inject constructor() {
             )
         )
     }
-
-    private fun stableId(name: String, country: String?): Long = "$name|$country".hashCode().toLong()
 
     internal fun toCondition(code: Int?): WeatherCondition = when (code) {
         113 -> WeatherCondition.CLEAR

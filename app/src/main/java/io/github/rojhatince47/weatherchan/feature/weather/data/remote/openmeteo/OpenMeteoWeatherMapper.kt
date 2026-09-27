@@ -40,7 +40,6 @@ class OpenMeteoWeatherMapper @Inject constructor() {
     )
 
     fun toCity(dto: OpenMeteoGeocodingResultDto): City = City(
-        id = dto.id,
         name = dto.name,
         region = dto.region,
         country = dto.country,
