@@ -52,10 +52,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun HavaTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
-    content: @Composable () -> Unit
-) {
+fun HavaTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, content: @Composable () -> Unit) {
     // isSystemInDarkTheme() composable olduğu için varsayılan parametre değerinde
     // çağrılamaz; burada gövde içinde çözülür.
     val darkTheme = themeMode.resolveIsDark()

@@ -85,6 +85,5 @@ object ConditionPalette {
     fun of(condition: WeatherCondition, isDark: Boolean): ConditionColors =
         colorsFor(isDark)[condition] ?: error("Koşul paleti tanımsız: $condition")
 
-    fun colorsFor(isDark: Boolean): Map<WeatherCondition, ConditionColors> =
-        if (isDark) dark else light
+    fun colorsFor(isDark: Boolean): Map<WeatherCondition, ConditionColors> = if (isDark) dark else light
 }

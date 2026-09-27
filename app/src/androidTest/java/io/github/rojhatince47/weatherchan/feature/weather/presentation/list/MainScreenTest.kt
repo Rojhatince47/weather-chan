@@ -1,13 +1,16 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -209,6 +212,35 @@ class MainScreenTest {
     }
 
     @Test
+    fun mainScreenSurvivesLargeFontScale() {
+        composeRule.setContent {
+            HavaTheme {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        density = LocalDensity.current.density,
+                        fontScale = 2.0f
+                    )
+                ) {
+                    MainScreen(
+                        uiState = MainUiState(content = UiState.Success(sampleCities())),
+                        unit = TemperatureUnit.CELSIUS.toUiModel(),
+                        themeMode = ThemeMode.SYSTEM,
+                        onQueryChange = {},
+                        onCityClick = {},
+                        onFavoriteClick = {},
+                        onRetry = {},
+                        onRefresh = {},
+                        onToggleUnit = {},
+                        onToggleThemeMode = {},
+                        onFavoritesOnlyChange = {}
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText("İstanbul").assertExists()
+    }
+
+    @Test
     fun themeToggleCyclesThroughAllModes() {
         val themeMode = mutableStateOf(ThemeMode.SYSTEM)
 
@@ -238,5 +270,11 @@ class MainScreenTest {
         composeRule.onNodeWithContentDescription("Tema: Koyu").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Tema: Koyu").performClick()
         composeRule.onNodeWithContentDescription("Tema: Sistem").assertIsDisplayed()
+    }
+
+    private fun sampleCities() = WeatherUiMapper().let { mapper ->
+        SampleWeatherDataSource().cityWeathers.map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
     }
 }
