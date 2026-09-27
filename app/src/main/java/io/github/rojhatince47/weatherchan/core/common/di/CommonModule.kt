@@ -2,8 +2,8 @@ package io.github.rojhatince47.weatherchan.core.common.di
 
 import io.github.rojhatince47.weatherchan.core.common.dispatcher.DefaultDispatcher
 import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
-import io.github.rojhatince47.weatherchan.core.common.error.DefaultErrorMapper
 import io.github.rojhatince47.weatherchan.core.common.error.ErrorMapper
+import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 @InstallIn(SingletonComponent::class)
 abstract class CommonModule {
     @Binds
-    abstract fun bindErrorMapper(impl: DefaultErrorMapper): ErrorMapper
+    abstract fun bindErrorMapper(impl: NetworkErrorMapper): ErrorMapper
 
     companion object {
         @Provides
