@@ -7,6 +7,9 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class OpenMeteoWeatherDataSource @Inject constructor(
     private val api: OpenMeteoApi,
@@ -16,12 +19,16 @@ class OpenMeteoWeatherDataSource @Inject constructor(
 ) {
 
     suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.runCatchingApp {
-        cities.map { city ->
-            val dto = api.forecast(
-                latitude = city.coordinates.latitude.toString(),
-                longitude = city.coordinates.longitude.toString()
-            )
-            mapper.toCityWeather(city, dto)
+        coroutineScope {
+            cities.map { city ->
+                async {
+                    val dto = api.forecast(
+                        latitude = city.coordinates.latitude.toString(),
+                        longitude = city.coordinates.longitude.toString()
+                    )
+                    mapper.toCityWeather(city, dto)
+                }
+            }.awaitAll()
         }
     }
 
