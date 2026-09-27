@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
     primary = Teal40,
@@ -12,7 +13,9 @@ private val LightColors = lightColorScheme(
     primaryContainer = Teal90,
     onPrimaryContainer = Teal10,
     secondary = Amber40,
+    onSecondary = Neutral99,
     secondaryContainer = Amber90,
+    onSecondaryContainer = Amber40,
     background = Neutral99,
     onBackground = Neutral10,
     surface = Neutral99,
@@ -20,7 +23,10 @@ private val LightColors = lightColorScheme(
     surfaceVariant = NeutralVariant90,
     onSurfaceVariant = NeutralVariant30,
     surfaceContainer = Neutral95,
-    error = Red40
+    outline = Color(0xFF6F7979),
+    outlineVariant = NeutralVariant90,
+    error = Red40,
+    onError = Neutral99
 )
 
 private val DarkColors = darkColorScheme(
@@ -29,12 +35,20 @@ private val DarkColors = darkColorScheme(
     primaryContainer = Teal30,
     onPrimaryContainer = Teal90,
     secondary = Amber80,
+    onSecondary = Neutral10,
+    secondaryContainer = Amber40,
+    onSecondaryContainer = Amber90,
     background = Neutral10,
     onBackground = Neutral90,
     surface = Neutral10,
     onSurface = Neutral90,
-    onSurfaceVariant = NeutralVariant90,
-    error = Red80
+    surfaceVariant = NeutralVariant30,
+    onSurfaceVariant = Neutral90,
+    surfaceContainer = Color(0xFF1D2020),
+    outline = Color(0xFF8C9292),
+    outlineVariant = NeutralVariant30,
+    error = Red80,
+    onError = Neutral10
 )
 
 @Composable
@@ -42,6 +56,7 @@ fun HavaTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = HavaTypography,
+        shapes = HavaShapes,
         content = content
     )
 }
