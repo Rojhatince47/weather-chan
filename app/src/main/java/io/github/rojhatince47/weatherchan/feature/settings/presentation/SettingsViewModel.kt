@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: TemperatureUnitRepository
+    private val repository: TemperatureUnitRepository,
+    private val themeModeRepository: ThemeModeRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = repository.unit
@@ -29,6 +32,13 @@ class SettingsViewModel @Inject constructor(
             initialValue = UiState.Success(repository.unit.value.toUiModel())
         )
 
+    val themeMode: StateFlow<ThemeMode> = themeModeRepository.themeMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = themeModeRepository.themeMode.value
+        )
+
     fun onToggleUnit() {
         val next = when (repository.unit.value) {
             TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
@@ -39,5 +49,13 @@ class SettingsViewModel @Inject constructor(
 
     fun onUnitSelected(unit: TemperatureUnit) {
         repository.setUnit(unit)
+    }
+
+    fun onCycleThemeMode() {
+        themeModeRepository.setThemeMode(themeModeRepository.themeMode.value.next())
+    }
+
+    fun onThemeModeSelected(themeMode: ThemeMode) {
+        themeModeRepository.setThemeMode(themeMode)
     }
 }

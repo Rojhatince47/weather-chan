@@ -6,6 +6,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.favorites.data.repository.InMemoryFavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
@@ -152,7 +153,7 @@ class MainViewModelTest {
     @Test
     fun `toggle from shared settings view model updates list temperatures`() = runTest {
         val unitRepository = InMemoryTemperatureUnitRepository()
-        val settingsViewModel = SettingsViewModel(unitRepository)
+        val settingsViewModel = SettingsViewModel(unitRepository, InMemoryThemeModeRepository())
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),

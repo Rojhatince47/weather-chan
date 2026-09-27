@@ -3,7 +3,9 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -32,7 +34,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `initial state is celsius`() = runTest {
-        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             val state = awaitItem()
@@ -46,7 +48,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggle switches between celsius and fahrenheit`() = runTest {
-        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             assertEquals(
@@ -70,7 +72,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `selecting a unit emits it`() = runTest {
-        val viewModel = SettingsViewModel(InMemoryTemperatureUnitRepository())
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitItem()
@@ -84,4 +86,47 @@ class SettingsViewModelTest {
             )
         }
     }
+
+    @Test
+    fun `initial theme mode is system`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.themeMode.test {
+            assertEquals(ThemeMode.SYSTEM, awaitItem())
+        }
+    }
+
+    @Test
+    fun `cycle theme mode moves system to light to dark`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.themeMode.test {
+            assertEquals(ThemeMode.SYSTEM, awaitItem())
+
+            viewModel.onCycleThemeMode()
+            assertEquals(ThemeMode.LIGHT, awaitItem())
+
+            viewModel.onCycleThemeMode()
+            assertEquals(ThemeMode.DARK, awaitItem())
+
+            viewModel.onCycleThemeMode()
+            assertEquals(ThemeMode.SYSTEM, awaitItem())
+        }
+    }
+
+    @Test
+    fun `theme selection emits selected mode`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.themeMode.test {
+            awaitItem()
+            viewModel.onThemeModeSelected(ThemeMode.DARK)
+            assertEquals(ThemeMode.DARK, awaitItem())
+        }
+    }
+
+    private fun newViewModel(): SettingsViewModel = SettingsViewModel(
+        InMemoryTemperatureUnitRepository(),
+        InMemoryThemeModeRepository()
+    )
 }
