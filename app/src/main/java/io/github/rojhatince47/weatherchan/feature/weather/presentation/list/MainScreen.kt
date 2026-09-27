@@ -32,11 +32,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.core.ui.theme.ThemeModeIcon
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
@@ -90,7 +90,7 @@ fun MainScreen(
                 description = stringResource(R.string.home_description)
             )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = HavaSpacing.lg),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -140,20 +140,20 @@ fun MainScreen(
             }
             when (val content = uiState.content) {
                 is UiState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl)
                 )
                 is UiState.Empty -> Text(
                     text = stringResource(R.string.state_empty_list),
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl)
                 )
                 is UiState.Error -> Text(
                     text = content.message.asString(),
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl)
                 )
                 is UiState.Success -> LazyColumn(
                     state = listState,
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(HavaSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
                 ) {
                     items(content.data, key = { it.cityId }) { cityWeather ->
                         CityWeatherCard(

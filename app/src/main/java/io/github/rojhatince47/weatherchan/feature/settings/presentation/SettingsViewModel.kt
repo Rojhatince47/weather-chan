@@ -32,12 +32,9 @@ class SettingsViewModel @Inject constructor(
             initialValue = UiState.Success(repository.unit.value.toUiModel())
         )
 
+    // Depo zaten bir StateFlow yayınlıyor; stateIn ile sarmalamak yalnızca
+    // Eagerly başlatma ve initialValue kırılma riskini eklerdi. Doğrudan yayınla.
     val themeMode: StateFlow<ThemeMode> = themeModeRepository.themeMode
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = themeModeRepository.themeMode.value
-        )
 
     fun onToggleUnit() {
         val next = when (repository.unit.value) {

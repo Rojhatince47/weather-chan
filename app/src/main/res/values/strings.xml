@@ -20,6 +20,14 @@
 
     <string name="state_empty_list">Sonuç bulunamadı</string>
     <string name="state_empty_detail">Veri bulunamadı</string>
+
+    <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni
+         paylaşsalar da ayrı anahtarları vardır, çünkü ileride ayrışabilirler
+         (örn. boş liste "şehir yok", bulunamadı hatası "şehir silinmiş"). -->
+    <string name="error_network">İnternet bağlantısı yok</string>
+    <string name="error_server">Sunucu hatası (%1$d)</string>
+    <string name="error_not_found">Sonuç bulunamadı</string>
+    <string name="error_parse">Veri okunamadı</string>
     <string name="error_unexpected">Beklenmeyen bir hata oluştu</string>
 
     <string name="unit_celsius">°C</string>

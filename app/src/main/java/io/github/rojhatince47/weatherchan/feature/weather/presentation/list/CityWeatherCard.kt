@@ -39,8 +39,8 @@ fun CityWeatherCard(
     val conditionColors = ConditionPalette.of(cityWeather.condition, isDark = isDarkTheme)
 
     Card(
-        // Tıklama karti kendisinde: ripple yuvarlak yüzeyin tamamını kaplar,
-        // ic Row'da olsaydi kenar koseleri kirpilmazdi.
+        // Tıklama kartın kendisinde: ripple yuvarlak yüzeye kırpılır. İç Row'da
+        // olsaydı ripple dikdörtgen kalır ve yuvarlatılmış köşeleri kapatırdı.
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),

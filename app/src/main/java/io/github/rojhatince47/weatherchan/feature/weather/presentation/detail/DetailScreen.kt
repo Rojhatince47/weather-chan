@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
@@ -109,15 +108,15 @@ fun DetailScreen(
             }
             when (val content = uiState.content) {
                 is UiState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl)
                 )
                 is UiState.Empty -> Text(
                     text = stringResource(R.string.state_empty_detail),
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl)
                 )
                 is UiState.Error -> Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(HavaSpacing.xl),
+                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
                 ) {
                     Text(text = content.message.asString())
                     Button(onClick = onRetry) {
