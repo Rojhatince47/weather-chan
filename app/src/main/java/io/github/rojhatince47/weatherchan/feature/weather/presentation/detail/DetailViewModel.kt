@@ -126,7 +126,7 @@ class DetailViewModel @Inject constructor(
     private suspend fun loadForecast(): UiState<ForecastDetailUiModel> {
         val city = city
             ?: return UiState.Error(UiText.Dynamic("Şehir bilgisi bulunamadı"))
-        val result = getForecast(city.id)
+        val result = getForecast(city)
         val unit = unitRepository.unit.value
         return when (result) {
             is AppResult.Success -> UiState.Success(

@@ -7,6 +7,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
+import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.favorites.domain.repository.FavoriteRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -32,7 +33,8 @@ class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val cityRepository: CityRepository
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
@@ -94,7 +96,7 @@ class MainViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
             try {
-                when (val result = getCityWeathers()) {
+                when (val result = getCityWeathers(cityRepository.cities.value)) {
                     is AppResult.Success -> {
                         applyFetchedData(result.data)
                         _uiState.update { it.copy(isRefreshing = false) }
@@ -126,7 +128,7 @@ class MainViewModel @Inject constructor(
             _uiState.update { it.copy(content = UiState.Loading) }
             _loadState.update { LoadState.Loading }
             try {
-                when (val result = getCityWeathers()) {
+                when (val result = getCityWeathers(cityRepository.cities.value)) {
                     is AppResult.Success -> applyFetchedData(result.data)
                     is AppResult.Failure -> _uiState.update {
                         it.copy(content = UiState.Error(result.error.toUiText()))

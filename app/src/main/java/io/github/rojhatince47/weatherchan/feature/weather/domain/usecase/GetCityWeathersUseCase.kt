@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.domain.usecase
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import javax.inject.Inject
@@ -8,5 +9,5 @@ import javax.inject.Inject
 class GetCityWeathersUseCase @Inject constructor(
     private val repository: WeatherRepository
 ) {
-    suspend operator fun invoke(): AppResult<List<CityWeather>> = repository.cityWeathers()
+    suspend operator fun invoke(cities: List<City>): AppResult<List<CityWeather>> = repository.cityWeathers(cities)
 }

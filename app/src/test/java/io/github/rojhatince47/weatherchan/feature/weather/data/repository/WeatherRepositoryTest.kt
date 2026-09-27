@@ -2,7 +2,6 @@ package io.github.rojhatince47.weatherchan.feature.weather.data.repository
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoGeocodingApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
@@ -10,6 +9,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherMapper
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -31,6 +32,23 @@ class WeatherRepositoryTest {
     private val backupServer = MockWebServer()
     private lateinit var repository: WeatherRepository
 
+    /** Eski sabit 5 şehirlik listede OLMAYAN bir şehir (Bursa). */
+    private fun dynamicCity() = City(
+        name = "Bursa",
+        region = "Marmara",
+        country = "Türkiye",
+        coordinates = Coordinates(latitude = 40.19, longitude = 29.06)
+    )
+
+    private fun testCities(count: Int): List<City> = List(count) { index ->
+        City(
+            name = "Şehir $index",
+            region = null,
+            country = "Türkiye",
+            coordinates = Coordinates(latitude = 40.0 + index / 10.0, longitude = 29.0)
+        )
+    }
+
     @Before
     fun setUp() {
         primaryServer.start()
@@ -50,8 +68,7 @@ class WeatherRepositoryTest {
                 api = backupRetrofit.create(WttrInApi::class.java),
                 mapper = WttrInWeatherMapper(),
                 errorMapper = errorMapper
-            ),
-            sampleDataSource = SampleWeatherDataSource()
+            )
         )
     }
 
@@ -63,11 +80,12 @@ class WeatherRepositoryTest {
 
     @Test
     fun `primary success returns primary data without calling backup`() = runTest {
+        val cities = testCities(5)
         repeat(5) {
             primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
         }
 
-        val result = repository.cityWeathers()
+        val result = repository.cityWeathers(cities)
 
         assertTrue(result is AppResult.Success)
         assertEquals(5, (result as AppResult.Success).data.size)
@@ -76,12 +94,13 @@ class WeatherRepositoryTest {
 
     @Test
     fun `primary failure falls back to backup`() = runTest {
+        val cities = testCities(5)
         primaryServer.enqueue(MockResponse().setResponseCode(500))
         repeat(5) {
             backupServer.enqueue(MockResponse().setBody(WTTR_JSON))
         }
 
-        val result = repository.cityWeathers()
+        val result = repository.cityWeathers(cities)
 
         assertTrue(result is AppResult.Success)
         assertEquals(
@@ -92,14 +111,42 @@ class WeatherRepositoryTest {
 
     @Test
     fun `both sources failing returns failure`() = runTest {
+        val cities = testCities(5)
         primaryServer.enqueue(MockResponse().setResponseCode(500))
         repeat(5) {
             backupServer.enqueue(MockResponse().setResponseCode(500))
         }
 
-        val result = repository.cityWeathers()
+        val result = repository.cityWeathers(cities)
 
         assertTrue(result is AppResult.Failure)
+    }
+
+    @Test
+    fun `cityWeathers verilen listenin tamamina hava durumu doner`() = runTest {
+        val cities = testCities(2)
+        repeat(2) {
+            primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
+        }
+
+        val result = repository.cityWeathers(cities)
+
+        assertEquals(2, (result as AppResult.Success).data.size)
+        assertEquals(
+            cities.map { it.id }.toSet(),
+            result.data.map { it.city.id }.toSet()
+        )
+    }
+
+    @Test
+    fun `listeye eklenmis dinamik sehir icin tahmin doner`() = runTest {
+        // Regresyon: forecast(cityId) şehri sabit listede arıyordu; eklenen her
+        // şehir NotFound alıyordu. Artık City doğrudan alınıyor.
+        primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
+
+        val result = repository.forecast(city = dynamicCity())
+
+        assertTrue("Sonuç başarılı olmalıydı, $result", result is AppResult.Success)
     }
 
     @Test
@@ -107,8 +154,7 @@ class WeatherRepositoryTest {
         primaryServer.enqueue(MockResponse().setResponseCode(500))
         backupServer.enqueue(MockResponse().setBody(WTTR_JSON))
 
-        val istanbul = SampleWeatherDataSource().cities.first()
-        val result = repository.forecast(cityId = istanbul.id)
+        val result = repository.forecast(city = dynamicCity())
 
         assertTrue(result is AppResult.Success)
         assertEquals(1, (result as AppResult.Success).data.hourlyForecast.size)

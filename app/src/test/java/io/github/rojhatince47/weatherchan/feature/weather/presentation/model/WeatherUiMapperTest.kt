@@ -3,18 +3,67 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyForecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WeatherUiMapperTest {
     private val mapper = WeatherUiMapper()
-    private val dataSource = SampleWeatherDataSource()
+
+    private val istanbul = City(
+        name = "İstanbul",
+        region = "Marmara",
+        country = "Türkiye",
+        coordinates = Coordinates(latitude = 41.01, longitude = 28.98)
+    )
+
+    private fun cityWeather() = CityWeather(
+        city = istanbul,
+        currentWeather = CurrentWeather(
+            temperatureCelsius = 18,
+            condition = WeatherCondition.CLEAR,
+            windSpeedKmh = 8,
+            humidityPercent = 50
+        )
+    )
+
+    private fun forecast() = Forecast(
+        city = istanbul,
+        currentWeather = CurrentWeather(
+            temperatureCelsius = 18,
+            condition = WeatherCondition.CLEAR,
+            windSpeedKmh = 8,
+            humidityPercent = 50
+        ),
+        hourlyForecast = List(24) { hour ->
+            HourlyForecast(
+                hourOfDay = hour,
+                temperatureCelsius = 15 + hour % 10,
+                condition = WeatherCondition.PARTLY_CLOUDY,
+                precipitationProbabilityPercent = hour * 3 % 100
+            )
+        },
+        dailyForecast = List(7) { day ->
+            DailyForecast(
+                dayOffset = day,
+                minTemperatureCelsius = 10 + day % 5,
+                maxTemperatureCelsius = 20 + day % 8,
+                condition = WeatherCondition.CLOUDY
+            )
+        }
+    )
 
     @Test
     fun `maps city weather to ui model`() {
-        val cityWeather = dataSource.cityWeathers.first()
+        val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(cityWeather, isFavorite = false)
 
         assertEquals(cityWeather.city.id, uiModel.cityId)
@@ -29,7 +78,7 @@ class WeatherUiMapperTest {
 
     @Test
     fun `maps forecast to detail ui model`() {
-        val forecast = dataSource.forecast(cityId = dataSource.cities.first().id)
+        val forecast = forecast()
         val uiModel = mapper.toForecastDetailUiModel(forecast, isFavorite = false)
 
         assertEquals(24, uiModel.hourlyForecast.size)
@@ -44,7 +93,7 @@ class WeatherUiMapperTest {
 
     @Test
     fun `converts temperatures to fahrenheit`() {
-        val cityWeather = dataSource.cityWeathers.first()
+        val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(
             cityWeather,
             isFavorite = false,

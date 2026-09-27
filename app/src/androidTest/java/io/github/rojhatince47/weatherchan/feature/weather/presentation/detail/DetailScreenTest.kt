@@ -11,7 +11,13 @@ import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyForecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
@@ -131,7 +137,7 @@ class DetailScreenTest {
     fun detailScreenRefreshKeepsContentAndShowsIndicator() {
         val mapper = WeatherUiMapper()
         val forecast = mapper.toForecastDetailUiModel(
-            SampleWeatherDataSource().forecast(cityId = 1L),
+            syntheticForecast(),
             isFavorite = false
         )
 
@@ -156,4 +162,35 @@ class DetailScreenTest {
         composeRule.onNodeWithText("Saatlik Tahmin").assertIsDisplayed()
         composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
     }
+
+    private fun syntheticForecast() = Forecast(
+        city = City(
+            name = "İstanbul",
+            region = "Marmara",
+            country = "Türkiye",
+            coordinates = Coordinates(latitude = 41.01, longitude = 28.98)
+        ),
+        currentWeather = CurrentWeather(
+            temperatureCelsius = 18,
+            condition = WeatherCondition.CLEAR,
+            windSpeedKmh = 8,
+            humidityPercent = 50
+        ),
+        hourlyForecast = List(24) { hour ->
+            HourlyForecast(
+                hourOfDay = hour,
+                temperatureCelsius = 15 + hour % 10,
+                condition = WeatherCondition.PARTLY_CLOUDY,
+                precipitationProbabilityPercent = hour * 3 % 100
+            )
+        },
+        dailyForecast = List(7) { day ->
+            DailyForecast(
+                dayOffset = day,
+                minTemperatureCelsius = 10 + day % 5,
+                maxTemperatureCelsius = 20 + day % 8,
+                condition = WeatherCondition.CLOUDY
+            )
+        }
+    )
 }

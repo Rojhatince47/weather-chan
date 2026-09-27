@@ -16,7 +16,11 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.SampleWeatherDataSource
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +32,7 @@ class MainScreenTest {
     @Test
     fun mainScreenShowsCities() {
         val mapper = WeatherUiMapper()
-        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+        val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
 
@@ -82,7 +86,7 @@ class MainScreenTest {
     @Test
     fun mainScreenRestoresScrollPositionFromListState() {
         val mapper = WeatherUiMapper()
-        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+        val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
 
@@ -114,7 +118,7 @@ class MainScreenTest {
     fun mainScreenShowsFavoritesFilterAndNotifiesChange() {
         var filterChangedTo: Boolean? = null
         val mapper = WeatherUiMapper()
-        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+        val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
 
@@ -148,7 +152,7 @@ class MainScreenTest {
     fun mainScreenShowsUnitToggleAndNotifiesClick() {
         var toggled = false
         val mapper = WeatherUiMapper()
-        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+        val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
 
@@ -180,7 +184,7 @@ class MainScreenTest {
     fun mainScreenRefreshKeepsContentAndShowsIndicator() {
         var refreshed = false
         val mapper = WeatherUiMapper()
-        val cityWeathers = SampleWeatherDataSource().cityWeathers.map {
+        val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
 
@@ -273,8 +277,26 @@ class MainScreenTest {
     }
 
     private fun sampleCities() = WeatherUiMapper().let { mapper ->
-        SampleWeatherDataSource().cityWeathers.map {
+        syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
         }
+    }
+
+    private fun syntheticCityWeathers() = listOf(
+        City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)),
+        City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)),
+        City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14)),
+        City("Antalya", "Akdeniz", "Türkiye", Coordinates(36.90, 30.70)),
+        City("Trabzon", "Karadeniz", "Türkiye", Coordinates(41.00, 39.72))
+    ).map { city ->
+        CityWeather(
+            city = city,
+            currentWeather = CurrentWeather(
+                temperatureCelsius = 18 + (city.id % 7).toInt(),
+                condition = WeatherCondition.CLEAR,
+                windSpeedKmh = 8 + (city.id % 5).toInt(),
+                humidityPercent = 50 + (city.id % 20).toInt()
+            )
+        )
     }
 }
