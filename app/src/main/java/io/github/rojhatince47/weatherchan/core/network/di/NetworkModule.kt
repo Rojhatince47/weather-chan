@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.core.network.di
 
+import io.github.rojhatince47.weatherchan.core.network.GeocodingRetrofit
 import io.github.rojhatince47.weatherchan.core.network.OpenMeteoRetrofit
 import io.github.rojhatince47.weatherchan.core.network.WttrInRetrofit
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
@@ -49,7 +50,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOpenMeteoGeocodingApi(@OpenMeteoRetrofit retrofit: Retrofit): OpenMeteoGeocodingApi =
+    @GeocodingRetrofit
+    fun provideGeocodingRetrofit(client: OkHttpClient): Retrofit =
+        retrofit(client, "https://geocoding-api.open-meteo.com/")
+
+    @Provides
+    @Singleton
+    fun provideOpenMeteoGeocodingApi(@GeocodingRetrofit retrofit: Retrofit): OpenMeteoGeocodingApi =
         retrofit.create(OpenMeteoGeocodingApi::class.java)
 
     @Provides

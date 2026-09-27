@@ -18,6 +18,8 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
+import org.junit.Assert.assertNotNull
 
 class OpenMeteoWeatherDataSourceTest {
 
@@ -82,6 +84,20 @@ class OpenMeteoWeatherDataSourceTest {
         assertEquals("İstanbul", city.name)
         assertEquals("İstanbul", city.region)
         assertEquals("Türkiye Cumhuriyeti", city.country)
+    }
+
+    @Test
+    fun `search request goes through the configured base url with ten results`() = runTest {
+        server.enqueue(MockResponse().setBody(GEOCODING_JSON))
+
+        val result = dataSource.searchCities("İstanbul")
+
+        assertTrue(result is AppResult.Success)
+        val request = server.takeRequest(2, TimeUnit.SECONDS)
+        assertNotNull("geocoding istegi sahte sunucuya gitmeli", request)
+        val path = request!!.path!!
+        assertEquals("/v1/search", path.substringBefore("?"))
+        assertTrue(path.contains("count=10"))
     }
 
     private fun testCity(): City = City(
