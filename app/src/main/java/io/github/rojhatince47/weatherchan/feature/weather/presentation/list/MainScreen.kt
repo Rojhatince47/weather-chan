@@ -128,8 +128,9 @@ fun MainScreen(
                 value = uiState.query,
                 onValueChange = onQueryChange
             )
-            // Canlı arama ana listenin altında, ayrı bir bölümde gösterilir;
-            // ana liste her durumda kendi durumunu korur.
+            // Canlı arama göstergeleri ince ve sabittir; sonuç satırları ise
+            // kaydırılabilir listenin başına gömülür — 10 sonuç yerel listeyi
+            // ekran dışına itmesin diye sabit bölüm kullanılmaz.
             when (val search = uiState.searchState) {
                 SearchUiState.Idle -> Unit
                 SearchUiState.Loading -> LinearProgressIndicator(
@@ -144,22 +145,14 @@ fun MainScreen(
                         vertical = HavaSpacing.sm
                     )
                 )
-                is SearchUiState.Success -> {
-                    if (search.results.isNotEmpty()) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = HavaSpacing.lg),
-                            verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
-                        ) {
-                            search.results.forEach { result ->
-                                SearchResultRow(
-                                    result = result,
-                                    onAddClick = { onAddCity(result.city) },
-                                    onOpenClick = { onOpenCity(result.city) }
-                                )
-                            }
-                        }
+                is SearchUiState.Success ->
+                    if (uiState.content !is UiState.Success && search.results.isNotEmpty()) {
+                        LiveSearchResults(
+                            results = search.results,
+                            onAddCity = onAddCity,
+                            onOpenCity = onOpenCity
+                        )
                     }
-                }
             }
             // Yenileme sırasında mevcut içerik korunur; yalnızca ince
             // ilerleme çubuğu gösterilir. Tam ekran Loading sadece ilk
@@ -186,6 +179,16 @@ fun MainScreen(
                     contentPadding = PaddingValues(HavaSpacing.lg),
                     verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
                 ) {
+                    val search = uiState.searchState
+                    if (search is SearchUiState.Success && search.results.isNotEmpty()) {
+                        item(key = "live_search_results") {
+                            LiveSearchResults(
+                                results = search.results,
+                                onAddCity = onAddCity,
+                                onOpenCity = onOpenCity
+                            )
+                        }
+                    }
                     items(content.data, key = { it.cityId }) { cityWeather ->
                         CityWeatherCard(
                             cityWeather = cityWeather,
@@ -260,6 +263,23 @@ private fun MainScreenExpandedPreview() {
             onToggleUnit = {},
             onToggleThemeMode = {}
         )
+    }
+}
+
+/** Canlı arama satırları. Hem sabit bölümde hem kaydırılabilir liste içinde kullanılır. */
+@Composable
+private fun LiveSearchResults(results: List<SearchResultUiModel>, onAddCity: (City) -> Unit, onOpenCity: (City) -> Unit) {
+    Column(
+        modifier = Modifier.padding(horizontal = HavaSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
+    ) {
+        results.forEach { result ->
+            SearchResultRow(
+                result = result,
+                onAddClick = { onAddCity(result.city) },
+                onOpenClick = { onOpenCity(result.city) }
+            )
+        }
     }
 }
 
