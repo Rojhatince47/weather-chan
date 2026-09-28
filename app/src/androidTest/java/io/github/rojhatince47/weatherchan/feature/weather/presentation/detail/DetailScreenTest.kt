@@ -1,11 +1,13 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
@@ -24,6 +26,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Dai
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -134,18 +137,42 @@ class DetailScreenTest {
     }
 
     @Test
-    fun detailScreenRefreshKeepsContentAndShowsIndicator() {
-        val mapper = WeatherUiMapper()
-        val forecast = mapper.toForecastDetailUiModel(
-            syntheticForecast(),
-            isFavorite = false
-        )
+    fun detailScreenRefreshesOnPullDown() {
+        var refreshed = false
 
         composeRule.setContent {
             HavaTheme {
                 DetailScreen(
+                    uiState = DetailUiState(content = UiState.Success(detailUiModel())),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    onBack = {},
+                    onFavoriteClick = {},
+                    onRetry = {},
+                    onRefresh = { refreshed = true },
+                    onToggleUnit = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("pull_refresh").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 200f))
+            moveBy(Offset(0f, 400f))
+            moveBy(Offset(0f, 600f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        assertTrue(refreshed)
+    }
+
+    @Test
+    fun detailScreenHasNoRefreshButtonAndKeepsContentWhileRefreshing() {
+        composeRule.setContent {
+            HavaTheme {
+                DetailScreen(
                     uiState = DetailUiState(
-                        content = UiState.Success(forecast),
+                        content = UiState.Success(detailUiModel()),
                         isRefreshing = true
                     ),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
@@ -159,9 +186,12 @@ class DetailScreenTest {
         }
 
         composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
-        composeRule.onNodeWithText("Saatlik Tahmin").assertIsDisplayed()
-        composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
+        composeRule.onNodeWithTag("pull_refresh").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Yenile").assertDoesNotExist()
     }
+
+    private fun detailUiModel(): ForecastDetailUiModel = WeatherUiMapper()
+        .toForecastDetailUiModel(syntheticForecast(), isFavorite = false)
 
     private fun syntheticForecast() = Forecast(
         city = City(

@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -19,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -27,6 +27,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -78,12 +79,6 @@ fun DetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onRefresh) {
-                        Icon(
-                            imageVector = Icons.Filled.Refresh,
-                            contentDescription = stringResource(R.string.action_refresh)
-                        )
-                    }
                     TextButton(onClick = onToggleUnit) {
                         Text(
                             text = if (unit.unit == TemperatureUnit.CELSIUS) {
@@ -98,31 +93,17 @@ fun DetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        // Gösterge M3'ün kendi IndicatorBox'ıdır: sürükleme mesafesine göre
+        // aşağı iner, yenilenirken döner. State'i Box yönetir; bu yüzden
+        // göstergeye testTag eklenemiyor (göstergeyi cihazda doğrularız).
+        // Yenileme sırasında mevcut içerik korunur.
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.testTag("pull_refresh")
+        ) {
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // Yenileme sırasında mevcut içerik korunur; yalnızca ince
-            // ilerleme çubuğu gösterilir.
-            if (uiState.isRefreshing) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().testTag("refresh_indicator")
-                )
-            }
             when (val content = uiState.content) {
-                is UiState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.padding(HavaSpacing.xl)
-                )
-                is UiState.Empty -> Text(
-                    text = stringResource(R.string.state_empty_detail),
-                    modifier = Modifier.padding(HavaSpacing.xl)
-                )
-                is UiState.Error -> Column(
-                    modifier = Modifier.padding(HavaSpacing.xl),
-                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
-                ) {
-                    Text(text = content.message.asString())
-                    Button(onClick = onRetry) {
-                        Text(text = stringResource(R.string.action_retry))
-                    }
-                }
                 is UiState.Success -> LazyColumn(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(HavaSpacing.lg),
@@ -152,7 +133,38 @@ fun DetailScreen(
                         DailyForecastItem(daily)
                     }
                 }
+                // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
+                // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
+                // çalışmaz.
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
+                ) {
+                    when (content) {
+                        is UiState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier.padding(HavaSpacing.xl)
+                        )
+                        is UiState.Empty -> Text(
+                            text = stringResource(R.string.state_empty_detail),
+                            modifier = Modifier.padding(HavaSpacing.xl)
+                        )
+                        is UiState.Error -> {
+                            Text(
+                                text = content.message.asString(),
+                                modifier = Modifier.padding(HavaSpacing.xl)
+                            )
+                            Button(onClick = onRetry) {
+                                Text(text = stringResource(R.string.action_retry))
+                            }
+                        }
+                        is UiState.Success -> Unit
+                    }
+                }
             }
+        }
         }
     }
 }
