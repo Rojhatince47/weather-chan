@@ -6,10 +6,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
@@ -22,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -254,6 +257,113 @@ class MainScreenTest {
         composeRule.onNodeWithContentDescription("Tema: Koyu").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Tema: Koyu").performClick()
         composeRule.onNodeWithContentDescription("Tema: Sistem").assertIsDisplayed()
+    }
+
+    @Test
+    fun longPressCityCardShowsDeleteConfirmationSheet() {
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(cityWeathers)),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").performTouchInput { longClick() }
+
+        composeRule.onNodeWithText("İstanbul silinsin mi?").assertIsDisplayed()
+        composeRule.onNodeWithText("Sil").assertIsDisplayed()
+        composeRule.onNodeWithText("İptal").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingDeleteInvokesCallbackWithCityIdAndClosesSheet() {
+        var deletedId: Long? = null
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+        val istanbulId = syntheticCityWeathers().first().city.id
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(cityWeathers)),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = { deletedId = it },
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Sil").performClick()
+
+        assertEquals(istanbulId, deletedId)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("İstanbul silinsin mi?").assertDoesNotExist()
+    }
+
+    @Test
+    fun cancelingDeleteClosesSheetWithoutCallback() {
+        var deleted = false
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(cityWeathers)),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = { deleted = true },
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").performTouchInput { longClick() }
+        composeRule.onNodeWithText("İptal").performClick()
+
+        assert(!deleted)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("İstanbul silinsin mi?").assertDoesNotExist()
     }
 
     private fun sampleCities() = WeatherUiMapper().let { mapper ->
