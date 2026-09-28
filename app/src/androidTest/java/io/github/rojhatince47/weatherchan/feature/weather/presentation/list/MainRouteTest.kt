@@ -86,21 +86,25 @@ class MainRouteTest {
         private val state = MutableStateFlow(initial)
         override val cities: StateFlow<List<City>> = state.asStateFlow()
 
-        override fun add(city: City) {
+        override suspend fun add(city: City): List<City> {
             // İstenen davranış: listede yoksa ekle.
-            if (state.value.none { it.id == city.id }) {
-                state.value = state.value + city
-            }
+            val updated = if (state.value.any { it.id == city.id }) state.value else state.value + city
+            state.value = updated
+            return updated
         }
 
-        override fun remove(cityId: Long) {
-            state.value = state.value.filterNot { it.id == cityId }
+        override suspend fun remove(cityId: Long): List<City> {
+            val updated = state.value.filterNot { it.id == cityId }
+            state.value = updated
+            return updated
         }
 
-        override fun toggleFavorite(cityId: Long) {
-            state.value = state.value.map {
+        override suspend fun toggleFavorite(cityId: Long): List<City> {
+            val updated = state.value.map {
                 if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it
             }
+            state.value = updated
+            return updated
         }
     }
 

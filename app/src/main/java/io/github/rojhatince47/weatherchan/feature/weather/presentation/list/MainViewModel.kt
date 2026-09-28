@@ -95,7 +95,7 @@ class MainViewModel @Inject constructor(
         loadData()
     }
 
-    fun onRefresh() {
+    fun onRefresh(cities: List<City> = cityRepository.cities.value) {
         // İçerik varsa mevcut listenin üzerinde yenile; yoksa tam yükleme yap.
         if (_uiState.value.content !is UiState.Success) {
             loadData()
@@ -105,7 +105,7 @@ class MainViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
             try {
-                when (val result = getCityWeathers(cityRepository.cities.value)) {
+                when (val result = getCityWeathers(cities)) {
                     is AppResult.Success -> {
                         applyFetchedData(result.data)
                         _uiState.update { it.copy(isRefreshing = false) }
@@ -126,7 +126,7 @@ class MainViewModel @Inject constructor(
 
     fun onFavoriteClick(cityId: Long) {
         if (cityId !in loadedCities) return
-        cityRepository.toggleFavorite(cityId)
+        viewModelScope.launch { cityRepository.toggleFavorite(cityId) }
     }
 
     /**
@@ -134,8 +134,7 @@ class MainViewModel @Inject constructor(
      * içerik korunarak arka planda yenilenir (onRefresh ile aynı akış).
      */
     fun onAddCity(city: City) {
-        cityRepository.add(city)
-        onRefresh()
+        viewModelScope.launch { onRefresh(cityRepository.add(city)) }
     }
 
     /**
@@ -147,8 +146,11 @@ class MainViewModel @Inject constructor(
         // bayrağıyla güncel olmayabilir; geri eklerken yıldız korunmalı.
         val deleted = cityRepository.cities.value.firstOrNull { it.id == cityId }
             ?: return
-        cityRepository.remove(cityId)
-        onRefresh()
+        viewModelScope.launch {
+            // Yazma beklenir: yenileme silme sonrası listeyle yapılmalı, yoksa
+            // silinen şehir bir sonraki tam yüklemeye kadar ekranda kalır.
+            onRefresh(cityRepository.remove(cityId))
+        }
         _events.trySend(
             MainEvent.ShowSnackbar(
                 message = UiText.Resource(R.string.city_deleted, deleted.name),
@@ -160,8 +162,7 @@ class MainViewModel @Inject constructor(
 
     /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler ve yeniler. */
     fun onUndoDelete(city: City) {
-        cityRepository.add(city)
-        onRefresh()
+        viewModelScope.launch { onRefresh(cityRepository.add(city)) }
     }
 
     fun loadData() {

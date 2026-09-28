@@ -102,7 +102,7 @@ class DetailViewModel @Inject constructor(
     }
 
     fun onFavoriteClick() {
-        city?.let { cityRepository.toggleFavorite(it.id) }
+        city?.let { viewModelScope.launch { cityRepository.toggleFavorite(it.id) } }
     }
 
     fun loadData() {

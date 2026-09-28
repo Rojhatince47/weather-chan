@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 @Singleton
 class DataStoreCityRepository @Inject constructor(
@@ -30,23 +29,28 @@ class DataStoreCityRepository @Inject constructor(
         .map { CitySort.favoritesFirst(it) }
         .stateIn(scope, SharingStarted.Eagerly, DefaultCitySeed.cities)
 
-    override fun add(city: City) = mutate { current ->
+    override suspend fun add(city: City): List<City> = mutate { current ->
         // Zaten varsa üzerine yazma: aksi halde yıldız kaybolur.
         if (current.any { it.id == city.id }) current else current + city
     }
 
-    override fun remove(cityId: Long) = mutate { current ->
+    override suspend fun remove(cityId: Long): List<City> = mutate { current ->
         current.filterNot { it.id == cityId }
     }
 
-    override fun toggleFavorite(cityId: Long) = mutate { current ->
+    override suspend fun toggleFavorite(cityId: Long): List<City> = mutate { current ->
         current.map { if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it }
     }
 
-    private fun mutate(block: (List<City>) -> List<City>) {
-        scope.launch {
-            val current = preferences.cities().first()
-            preferences.write(CitySort.favoritesFirst(block(current)))
-        }
+    /**
+     * Oku-değiştir-yaz ve **yazılan listeyi** döndürür. Dönüş değeri, akışın
+     * (`cities`) yeni değeri yaymasından bağımsızdır: çağıran aynı karede doğru
+     * listeyle devam edebilsin diye. Sıralama ve yazma tek yerde toplanır.
+     */
+    private suspend fun mutate(block: (List<City>) -> List<City>): List<City> {
+        val current = preferences.cities().first()
+        val updated = CitySort.favoritesFirst(block(current))
+        preferences.write(updated)
+        return updated
     }
 }

@@ -651,29 +651,36 @@ class MainViewModelTest {
     }
 
     /**
-     * Gerçek depoda yazım asenkrondur: `DataStoreCityRepository.mutate` kendi
-     * scope'unu başlatıp bitince `cities` akışına yansıtır. Bu fake yazımı
-     * elle ilerletir; test böylece üretimdeki sırayı (önce istek, sonra akış)
-     * yeniden üretir.
+     * Gerçek depoda yazım asenkrondur: `DataStoreCityRepository.mutate` diske
+     * yazar, `cities` akışı ise bir sonraki okumada yansıtır. Bu fake yazılan
+     * listeyi **anında** döndürür ama akışa `flush()` ile geçirir; test böylece
+     * üretimdeki sırayı (çağıran yeni listeyi görür, akış gecikir) yeniden
+     * üretir.
      */
     private class GatedCityRepository(initial: List<City>) : CityRepository {
         private val state = MutableStateFlow(initial)
         private var pending: List<City>? = null
         override val cities: StateFlow<List<City>> = state.asStateFlow()
 
-        override fun add(city: City) {
+        override suspend fun add(city: City): List<City> {
             val current = pending ?: state.value
-            pending = if (current.any { it.id == city.id }) current else current + city
+            val updated = if (current.any { it.id == city.id }) current else current + city
+            pending = updated
+            return updated
         }
 
-        override fun remove(cityId: Long) {
-            pending = (pending ?: state.value).filterNot { it.id == cityId }
+        override suspend fun remove(cityId: Long): List<City> {
+            val updated = (pending ?: state.value).filterNot { it.id == cityId }
+            pending = updated
+            return updated
         }
 
-        override fun toggleFavorite(cityId: Long) {
-            pending = (pending ?: state.value).map {
+        override suspend fun toggleFavorite(cityId: Long): List<City> {
+            val updated = (pending ?: state.value).map {
                 if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it
             }
+            pending = updated
+            return updated
         }
 
         /** Bekleyen yazımı tamamlar; DataStore'ın akışa yansıması budur. */
@@ -702,6 +709,37 @@ class MainViewModelTest {
         assertTrue(
             "Silinen sehir hava durumu onbelleginde kalinsa da gosterilmemeli",
             content.data.none { it.cityId == istanbul.id }
+        )
+    }
+
+    @Test
+    fun `undo adds the city to the next refresh even when the write lands late`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val gatedCities = GatedCityRepository(listOf(istanbul, ankara))
+        val viewModel = mainViewModel(fakeWeather, gatedCities)
+        viewModel.loadData()
+        runCurrent()
+
+        viewModel.onDeleteCity(istanbul.id)
+        runCurrent()
+        gatedCities.flush()
+        runCurrent()
+
+        viewModel.onUndoDelete(istanbul)
+        runCurrent()
+        gatedCities.flush()
+        runCurrent()
+
+        assertTrue(
+            "Geri alinan sehir yenilenen hava durumunda yer almali",
+            fakeWeather.cityWeathersRequests.last().any { it.id == istanbul.id }
+        )
+        val content = viewModel.uiState.value.content
+        assertTrue("Geri alinan sehir listede gorunmeli", content is UiState.Success)
+        content as UiState.Success
+        assertTrue(
+            "Geri alinan sehir listede gorunmeli",
+            content.data.any { it.cityId == istanbul.id }
         )
     }
 

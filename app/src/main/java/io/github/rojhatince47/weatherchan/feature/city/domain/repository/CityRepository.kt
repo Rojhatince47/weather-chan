@@ -13,10 +13,17 @@ interface CityRepository {
     /** Her zaman favoriler en üstte sıralı döner. */
     val cities: StateFlow<List<City>>
 
-    /** Zaten listede olan şehir eklenirse mevcut kayıt korunur (yıldızı kaybolmaz). */
-    fun add(city: City)
+    /**
+     * Zaten listede olan şehir eklenirse mevcut kayıt korunur (yıldızı kaybolmaz).
+     *
+     * Mutatörler `suspend` ve **yazılan listeyi** döner: çağıran, yazma bittikten
+     * sonra elindeki liste neyse onunla devam eder. Yazma asenkrondur (DataStore),
+     * bu yüzden dönen değer `cities.value` okunmadan önce kullanılmalıdır;
+     * aksi halde çağıran eski listeyi görüp yanlış veri çeker.
+     */
+    suspend fun add(city: City): List<City>
 
-    fun remove(cityId: Long)
+    suspend fun remove(cityId: Long): List<City>
 
-    fun toggleFavorite(cityId: Long)
+    suspend fun toggleFavorite(cityId: Long): List<City>
 }
