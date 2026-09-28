@@ -23,8 +23,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -59,6 +62,7 @@ fun MainScreen(
     onFavoriteClick: (Long) -> Unit,
     onAddCity: (City) -> Unit,
     onOpenCity: (City) -> Unit,
+    onDeleteCity: (Long) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
@@ -71,6 +75,10 @@ fun MainScreen(
         LazyListState()
     }
 ) {
+    // Uzun basma ile onaya kalkışılan şehir (id + görünen ad). Sheet açıkken
+    // dolu tutulur; onay/iptal ya da alan dışına dokunma ile sıfırlanır.
+    var pendingDelete: Pair<Long, String>? by remember { mutableStateOf(null) }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -194,11 +202,25 @@ fun MainScreen(
                             cityWeather = cityWeather,
                             isDarkTheme = isDarkTheme,
                             onClick = { onCityClick(cityWeather.cityId) },
+                            onLongClick = {
+                                pendingDelete = cityWeather.cityId to cityWeather.name
+                            },
                             onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
                         )
                     }
                 }
             }
+        }
+
+        pendingDelete?.let { (cityId, cityName) ->
+            DeleteConfirmationBottomSheet(
+                cityName = cityName,
+                onConfirm = {
+                    onDeleteCity(cityId)
+                    pendingDelete = null
+                },
+                onDismiss = { pendingDelete = null }
+            )
         }
     }
 }
@@ -216,6 +238,7 @@ private fun MainScreenCompactPreview() {
             onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
+            onDeleteCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
@@ -237,6 +260,7 @@ private fun MainScreenMediumPreview() {
             onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
+            onDeleteCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
@@ -258,6 +282,7 @@ private fun MainScreenExpandedPreview() {
             onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
+            onDeleteCity = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
