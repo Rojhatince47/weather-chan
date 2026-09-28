@@ -4,6 +4,8 @@ import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 
 sealed interface MainEvent {
     data class ShowSnackbar(
-        val message: UiText
+        val message: UiText,
+        val actionLabel: UiText? = null,
+        val action: (() -> Unit)? = null
     ) : MainEvent
 }
