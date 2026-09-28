@@ -284,6 +284,11 @@ class MainViewModel @Inject constructor(
         val citiesById = cityRepository.cities.value.associateBy { it.id }
         val unit = unitRepository.unit.value
         val filtered = source
+            // Depo doğruluk kaynağıdır: hava durumu önbelleği silinen şehri
+            // bir süre daha taşır (yazım asenkrondur ve liste ilk yüklemede
+            // tohum değerle açılabilir). Kesişim olmazsa silinen şehir ekranda
+            // kalır.
+            .filter { cityWeather -> cityWeather.city.id in citiesById }
             .filter { cityWeather ->
                 query.isBlank() ||
                     cityWeather.city.name.contains(query, ignoreCase = true)

@@ -8,6 +8,7 @@ import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
@@ -49,8 +50,9 @@ class MainViewModelTest {
      * üretim kodundaki aynı City'yi okuyarak id alır.
      */
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+    private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
 
-    private fun TestScope.mainViewModel(fakeWeather: FakeWeatherRepository, fakeCities: FakeCityRepository = FakeCityRepository()) =
+    private fun TestScope.mainViewModel(fakeWeather: FakeWeatherRepository, fakeCities: CityRepository = FakeCityRepository()) =
         MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeWeather),
             searchCities = SearchCitiesUseCase(fakeWeather),
@@ -646,6 +648,61 @@ class MainViewModelTest {
 
         val after = viewModel.uiState.value.searchState as SearchUiState.Success
         assertEquals(true, after.results.single().isInList)
+    }
+
+    /**
+     * Gerçek depoda yazım asenkrondur: `DataStoreCityRepository.mutate` kendi
+     * scope'unu başlatıp bitince `cities` akışına yansıtır. Bu fake yazımı
+     * elle ilerletir; test böylece üretimdeki sırayı (önce istek, sonra akış)
+     * yeniden üretir.
+     */
+    private class GatedCityRepository(initial: List<City>) : CityRepository {
+        private val state = MutableStateFlow(initial)
+        private var pending: List<City>? = null
+        override val cities: StateFlow<List<City>> = state.asStateFlow()
+
+        override fun add(city: City) {
+            val current = pending ?: state.value
+            pending = if (current.any { it.id == city.id }) current else current + city
+        }
+
+        override fun remove(cityId: Long) {
+            pending = (pending ?: state.value).filterNot { it.id == cityId }
+        }
+
+        override fun toggleFavorite(cityId: Long) {
+            pending = (pending ?: state.value).map {
+                if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it
+            }
+        }
+
+        /** Bekleyen yazımı tamamlar; DataStore'ın akışa yansıması budur. */
+        fun flush() {
+            pending?.let { state.value = it }
+            pending = null
+        }
+    }
+
+    @Test
+    fun `deleting a city removes it from the visible list even when the write lands late`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val gatedCities = GatedCityRepository(listOf(istanbul, ankara))
+        val viewModel = mainViewModel(fakeWeather, gatedCities)
+        viewModel.loadData()
+        runCurrent()
+
+        viewModel.onDeleteCity(istanbul.id)
+        runCurrent()
+        gatedCities.flush()
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Silinen sehir listeden cikmali", content is UiState.Success)
+        content as UiState.Success
+        assertTrue(
+            "Silinen sehir hava durumu onbelleginde kalinsa da gosterilmemeli",
+            content.data.none { it.cityId == istanbul.id }
+        )
     }
 
     @Test
