@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +22,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     uiState: MainUiState,
@@ -83,6 +85,14 @@ fun MainScreen(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        // Gösterge M3'ün kendi IndicatorBox'ıdır: sürükleme mesafesine göre
+        // aşağı iner, yenilenirken döner. State'i Box yönetir; bu yüzden
+        // göstergeye testTag eklenemiyor (göstergeyi cihazda doğrularız).
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.testTag("pull_refresh")
+        ) {
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
             // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
@@ -115,12 +125,6 @@ fun MainScreen(
                         .semantics { contentDescription = themeLabel }
                 ) {
                     ThemeModeIcon(themeMode = themeMode)
-                }
-                IconButton(onClick = onRefresh) {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = stringResource(R.string.action_refresh)
-                    )
                 }
                 TextButton(onClick = onToggleUnit) {
                     Text(
@@ -162,26 +166,10 @@ fun MainScreen(
                         )
                     }
             }
-            // Yenileme sırasında mevcut içerik korunur; yalnızca ince
-            // ilerleme çubuğu gösterilir. Tam ekran Loading sadece ilk
+            // Yenileme sırasında mevcut içerik korunur; göstergeyi
+            // PullToRefreshBox üretir. Tam ekran Loading sadece ilk
             // yüklemede (içerik yokken) gösterilir.
-            if (uiState.isRefreshing) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().testTag("refresh_indicator")
-                )
-            }
             when (val content = uiState.content) {
-                is UiState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.padding(HavaSpacing.xl)
-                )
-                is UiState.Empty -> Text(
-                    text = stringResource(R.string.state_empty_list),
-                    modifier = Modifier.padding(HavaSpacing.xl)
-                )
-                is UiState.Error -> Text(
-                    text = content.message.asString(),
-                    modifier = Modifier.padding(HavaSpacing.xl)
-                )
                 is UiState.Success -> LazyColumn(
                     state = listState,
                     contentPadding = PaddingValues(HavaSpacing.lg),
@@ -209,7 +197,32 @@ fun MainScreen(
                         )
                     }
                 }
+                // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
+                // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
+                // çalışmaz.
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    when (content) {
+                        is UiState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier.padding(HavaSpacing.xl)
+                        )
+                        is UiState.Empty -> Text(
+                            text = stringResource(R.string.state_empty_list),
+                            modifier = Modifier.padding(HavaSpacing.xl)
+                        )
+                        is UiState.Error -> Text(
+                            text = content.message.asString(),
+                            modifier = Modifier.padding(HavaSpacing.xl)
+                        )
+                        is UiState.Success -> Unit
+                    }
+                }
             }
+        }
         }
 
         pendingDelete?.let { (cityId, cityName) ->

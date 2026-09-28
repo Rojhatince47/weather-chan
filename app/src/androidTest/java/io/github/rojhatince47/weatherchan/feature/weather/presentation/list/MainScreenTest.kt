@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -158,8 +159,47 @@ class MainScreenTest {
     }
 
     @Test
-    fun mainScreenRefreshKeepsContentAndShowsIndicator() {
+    fun mainScreenRefreshesOnPullDown() {
         var refreshed = false
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map {
+            mapper.toCityWeatherUiModel(it, isFavorite = false)
+        }
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(cityWeathers)),
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onFavoriteClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = { refreshed = true },
+                    onToggleUnit = {},
+                    onToggleThemeMode = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("pull_refresh").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 200f))
+            moveBy(Offset(0f, 400f))
+            moveBy(Offset(0f, 600f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        assert(refreshed)
+    }
+
+    @Test
+    fun mainScreenHasNoRefreshButtonAndKeepsContentWhileRefreshing() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
@@ -181,17 +221,19 @@ class MainScreenTest {
                     onOpenCity = {},
                     onDeleteCity = {},
                     onRetry = {},
-                    onRefresh = { refreshed = true },
+                    onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {}
                 )
             }
         }
 
+        // Yenileme sırasında mevcut içerik korunur. Göstergeyi M3'ün kendi
+        // IndicatorBox'ı üretir ve testTag taşıyamaz; görünürlüğü cihazda
+        // doğrulanır. Buradaki söz: buton gitti, içerik gitti.
         composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
-        composeRule.onNodeWithTag("refresh_indicator").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Yenile").performClick()
-        assert(refreshed)
+        composeRule.onNodeWithTag("pull_refresh").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Yenile").assertDoesNotExist()
     }
 
     @Test
