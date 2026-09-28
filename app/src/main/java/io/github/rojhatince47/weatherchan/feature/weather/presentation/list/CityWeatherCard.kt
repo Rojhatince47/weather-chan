@@ -1,6 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +33,7 @@ fun CityWeatherCard(
     cityWeather: CityWeatherUiModel,
     isDarkTheme: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -43,7 +44,10 @@ fun CityWeatherCard(
         // olsaydı ripple dikdörtgen kalır ve yuvarlatılmış köşeleri kapatırdı.
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = conditionColors.container)
     ) {
