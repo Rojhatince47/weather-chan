@@ -27,12 +27,7 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
  * eklemez, yalnızca onay işareti gösterir); ayrı büyüteç düğmesi detayı açar.
  */
 @Composable
-fun SearchResultRow(
-    result: SearchResultUiModel,
-    onAddClick: () -> Unit,
-    onOpenClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SearchResultRow(result: SearchResultUiModel, onAddClick: () -> Unit, onOpenClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()

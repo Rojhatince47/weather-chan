@@ -51,8 +51,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @GeocodingRetrofit
-    fun provideGeocodingRetrofit(client: OkHttpClient): Retrofit =
-        retrofit(client, "https://geocoding-api.open-meteo.com/")
+    fun provideGeocodingRetrofit(client: OkHttpClient): Retrofit = retrofit(client, "https://geocoding-api.open-meteo.com/")
 
     @Provides
     @Singleton

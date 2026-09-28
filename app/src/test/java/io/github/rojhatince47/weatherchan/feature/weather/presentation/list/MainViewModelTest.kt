@@ -2,6 +2,8 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import io.github.rojhatince47.weatherchan.core.common.error.AppError
+import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
@@ -11,8 +13,6 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.Temperat
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
-import io.github.rojhatince47.weatherchan.core.common.error.AppError
-import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
@@ -48,16 +48,14 @@ class MainViewModelTest {
      */
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
 
-    private fun TestScope.mainViewModel(
-        fakeWeather: FakeWeatherRepository,
-        fakeCities: FakeCityRepository = FakeCityRepository()
-    ) = MainViewModel(
-        getCityWeathers = GetCityWeathersUseCase(fakeWeather),
-        searchCities = SearchCitiesUseCase(fakeWeather),
-        uiMapper = WeatherUiMapper(),
-        unitRepository = InMemoryTemperatureUnitRepository(),
-        cityRepository = fakeCities
-    )
+    private fun TestScope.mainViewModel(fakeWeather: FakeWeatherRepository, fakeCities: FakeCityRepository = FakeCityRepository()) =
+        MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeWeather),
+            searchCities = SearchCitiesUseCase(fakeWeather),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = InMemoryTemperatureUnitRepository(),
+            cityRepository = fakeCities
+        )
 
     @Before
     fun setUp() {
