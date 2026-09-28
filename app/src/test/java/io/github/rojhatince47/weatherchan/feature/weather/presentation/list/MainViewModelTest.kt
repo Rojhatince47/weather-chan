@@ -2,10 +2,12 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
@@ -644,5 +646,99 @@ class MainViewModelTest {
 
         val after = viewModel.uiState.value.searchState as SearchUiState.Success
         assertEquals(true, after.results.single().isInList)
+    }
+
+    @Test
+    fun `deleting a city removes it and triggers a refresh without it`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+        val requestsBefore = fakeWeather.cityWeathersRequests.size
+
+        viewModel.onDeleteCity(istanbul.id)
+
+        assertTrue(fakeCities.cities.value.none { it.id == istanbul.id })
+        assertTrue(
+            "Silme sonrasi hava durumu istegi atilmali",
+            fakeWeather.cityWeathersRequests.size > requestsBefore
+        )
+        assertTrue(
+            "Yenileme artik silinen sehri icermemeli",
+            fakeWeather.cityWeathersRequests.last().none { it.id == istanbul.id }
+        )
+    }
+
+    @Test
+    fun `delete emits snackbar with city name and undo action label`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(fakeWeather)
+
+        viewModel.onDeleteCity(istanbul.id)
+
+        viewModel.events.test {
+            val event = awaitItem()
+            assertTrue(event is MainEvent.ShowSnackbar)
+            event as MainEvent.ShowSnackbar
+            assertEquals(UiText.Resource(R.string.city_deleted, istanbul.name), event.message)
+            assertEquals(UiText.Resource(R.string.undo_delete), event.actionLabel)
+            assertTrue("Geri al aksiyonu tanimli olmali", event.action != null)
+        }
+    }
+
+    @Test
+    fun `undo action restores the deleted city and refreshes`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+
+        viewModel.onDeleteCity(istanbul.id)
+        var action: (() -> Unit)? = null
+        viewModel.events.test {
+            val event = awaitItem() as MainEvent.ShowSnackbar
+            action = event.action
+        }
+        assertTrue(action != null)
+        val requestsBefore = fakeWeather.cityWeathersRequests.size
+
+        action!!.invoke()
+        runCurrent()
+
+        assertTrue(fakeCities.cities.value.any { it.id == istanbul.id })
+        assertTrue(fakeWeather.cityWeathersRequests.size > requestsBefore)
+    }
+
+    @Test
+    fun `undo delete preserves a city that was favorited`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+
+        viewModel.onFavoriteClick(istanbul.id)
+        runCurrent()
+        viewModel.onDeleteCity(istanbul.id)
+
+        var action: (() -> Unit)? = null
+        viewModel.events.test {
+            val event = awaitItem() as MainEvent.ShowSnackbar
+            action = event.action
+        }
+        action!!.invoke()
+        runCurrent()
+
+        val restored = fakeCities.cities.value.first { it.id == istanbul.id }
+        assertTrue("Geri alinan sehir favoriligi korunmali", restored.isFavorite)
+    }
+
+    @Test
+    fun `deleting an unknown city is a no-op`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+        val requestsBefore = fakeWeather.cityWeathersRequests.size
+
+        viewModel.onDeleteCity(-1L)
+
+        assertEquals(5, fakeCities.cities.value.size)
+        assertEquals(requestsBefore, fakeWeather.cityWeathersRequests.size)
     }
 }

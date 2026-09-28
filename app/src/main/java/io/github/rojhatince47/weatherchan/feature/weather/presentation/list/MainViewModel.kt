@@ -2,10 +2,12 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
+import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
@@ -132,6 +134,32 @@ class MainViewModel @Inject constructor(
      * içerik korunarak arka planda yenilenir (onRefresh ile aynı akış).
      */
     fun onAddCity(city: City) {
+        cityRepository.add(city)
+        onRefresh()
+    }
+
+    /**
+     * Şehri kalıcı listeden siler ve hava durumunu yeniler; geri alma için
+     * son durumdaki City (favori bayrağıyla) snackbar aksiyonunda kapatılır.
+     */
+    fun onDeleteCity(cityId: Long) {
+        // Canlı depodan okunur: loadedCities hava durumu kaynağıdır ve favori
+        // bayrağıyla güncel olmayabilir; geri eklerken yıldız korunmalı.
+        val deleted = cityRepository.cities.value.firstOrNull { it.id == cityId }
+            ?: return
+        cityRepository.remove(cityId)
+        onRefresh()
+        _events.trySend(
+            MainEvent.ShowSnackbar(
+                message = UiText.Resource(R.string.city_deleted, deleted.name),
+                actionLabel = UiText.Resource(R.string.undo_delete),
+                action = { onUndoDelete(deleted) }
+            )
+        )
+    }
+
+    /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler ve yeniler. */
+    fun onUndoDelete(city: City) {
         cityRepository.add(city)
         onRefresh()
     }
