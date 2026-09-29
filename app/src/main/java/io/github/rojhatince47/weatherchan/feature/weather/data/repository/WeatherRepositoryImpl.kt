@@ -25,8 +25,35 @@ class WeatherRepositoryImpl @Inject constructor(
         is AppResult.Failure -> backup.forecast(city)
     }
 
-    override suspend fun search(query: String): AppResult<List<City>> = when (val primaryResult = primary.searchCities(query)) {
-        is AppResult.Success -> primaryResult
-        is AppResult.Failure -> backup.searchCities(query)
+    /**
+     * Arama iki kaynağı da dener.
+     *
+     * Yedeğe düşmek için yalnız `Failure` yeterli **değildir**: birincil
+     * kaynak aramayı başarıyla yürütebilir ama **hiçbir şey bulamayabilir**.
+     * Konum adı çözümlemesi tam olarak bu duruma dayanır — sorgu
+     * `"41.01,28.98"` biçiminde bir koordinattır, Open-Meteo geocoding'i ise
+     * *ad* arar ve boş liste döner (HTTP 200). Yalnız `Failure`'a bakılsaydı
+     * wttr.in hiç çağrılmaz ve konum kartı ağ sağlıklı olsa bile sürekli
+     * "Konum" adını gösterirdi.
+     *
+     * Bu yüzden kural: birincil kaynak **hem başarısız olursa hem de boş
+     * dönerse** yedeğe düşülür; kim bir şey bulduysa onun cevabı döner.
+     * Hiçbiri bulamazsa, iki kaynaktan **gerçekten tamamlanmış** olanın cevabı
+     * döner — aranan yer yoksa "sonuç yok", ağ çalışmıyorsa hata mesajı.
+     */
+    override suspend fun search(query: String): AppResult<List<City>> {
+        val primaryResult = primary.searchCities(query)
+        if (primaryResult is AppResult.Success && primaryResult.data.isNotEmpty()) {
+            return primaryResult
+        }
+        val backupResult = backup.searchCities(query)
+        if (backupResult is AppResult.Success && backupResult.data.isNotEmpty()) {
+            return backupResult
+        }
+        // Kim bir şey bulamadıysa artık önemli olan şey **ağın çalışıp
+        // çalışmadığı**. Birincil kaynak tamamlandıysa (200 + boş) onun cevabı
+        // döner: kullanıcı gerçekten var olmayan bir yer aramıştır ve hata
+        // mesajı yanıltıcı olur. Birincil de hata verdiyse hata gösterilir.
+        return if (primaryResult is AppResult.Failure) backupResult else primaryResult
     }
 }

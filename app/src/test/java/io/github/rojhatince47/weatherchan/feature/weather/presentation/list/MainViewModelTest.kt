@@ -825,6 +825,23 @@ class MainViewModelTest {
         }
     }
 
+    /**
+     * `wasAsked` okumasını [gate] açılana kadar bekleten sahte.
+     *
+     * Gerçekte bu okuma DataStore'dan gelir ve asenkrondur; ilk Compose
+     * karesi bu okuma tamamlanmadan gelebilir. Gecikmeli sahte o pencereyi
+     * testte kalıcılaştırır.
+     */
+    private class GatedCityPermissions(private val gate: CompletableDeferred<Boolean>) : CityPermissions {
+        private var asked = false
+
+        override suspend fun wasAsked(): Boolean = gate.await()
+
+        override suspend fun markAsked() {
+            asked = true
+        }
+    }
+
     private fun TestScope.viewModelWithLocation(
         cities: CityRepository = FakeCityRepository(),
         provider: LocationProvider = FakeLocationProvider(locationCoordinates),
@@ -849,6 +866,37 @@ class MainViewModelTest {
         assertEquals(
             "Diyalog bir kez gösterilmeli",
             LocationPermissionState.NotAsked,
+            viewModel.uiState.value.permissionState
+        )
+    }
+
+    /**
+     * Kalıcı bayrak okunana kadar izin durumu **karar verilemez** olmalıdır.
+     *
+     * Yoksa ilk karede durum `NotAsked` görünür ve UI diyaloğu ateşler.
+     * Gerçek cihazda böyle oldu: kullanıcı izni reddettikten sonra uygulamayı
+     * her açtığında sistem diyaloğu tekrar karşısına çıktı. Bayrağın DataStore
+     * okuması ilk kareden önce tamamlanırsa sorun görünmez; tamamlanmazsa
+     * olur. Yani hata **zamanlamaya bağlı** olduğu için gözle güvenilmez,
+     * durumun kendisiyle engellenmelidir.
+     */
+    @Test
+    fun `bayrak okunmadan once izin durumu karar verilemez`() = runTest {
+        val gate = CompletableDeferred<Boolean>()
+        val viewModel = viewModelWithLocation(permissions = GatedCityPermissions(gate))
+
+        assertEquals(
+            "Okuma sürerken UI karar verememeli; aksi halde diyalog yanlışlıkla açılır",
+            LocationPermissionState.Restoring,
+            viewModel.uiState.value.permissionState
+        )
+
+        gate.complete(true)
+        runCurrent()
+
+        assertEquals(
+            "Bayrak okununca diyaloğa karar verilebilmeli",
+            LocationPermissionState.Asked,
             viewModel.uiState.value.permissionState
         )
     }

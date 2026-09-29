@@ -121,6 +121,10 @@ class MainViewModel @Inject constructor(
         if (cityPermissions.wasAsked()) {
             _uiState.update { it.copy(permissionState = LocationPermissionState.Asked) }
             refreshLocation()
+        } else {
+            // Okuma bitti ve diyaloğun hiç gösterilmediği kesinleşti: ancak
+            // şimdi `NotAsked`'a geçilir, UI de diyaloğu bir kez başlatır.
+            _uiState.update { it.copy(permissionState = LocationPermissionState.NotAsked) }
         }
     }
 

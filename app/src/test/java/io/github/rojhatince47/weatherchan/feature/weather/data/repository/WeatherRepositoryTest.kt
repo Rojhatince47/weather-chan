@@ -133,6 +133,39 @@ class WeatherRepositoryTest {
         assertEquals(1, (result as AppResult.Success).data.size)
     }
 
+    /**
+     * Birincil kaynak **başarılı olup boş liste** döndürdüğünde yedeğe düşülür.
+     *
+     * Konum adı çözümlemesi buna bağlıdır: sorgu `"41.01,28.98"` biçiminde
+     * bir koordinattır ve Open-Meteo geocoding'i *ad* arar, koordinat değil.
+     * Yani birincil kaymak HTTP 200 ve boş döner. Yalnız `Failure` durumunda
+     * yedeğe düşülsaydı wttr.in hiç çağrılmazdı ve konum kartı sürekli
+     * "Konum" adını gösterirdi — ağ sağlıklı olsa bile.
+     */
+    @Test
+    fun `search falls back to backup when primary returns empty result`() = runTest {
+        primaryServer.enqueue(MockResponse().setBody(EMPTY_GEOCODING_JSON))
+        backupServer.enqueue(MockResponse().setBody(WTTR_JSON))
+
+        val result = repository.search("41.0100,28.9800")
+
+        assertTrue("Boş sonuçta yedeğe düşülmeli", result is AppResult.Success)
+        val cities = (result as AppResult.Success).data
+        assertEquals(1, cities.size)
+        assertEquals(1, backupServer.requestCount)
+    }
+
+    @Test
+    fun `both sources empty returns empty success`() = runTest {
+        primaryServer.enqueue(MockResponse().setBody(EMPTY_GEOCODING_JSON))
+        backupServer.enqueue(MockResponse().setResponseCode(500).setBody("{}"))
+
+        val result = repository.search("Bilinmeyen Yer")
+
+        assertTrue("İki kaynak da bulamazsa hata değil boş sonuç döner", result is AppResult.Success)
+        assertTrue((result as AppResult.Success).data.isEmpty())
+    }
+
     @Test
     fun `both sources failing returns failure`() = runTest {
         val cities = testCities(5)
@@ -194,6 +227,9 @@ class WeatherRepositoryTest {
     }
 
     private companion object {
+        /** Birincil kaynağın koordinat sorgusuna verdiği tipik cevap: 200, boş. */
+        const val EMPTY_GEOCODING_JSON = """{"results":[]}"""
+
         const val FORECAST_JSON = """
             {
               "current": {

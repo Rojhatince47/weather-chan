@@ -13,6 +13,7 @@ import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -222,6 +223,32 @@ class DataStoreCityRepositoryTest {
             "Bursa",
             stored.single().name
         )
+    }
+
+    /**
+     * Konum her açılışta yeniden çözülür. Aynı şehir bulunduğunda **yeniden
+     * yazılmamalıdır**: yazmak depoyu yeniden yayımlatır, liste toplayıcısı
+     * bunu görüp tüm şehirler için hava durumunu ikinci kez ister. Yani
+     * kullanıcı şehir eklemeden her uygulama açılışında ağ isteği sayısı
+     * ikiye katlanır ve hız sınırına çarpma riski artar.
+     */
+    @Test
+    fun `ayni konum tekrar cozulurse veri yeniden yazilmaz`() = runTest {
+        val repository = createRepository(createDataStore())
+        repository.addAsLocation(bursa)
+        var emissions = 0
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            repository.cities.collect { emissions++ }
+        }
+
+        repository.addAsLocation(bursa)
+
+        assertEquals(
+            "Liste değişmediyse akış yeni bir değer yaymamalı",
+            1,
+            emissions
+        )
+        job.cancel()
     }
 
     @Test
