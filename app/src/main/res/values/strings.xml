@@ -23,8 +23,10 @@
     <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni
          paylaşsalar da ayrı anahtarları vardır, çünkü ileride ayrışabilirler
          (örn. boş liste "şehir yok", bulunamadı hatası "şehir silinmiş"). -->
-    <string name="error_network">İnternet bağlantısı yok</string>
+    <string name="error_network">Bağlantı kurulamadı veya zaman aşımına uğradı</string>
     <string name="error_server">Sunucu hatası (%1$d)</string>
+    <string name="error_server_unavailable">Hizmet şu anda yanıt vermiyor, lütfen tekrar deneyin</string>
+    <string name="error_rate_limited">Çok fazla istek gönderildi, lütfen biraz sonra tekrar deneyin</string>
     <string name="error_not_found">Sonuç bulunamadı</string>
     <string name="error_parse">Veri okunamadı</string>
     <string name="error_unexpected">Beklenmeyen bir hata oluştu</string>

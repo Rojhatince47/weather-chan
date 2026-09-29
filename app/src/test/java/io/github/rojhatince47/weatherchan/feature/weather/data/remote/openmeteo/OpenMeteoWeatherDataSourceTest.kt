@@ -100,12 +100,54 @@ class OpenMeteoWeatherDataSourceTest {
         assertTrue(path.contains("count=10"))
     }
 
-    private fun testCity(): City = City(
-        name = "İstanbul",
+    private fun testCity(name: String = "İstanbul"): City = City(
+        name = name,
         region = "Marmara",
         country = "Türkiye",
         coordinates = Coordinates(latitude = 41.01, longitude = 28.98)
     )
+
+    // --- kısmi başarısızlık ---------------------------------------------------
+
+    @Test
+    fun `tek sehir basarisiz olsa bile listeyi bosaltmaz`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(500))
+        server.enqueue(MockResponse().setBody(FORECAST_JSON))
+
+        val result = dataSource.cityWeathers(
+            listOf(testCity(), testCity(name = "Ankara"))
+        )
+
+        assertTrue(
+            "Bir şehir hata verse de diğeri başarılıysa liste boşalmamalı",
+            result is AppResult.Success
+        )
+        assertEquals(1, (result as AppResult.Success).data.size)
+        assertEquals("Ankara", result.data.single().city.name)
+    }
+
+    @Test
+    fun `tum sehirler basarisizsa hata doner`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(500))
+        server.enqueue(MockResponse().setResponseCode(503))
+
+        val result = dataSource.cityWeathers(
+            listOf(testCity(), testCity(name = "Ankara"))
+        )
+
+        assertTrue(
+            "Hiçbir şehir gelemiyorsa hata yutulmamalı, kullanıcıya bildirilmeli",
+            result is AppResult.Failure
+        )
+    }
+
+    @Test
+    fun `bos liste hataya dusmez`() = runTest {
+        val result = dataSource.cityWeathers(emptyList())
+
+        assertTrue(result is AppResult.Success)
+        assertTrue((result as AppResult.Success).data.isEmpty())
+    }
 
     private companion object {
         const val FORECAST_JSON = """

@@ -2,14 +2,12 @@ package io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin
 
 import io.github.rojhatince47.weatherchan.core.common.error.ErrorMapper
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.core.common.result.batchAll
 import io.github.rojhatince47.weatherchan.core.common.result.runCatchingApp
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import javax.inject.Inject
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 class WttrInWeatherDataSource @Inject constructor(
     private val api: WttrInApi,
@@ -17,15 +15,9 @@ class WttrInWeatherDataSource @Inject constructor(
     private val errorMapper: ErrorMapper
 ) {
 
-    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.runCatchingApp {
-        coroutineScope {
-            cities.map { city ->
-                async {
-                    val dto = api.weather(locationOf(city))
-                    mapper.toCityWeather(city, dto)
-                }
-            }.awaitAll()
-        }
+    suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.batchAll(cities) { city ->
+        val dto = api.weather(locationOf(city))
+        mapper.toCityWeather(city, dto)
     }
 
     suspend fun forecast(city: City): AppResult<Forecast> = errorMapper.runCatchingApp {
