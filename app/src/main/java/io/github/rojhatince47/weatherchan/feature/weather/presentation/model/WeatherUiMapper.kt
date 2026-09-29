@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
@@ -16,11 +17,26 @@ class WeatherUiMapper @Inject constructor() {
             name = cityWeather.city.name,
             region = cityWeather.city.region,
             country = cityWeather.city.country,
-            temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
-            condition = cityWeather.currentWeather.condition,
-            conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
-            conditionLabel = labelFor(cityWeather.currentWeather.condition)
+            weather = CardWeather.Loaded(
+                temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
+                condition = cityWeather.currentWeather.condition,
+                conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
+                conditionLabel = labelFor(cityWeather.currentWeather.condition)
+            )
         )
+
+    /**
+     * Hava durumu alınamayan şehir için kart üretir. Kayıt listede kaldığı
+     * sürece bu kart görünür; [CardWeather.Unavailable] dalı nedeni ve eylemi
+     * çizer.
+     */
+    fun toUnavailable(city: City): CityWeatherUiModel = CityWeatherUiModel(
+        cityId = city.id,
+        name = city.name,
+        region = city.region,
+        country = city.country,
+        weather = CardWeather.Unavailable
+    )
 
     fun toForecastDetailUiModel(forecast: Forecast, unit: TemperatureUnit = TemperatureUnit.CELSIUS): ForecastDetailUiModel =
         ForecastDetailUiModel(

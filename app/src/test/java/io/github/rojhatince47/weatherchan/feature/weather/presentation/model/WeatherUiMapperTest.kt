@@ -65,15 +65,31 @@ class WeatherUiMapperTest {
     fun `maps city weather to ui model`() {
         val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(cityWeather)
+        val weather = uiModel.weather as CardWeather.Loaded
 
         assertEquals(cityWeather.city.id, uiModel.cityId)
         assertEquals(cityWeather.city.name, uiModel.name)
-        assertTrue(uiModel.temperatureText.endsWith("°C"))
-        assertEquals(cityWeather.currentWeather.condition, uiModel.condition)
+        assertTrue(weather.temperatureText.endsWith("°C"))
+        assertEquals(cityWeather.currentWeather.condition, weather.condition)
         assertEquals(
             UiText.Resource(R.string.condition_clear),
-            uiModel.conditionLabel
+            weather.conditionLabel
         )
+    }
+
+    /**
+     * Hava durumu alınamayan şehir de listede kalır; kart sıcaklık yerine
+     * nedeni ve eylemi gösterir. Yüksüz kartın varlığı bu eşlemeye bağlıdır.
+     */
+    @Test
+    fun `maps city without weather to unavailable card`() {
+        val uiModel = mapper.toUnavailable(istanbul)
+
+        assertEquals(istanbul.id, uiModel.cityId)
+        assertEquals("İstanbul", uiModel.name)
+        assertEquals("Marmara", uiModel.region)
+        assertEquals("Türkiye", uiModel.country)
+        assertTrue(uiModel.weather is CardWeather.Unavailable)
     }
 
     @Test
@@ -99,7 +115,8 @@ class WeatherUiMapperTest {
             unit = TemperatureUnit.FAHRENHEIT
         )
         val expected = cityWeather.currentWeather.temperatureCelsius * 9 / 5 + 32
+        val weather = uiModel.weather as CardWeather.Loaded
 
-        assertEquals("$expected°F", uiModel.temperatureText)
+        assertEquals("$expected°F", weather.temperatureText)
     }
 }

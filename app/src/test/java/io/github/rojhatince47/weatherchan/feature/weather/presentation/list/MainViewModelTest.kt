@@ -20,6 +20,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -252,8 +253,8 @@ class MainViewModelTest {
         viewModel.uiState.test {
             val celsiusState = awaitItem()
             assertTrue(
-                ((celsiusState.content as UiState.Success).data.first().temperatureText)
-                    .endsWith("°C")
+                ((celsiusState.content as UiState.Success).data.first().weather as CardWeather.Loaded)
+                    .temperatureText.endsWith("°C")
             )
 
             unitRepository.setUnit(TemperatureUnit.FAHRENHEIT)
@@ -261,7 +262,7 @@ class MainViewModelTest {
             assertTrue(fahrenheitState.content is UiState.Success)
             assertTrue(
                 (fahrenheitState.content as UiState.Success).data.all {
-                    it.temperatureText.endsWith("°F")
+                    (it.weather as CardWeather.Loaded).temperatureText.endsWith("°F")
                 }
             )
         }
@@ -284,8 +285,8 @@ class MainViewModelTest {
         viewModel.uiState.test {
             val celsiusState = awaitItem()
             assertTrue(
-                ((celsiusState.content as UiState.Success).data.first().temperatureText)
-                    .endsWith("°C")
+                ((celsiusState.content as UiState.Success).data.first().weather as CardWeather.Loaded)
+                    .temperatureText.endsWith("°C")
             )
 
             settingsViewModel.onToggleUnit()
@@ -293,7 +294,7 @@ class MainViewModelTest {
             assertTrue(fahrenheitState.content is UiState.Success)
             assertTrue(
                 (fahrenheitState.content as UiState.Success).data.all {
-                    it.temperatureText.endsWith("°F")
+                    (it.weather as CardWeather.Loaded).temperatureText.endsWith("°F")
                 }
             )
         }

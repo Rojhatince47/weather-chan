@@ -28,6 +28,7 @@
     <string name="location_card_label">Konumunuz</string>
     <string name="state_empty_search">Aramanızla eşleşen şehir bulunamadı</string>
     <string name="state_empty_detail">Veri bulunamadı</string>
+    <string name="card_weather_unavailable">Hava durumu alınamadı</string>
 
     <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni
          paylaşsalar da ayrı anahtarları vardır, çünkü ileride ayrışabilirler

@@ -52,6 +52,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.Te
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -434,10 +435,12 @@ private fun sampleMainUiState(): MainUiState = MainUiState(
                 name = "İstanbul",
                 region = "Marmara",
                 country = "Türkiye",
-                temperatureText = "21°C",
-                condition = WeatherCondition.CLEAR,
-                conditionEmoji = "☀️",
-                conditionLabel = UiText.Dynamic("Açık")
+                weather = CardWeather.Loaded(
+                    temperatureText = "21°C",
+                    condition = WeatherCondition.CLEAR,
+                    conditionEmoji = "☀️",
+                    conditionLabel = UiText.Dynamic("Açık")
+                )
             )
         )
     )
