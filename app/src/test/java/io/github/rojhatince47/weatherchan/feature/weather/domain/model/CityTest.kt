@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.domain.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
@@ -55,5 +56,20 @@ class CityTest {
         val a = city(latitude = 40.19049, longitude = 29.06)
         val b = city(latitude = 40.19050, longitude = 29.06)
         assertNotEquals(a.id, b.id)
+    }
+
+    @Test
+    fun `isLocation farkli olsa da ayni koordinat esittir`() {
+        val normal = City("Bursa", "Marmara", "Türkiye", Coordinates(40.19, 29.06), isLocation = false)
+        val location = City("Bursa", "Marmara", "Türkiye", Coordinates(40.19, 29.06), isLocation = true)
+
+        // isLocation bir *görüntüleme* niteliğidir, kimliğin parçası olmamalıdır.
+        assertEquals(normal, location)
+        assertEquals(normal.hashCode(), location.hashCode())
+    }
+
+    @Test
+    fun `isLocation varsayilan olarak false`() {
+        assertFalse(city().isLocation)
     }
 }

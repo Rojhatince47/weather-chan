@@ -6,7 +6,8 @@ data class City(
     val name: String,
     val region: String?,
     val country: String?,
-    val coordinates: Coordinates
+    val coordinates: Coordinates,
+    val isLocation: Boolean = false
 ) {
     /**
      * Koordinattan deterministik kimlik.
@@ -19,4 +20,14 @@ data class City(
     val id: Long
         get() = (coordinates.latitude * 1_000).roundToLong() * 10_000_000 +
             (coordinates.longitude * 1_000).roundToLong()
+
+    // isLocation bilinçli olarak kimliğin parçası DEĞİLDİR. Aynı koordinattaki
+    // kayıt, aramadan eklendiğinde ve sonra konum olarak yükseltildiğinde hâlâ
+    // aynı şehirdir. Mükerrer kontrolü zaten id üzerinden çalıştığı için
+    // (DataStoreCityRepository.add) bu sapma mükerrer kayda yol açmaz; tersine
+    // data class'ın ürettiği eşitlik, "aynı şehir ama isLocation farklı"
+    // durumunu yanlışlıkla iki kayda bölerdi.
+    override fun equals(other: Any?): Boolean = other is City && other.id == id
+
+    override fun hashCode(): Int = id.hashCode()
 }
