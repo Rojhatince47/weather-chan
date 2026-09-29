@@ -586,6 +586,13 @@ class MainViewModelTest {
             return updated
         }
 
+        override suspend fun addAsLocation(city: City): List<City> {
+            val location = city.copy(isLocation = true)
+            val updated = listOf(location) + (pending ?: state.value).filterNot { it.id == location.id }
+            pending = updated
+            return updated
+        }
+
         /** Bekleyen yazımı tamamlar; DataStore'ın akışa yansıması budur. */
         fun flush() {
             pending?.let { state.value = it }

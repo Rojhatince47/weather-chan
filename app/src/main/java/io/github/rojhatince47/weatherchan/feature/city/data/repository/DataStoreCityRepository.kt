@@ -32,6 +32,13 @@ class DataStoreCityRepository @Inject constructor(
         current.filterNot { it.id == cityId }
     }
 
+    override suspend fun addAsLocation(city: City): List<City> = mutate { current ->
+        val location = city.copy(isLocation = true)
+        val withoutSame = current.filterNot { it.id == location.id }
+        // Konum başa; geri kalanlar eski sıralarını korur.
+        listOf(location) + withoutSame
+    }
+
     /**
      * Oku-değiştir-yaz ve **yazılan listeyi** döndürür. Dönüş değeri, akışın
      * yeni değeri yaymasından bağımsızdır: çağıran aynı karede doğru listeyle

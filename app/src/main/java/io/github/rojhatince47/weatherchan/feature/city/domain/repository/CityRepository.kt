@@ -29,4 +29,17 @@ interface CityRepository {
     suspend fun add(city: City): List<City>
 
     suspend fun remove(cityId: Long): List<City>
+
+    /**
+     * Şehri **konum olarak** ekler veya mevcut kaydı konuma yükseltir.
+     *
+     * `add` bilinçli olarak üzerine yazmaz: kullanıcı aynı şehri iki kez
+     * aramadan ekleyemez. Konumda davranış farklıdır — kullanıcı şehri önce
+     * aramadan eklemiş, sonra "Konumumu ekle" demiş olabilir. Bu durumda
+     * mükerrer kayıt oluşturmak yerine **mevcut kayıt güncellenir**: ad,
+     * bölge ve koordinat tazelenir, `isLocation` işaretlenir.
+     *
+     * Konum daima listenin başına alınır; diğer şehirlerin sırası korunur.
+     */
+    suspend fun addAsLocation(city: City): List<City>
 }

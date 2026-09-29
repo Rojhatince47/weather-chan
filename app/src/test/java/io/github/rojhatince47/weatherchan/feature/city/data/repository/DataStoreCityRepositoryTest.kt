@@ -177,6 +177,63 @@ class DataStoreCityRepositoryTest {
         )
     }
 
+    // --- konum yükseltme ------------------------------------------------------
+
+    @Test
+    fun `konum olarak eklenen sehir mükerrer olmaz`() = runTest {
+        val repository = createRepository(createDataStore())
+
+        repository.add(bursa)
+        repository.addAsLocation(bursa)
+
+        val stored = repository.cities.first()
+        assertEquals(1, stored.size)
+        assertTrue(stored.single().isLocation)
+    }
+
+    @Test
+    fun `konum olarak eklenen sehir en basa gider`() = runTest {
+        val repository = createRepository(createDataStore())
+
+        repository.add(ankara)
+        repository.add(bursa)
+        repository.addAsLocation(bursa)
+
+        assertEquals(
+            "Konum listenin başında olmalı; mevcut sıra korunmalı",
+            listOf("Bursa", "Ankara"),
+            repository.cities.first().map { it.name }
+        )
+    }
+
+    @Test
+    fun `aramadan eklenen ayni sehir konum olarak yukseltilir yeni kayit olusmaz`() = runTest {
+        val repository = createRepository(createDataStore())
+
+        // Kullanıcı önce aramadan ekledi, sonra "Konumumu ekle" dedi.
+        repository.add(bursa.copy(name = "Bursa Kalesi"))
+        repository.addAsLocation(bursa.copy(name = "Bursa", isLocation = true))
+
+        val stored = repository.cities.first()
+        assertEquals(1, stored.size)
+        assertTrue(stored.single().isLocation)
+        assertEquals(
+            "Yükseltilen kayıt güncel adı almalı",
+            "Bursa",
+            stored.single().name
+        )
+    }
+
+    @Test
+    fun `konum isareti diskte kalici olur`() = runTest {
+        val dataStore = createDataStore()
+
+        createRepository(dataStore).addAsLocation(bursa)
+
+        val read = createRepository(dataStore).cities.first()
+        assertTrue(read.single().isLocation)
+    }
+
     // --- konum işareti serileştirmesi ---
 
     @Test
