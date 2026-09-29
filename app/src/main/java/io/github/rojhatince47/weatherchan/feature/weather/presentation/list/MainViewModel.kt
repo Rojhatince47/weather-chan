@@ -46,6 +46,9 @@ class MainViewModel @Inject constructor(
 
     private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
+
+    /** Şehir başına yeniden deneme işleri; tüm liste yüklemesinden bağımsızdır. */
+    private val retryJobs = mutableMapOf<Long, Job>()
     private var locationJob: Job? = null
     private var searchJob: Job? = null
 
@@ -289,6 +292,48 @@ class MainViewModel @Inject constructor(
     /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler. */
     fun onUndoDelete(city: City) {
         viewModelScope.launch { cityRepository.add(city) }
+    }
+
+    /**
+     * Yalnız bir şehrin hava durumunu yeniden dener.
+     *
+     * `loadJob` bilinçli olarak kullanılmaz: tek bir şehrin denemesi tüm
+     * listenin yüklenmesini iptal etmemeli. İki şehir eşzamanlı denenebilir;
+     * bu yüzden işler şehir başına tutulur.
+     *
+     * Başarısızlık sessizce yutulur çünkü kartın kendisi zaten durumu anlatır:
+     * "Hava durumu alınamadı" yazısı kalır. Snackbar atmak hatayı iki kez
+     * bildirmek olurdu.
+     */
+    fun onRetryCity(cityId: Long) {
+        val city = storedCities.firstOrNull { it.id == cityId } ?: return
+        if (cityId in retryJobs) return
+        retryJobs[cityId] = viewModelScope.launch {
+            _uiState.update { it.copy(retryingCityIds = it.retryingCityIds + cityId) }
+            try {
+                when (val result = getCityWeathers(listOf(city))) {
+                    is AppResult.Success -> if (result.data.isNotEmpty()) {
+                        mergeCityWeathers(result.data)
+                    }
+                    is AppResult.Failure -> Unit // kart Unavailable kalır
+                }
+            } finally {
+                retryJobs.remove(cityId)
+                _uiState.update { it.copy(retryingCityIds = it.retryingCityIds - cityId) }
+            }
+        }
+    }
+
+    /**
+     * Tek bir şehrin sonucunu önbelleğe birleştirir. Mevcut liste korunur;
+     * yalnız aynı id'li kayıt yerini yenisiyle değiştirir.
+     * [applyFetchedData] yeniden kullanılır: `loadedCities` (detay ekranı
+     * gezinmesi bunu okur) böylece tutarsız kalmaz.
+     */
+    private fun mergeCityWeathers(newWeathers: List<CityWeather>) {
+        val merged = cachedCityWeathers.orEmpty()
+            .filterNot { existing -> newWeathers.any { it.city.id == existing.city.id } } + newWeathers
+        applyFetchedData(merged)
     }
 
     fun loadData() {

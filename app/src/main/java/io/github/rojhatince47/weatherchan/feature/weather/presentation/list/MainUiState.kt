@@ -9,7 +9,9 @@ data class MainUiState(
     val isRefreshing: Boolean = false,
     val searchState: SearchUiState = SearchUiState.Idle,
     val permissionState: LocationPermissionState = LocationPermissionState.Restoring,
-    val locationState: LocationState = LocationState.Idle
+    val locationState: LocationState = LocationState.Idle,
+    /** Şu an yeniden deneniyor: kart düğmesi kilitli, gösterge döner. */
+    val retryingCityIds: Set<Long> = emptySet()
 )
 
 /**

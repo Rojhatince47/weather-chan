@@ -211,6 +211,77 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `tekrar deneme basarili olunca kart yuklenmis olur`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        )
+
+        // Ağ düzeldi: aynı istek artık ankara'yı da döndürüyor.
+        fakeWeather.omitCities = emptySet()
+        viewModel.onRetryCity(ankara.id)
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            val ankaraItem = (state.content as UiState.Success).data.first { it.cityId == ankara.id }
+            assertTrue(ankaraItem.weather is CardWeather.Loaded)
+            assertTrue("Deneme bitince kilit kalmalı", state.retryingCityIds.isEmpty())
+        }
+    }
+
+    /**
+     * Gerçekte batchAll, tek şehrin denemesi başarısız olursa Failure döndürür
+     * (hiçbir öğe başarılı olmadığı için). Kart değişmez ve kilit açılır —
+     * kullanıcı tekrar deneyebilir.
+     */
+    @Test
+    fun `tekrar deneme hata dondururse kart hata olarak kalir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        )
+
+        // Deneme bu kez tümüyle başarısız: depo Failure döndürür.
+        fakeWeather.omitCities = emptySet()
+        fakeWeather.failCityWeathers = true
+        viewModel.onRetryCity(ankara.id)
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            val ankaraItem = (state.content as UiState.Success).data.first { it.cityId == ankara.id }
+            assertTrue(ankaraItem.weather is CardWeather.Unavailable)
+            assertTrue("Başarısız deneme kilidi bırakmalı", state.retryingCityIds.isEmpty())
+        }
+    }
+
+    /**
+     * Deneme sırasında şehir silinmiş olabilir; akış çökmemeli ve boşa istek
+     * atılmamalı.
+     */
+    @Test
+    fun `silinmis sehir icin tekrar deneme istek atmaz`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(fakeWeather = fakeWeather)
+
+        viewModel.onRetryCity(999L)
+
+        assertEquals(
+            "Yalnız ilk listenin yüklenmesi istek atmış olmalı",
+            1,
+            fakeWeather.cityWeathersRequests.size
+        )
+        assertTrue(viewModel.uiState.value.retryingCityIds.isEmpty())
+    }
+
+    @Test
     fun `emits loading while repository is slow`() = runTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
