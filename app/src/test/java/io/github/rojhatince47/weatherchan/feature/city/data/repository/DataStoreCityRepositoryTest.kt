@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.city.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.rojhatince47.weatherchan.feature.city.data.local.CityPreferences
@@ -60,63 +61,123 @@ class DataStoreCityRepositoryTest {
         )
     }
 
+    /**
+     * Göçü yapılmış bir kurulumu taklit eder: bayrak yazılıdır, dolayısıyla
+     * liste bir daha temizlenmez. Serileştirme uyumluluğu gibi yalnız *göçten
+     * sonra* geçerli olan davranışları sınayan testler bunu çağırır.
+     */
+    private suspend fun DataStore<Preferences>.markMigrated() {
+        edit { it[booleanPreferencesKey("cities_migrated_v2")] = true }
+    }
+
+    // --- varsayılan liste -----------------------------------------------------
+
     @Test
-    fun `ilk acilista gomulu liste yazilir`() = runTest {
+    fun `ilk acilista liste bos`() = runTest {
         val repository = createRepository(createDataStore())
 
-        val names = repository.cities.first { it.isNotEmpty() }.map { it.name }
-        assertTrue(names.contains("İstanbul"))
-        assertTrue(names.contains("Ankara"))
+        assertTrue(
+            "Gömülü tohum kaldırıldı; taze kurulumda liste boş olmalı",
+            repository.cities.first().isEmpty()
+        )
     }
 
     @Test
-    fun `ayni sehir iki kez eklenmez`() = runTest {
+    fun `tum sehirler silinince liste bos kalir`() = runTest {
+        val repository = createRepository(createDataStore())
+
+        repository.add(bursa)
+        repository.add(ankara)
+        assertEquals(2, repository.cities.first().size)
+
+        repository.remove(bursa.id)
+        repository.remove(ankara.id)
+
+        assertTrue(
+            "Kullanıcı listeyi bilerek boşalttı; tohum geri gelmemeli",
+            repository.cities.first().isEmpty()
+        )
+    }
+
+    // --- göç -------------------------------------------------------------------
+
+    @Test
+    fun `eski kurulumdaki kayitlar bir kez temizlenir`() = runTest {
         val dataStore = createDataStore()
+        // Göçten önceki kurulum: bayrak yok, eski şehirler yazılı.
+        dataStore.edit {
+            it[stringPreferencesKey("cities_json")] = """
+                [{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98}]
+            """.trimIndent()
+        }
+
         val repository = createRepository(dataStore)
-        repository.cities.first { it.isNotEmpty() }
+
+        assertTrue(
+            "Eski kayıtlar tek seferlik göçte temizlenmeli",
+            repository.cities.first().isEmpty()
+        )
+    }
+
+    @Test
+    fun `goc sonrasi eklenen sehirler kalici olur`() = runTest {
+        val dataStore = createDataStore()
+        createRepository(dataStore).cities.first() // göçü tetikler
+        dataStore.markMigrated()
+
+        val first = createRepository(dataStore)
+        first.add(bursa)
+
+        val second = createRepository(dataStore)
+
+        assertEquals(
+            "Göç tamamlandıktan sonra eklenen şehir silinmemeli",
+            listOf("Bursa"),
+            second.cities.first().map { it.name }
+        )
+    }
+
+    // --- ekleme / çıkarma ------------------------------------------------------
+
+    @Test
+    fun `ayni sehir iki kez eklenmez`() = runTest {
+        val repository = createRepository(createDataStore())
 
         repository.add(bursa)
         repository.add(bursa.copy(name = "Bursa (farklı yazım)"))
 
-        val matching = repository.cities.first { list -> list.count { it.id == bursa.id } == 1 }
+        val matching = repository.cities.first { list -> list.any { it.id == bursa.id } }
             .filter { it.id == bursa.id }
         assertEquals(1, matching.size)
     }
 
     @Test
     fun `cikarilan sehir listeden gider`() = runTest {
-        val dataStore = createDataStore()
-        val repository = createRepository(dataStore)
-        repository.cities.first { it.isNotEmpty() }
+        val repository = createRepository(createDataStore())
+        repository.add(bursa)
 
         repository.remove(bursa.id)
 
-        assertTrue(repository.cities.first { list -> list.none { it.id == bursa.id } }.none { it.id == bursa.id })
-    }
-
-    @Test
-    fun `tum sehirler silinince seed geri gelmez`() = runTest {
-        val dataStore = createDataStore()
-        val repository = createRepository(dataStore)
-        val initial = repository.cities.first { it.isNotEmpty() }
-
-        initial.forEach { repository.remove(it.id) }
-
-        // Kullanıcı listeyi bilerek boşalttı; gömülü liste geri gelmemeli.
-        assertTrue(repository.cities.first { it.isEmpty() }.isEmpty())
+        assertTrue(repository.cities.first().none { it.id == bursa.id })
     }
 
     @Test
     fun `yazilan veri yeni repository okumasiyla korunur`() = runTest {
         val dataStore = createDataStore()
         val first = createRepository(dataStore)
-        first.cities.first { it.isNotEmpty() }
+        first.add(bursa)
+        first.add(ankara)
         first.remove(ankara.id)
 
         val second = createRepository(dataStore)
 
-        assertTrue(second.cities.first { list -> list.none { it.id == ankara.id } }.none { it.id == ankara.id })
+        assertEquals(
+            listOf("Bursa"),
+            second.cities.first().map { it.name }
+        )
     }
+
+    // --- izin bayrağı ---------------------------------------------------------
 
     @Test
     fun `izin bayragi kalici olur`() = runTest {
@@ -130,20 +191,27 @@ class DataStoreCityRepositoryTest {
         assertTrue(preferences.isLocationPermissionAsked())
     }
 
+    // --- bozuk kayıt -----------------------------------------------------------
+
     @Test
-    fun `bogzuk kayit kurtarilir`() = runTest {
-        // Bozuk JSON: decode hatası akışı kırmamalı, gömülü listeye düşülmeli
+    fun `bogzuk kayit akisi kirmaz ve bos listeye duser`() = runTest {
         val dataStore = createDataStore()
+        dataStore.markMigrated()
         dataStore.edit { it[stringPreferencesKey("cities_json")] = "{{{{bozuk" }
 
         val repository = createRepository(dataStore)
 
-        assertTrue(repository.cities.first { it.isNotEmpty() }.isNotEmpty())
+        val decoded = repository.cities.first()
+        assertTrue(
+            "Bozuk kayıt tohuma düşmemeli; akış boş listeyle devam etmeli. Gelen: $decoded",
+            decoded.isEmpty()
+        )
     }
 
     @Test
-    fun `eski kayittaki favori alani siralamayi degistirmez`() = runTest {
+    fun `goc sonrasi eski favori alani siralamayi degistirmez`() = runTest {
         val dataStore = createDataStore()
+        dataStore.markMigrated()
         dataStore.edit {
             it[stringPreferencesKey("cities_json")] =
                 """[{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98,"isFavorite":false},""" +

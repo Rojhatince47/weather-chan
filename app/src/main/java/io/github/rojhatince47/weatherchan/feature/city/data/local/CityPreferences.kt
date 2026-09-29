@@ -13,7 +13,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -23,7 +25,8 @@ import kotlinx.serialization.json.Json
  *
  * Anahtarlar:
  * - `cities_json`: şehir listesi, JSON dizisi, ekleme sırası korunur.
- * - `location_permission_asked`: konum izni bir kez soruldu mu (Plan 3'te kullanılır).
+ * - `location_permission_asked`: konum izni bir kez soruldu mu.
+ * - `cities_migrated_v2`: gömülü tohum listesi bir kez temizlendi mi.
  */
 @Singleton
 class CityPreferences @Inject constructor(
@@ -33,21 +36,40 @@ class CityPreferences @Inject constructor(
 
     private val citiesKey = stringPreferencesKey("cities_json")
     private val permissionAskedKey = booleanPreferencesKey("location_permission_asked")
+    private val seedRemovedKey = booleanPreferencesKey("cities_migrated_v2")
 
     /**
-     * Anahtar hiç yazılmadıysa gömülü liste döner (ilk açılış). Boş liste (`"[]"`)
-     * yazılmışsa boş döner: kullanıcı listeyi bilerek boşaltmıştır, seed geri gelmez.
+     * Gömülü 32 şehirlik tohum listesi **bir kez** temizlenir.
+     *
+     * Ürün kararı: açılışta liste yalnız mevcut konumu içermelidir. Daha önce
+     * kurulmuş sürümlerde `cities_json` içinde o tohum ve kullanıcının eklediği
+     * şehirler birlikte durur; bayrak yazılmadıkça liste bir kez boşaltılır.
+     * Bayrak aynı `edit` içinde yazıldığı için göç ya tamamen olur ya hiç
+     * olmaz — yarı kalmış bir durum oluşamaz.
      */
-    fun cities(): Flow<List<City>> = dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { preferences ->
-            val raw = preferences[citiesKey]
-            if (raw == null) {
-                DefaultCitySeed.cities
-            } else {
-                decode(raw)
+    private suspend fun removeLegacySeedOnce() {
+        dataStore.edit { preferences ->
+            if (preferences[seedRemovedKey] != true) {
+                preferences[citiesKey] = "[]"
+                preferences[seedRemovedKey] = true
             }
         }
+    }
+
+    /**
+     * Depodaki şehir listesi.
+     *
+     * Göç, akışa **geçilmeden önce** çalışır: dinleyen ilk değer zaten temizlenmiş
+     * gerçek listeyi görür, göçün kendisi ek bir karede görünmez.
+     */
+    fun cities(): Flow<List<City>> = flow {
+        removeLegacySeedOnce()
+        emitAll(
+            dataStore.data
+                .catch { emit(emptyPreferences()) }
+                .map { preferences -> preferences[citiesKey]?.let { decode(it) } ?: emptyList() }
+        )
+    }
 
     suspend fun write(cities: List<City>) {
         dataStore.edit { preferences ->
@@ -62,13 +84,12 @@ class CityPreferences @Inject constructor(
     }
 
     /**
-     * Bozuk kayıtta uygulama çökmek yerine gömülü listeye düşülür; akış yarılmaz.
-     * Başarılı şekilde boş çözülen liste (`"[]"`) boş kalır: kullanıcı listeyi
-     * bilerek boşaltmıştır, seed geri gelmez. Kurtarma yalnız *çözülemediğinde*
-     * devreye girer.
+     * Bozuk kayıtta uygulama çökmez, **boş listeye** düşülür; akış yarılmaz.
+     * Kurtarma yalnız *çözülemediğinde* devreye girer: geçerli `"[]"` da boş
+     * kalır, çünkü kullanıcı listeyi bilerek boşaltmıştır.
      */
     private fun decode(raw: String): List<City> = runCatching { json.decodeFromString<List<CityDto>>(raw).map { it.toCity() } }
-        .getOrDefault(DefaultCitySeed.cities)
+        .getOrDefault(emptyList())
 
     @Serializable
     private data class CityDto(
