@@ -569,6 +569,13 @@ class MainViewModelTest {
         private var pending: List<City>? = null
         override val cities: StateFlow<List<City>> = state.asStateFlow()
 
+        /**
+         * Bekleyen yazım varsa onu döndürür ama **akışa yansıtmaz**: üretimde de
+         * yazma diske düşer, akış bir sonraki okumada güncellenir. `flush()`'ı
+         * çağırmamak, kapının açık kalmasını korur.
+         */
+        override suspend fun loadCities(): List<City> = pending ?: state.value
+
         override suspend fun add(city: City): List<City> {
             val current = pending ?: state.value
             val updated = if (current.any { it.id == city.id }) current else current + city
@@ -712,5 +719,32 @@ class MainViewModelTest {
 
         assertEquals(5, fakeCities.cities.value.size)
         assertEquals(requestsBefore, fakeWeather.cityWeathersRequests.size)
+    }
+
+    /**
+     * Soğuk açılış yarışı: `cities` StateFlow'u henüz tohumu (tek şehir)
+     * taşırken depoda üç şehir vardır. İlk yükleme **depodaki listeyi**
+     * kullanmalıdır; aksi hâlde eklenen şehirler hiç çekilmez ve görünmez.
+     */
+    @Test
+    fun `acilis depodaki tum sehirler icin hava durumu ceger`() = runTest {
+        val izmir = City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
+        val repository = FakeCityRepository(
+            initial = listOf(istanbul, ankara, izmir),
+            staleStartupValue = listOf(istanbul)
+        )
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = FakeTemperatureUnitRepository(),
+            cityRepository = repository
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.content is UiState.Success)
+            assertEquals(3, (state.content as UiState.Success).data.size)
+        }
     }
 }

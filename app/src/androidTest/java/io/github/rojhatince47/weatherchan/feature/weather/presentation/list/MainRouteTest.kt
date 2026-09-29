@@ -106,6 +106,8 @@ class MainRouteTest {
         private val state = MutableStateFlow(initial)
         override val cities: StateFlow<List<City>> = state.asStateFlow()
 
+        override suspend fun loadCities(): List<City> = state.value
+
         override suspend fun add(city: City): List<City> {
             // İstenen davranış: listede yoksa ekle.
             val updated = if (state.value.any { it.id == city.id }) state.value else state.value + city

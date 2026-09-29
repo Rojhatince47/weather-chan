@@ -11,6 +11,16 @@ interface CityRepository {
     val cities: StateFlow<List<City>>
 
     /**
+     * Depodaki **güncel** listeyi bekleyerek döndürür.
+     *
+     * `cities` bir `StateFlow`'dur ve soğuk açılışta **başlangıç değerini**
+     * taşır (tohum). DataStore akışı henüz yaymamışken okunan bu değer diskteki
+     * gerçek listeyi yansıtmaz. Veri çekmeden önce depodan okunması gereken
+     * yerlerde bu işlem kullanılır.
+     */
+    suspend fun loadCities(): List<City>
+
+    /**
      * Zaten listede olan şehir eklenirse mükerrer kayıt oluşmaz.
      *
      * Mutatörler `suspend` ve **yazılan listeyi** döner: çağıran, yazma bittikten

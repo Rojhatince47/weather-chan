@@ -26,6 +26,13 @@ class DataStoreCityRepository @Inject constructor(
     override val cities: StateFlow<List<City>> = preferences.cities()
         .stateIn(scope, SharingStarted.Eagerly, DefaultCitySeed.cities)
 
+    /**
+     * `cities` StateFlow'unun başlangıç (tohum) değerini atlar, doğrudan
+     * DataStore'dan okur. DataStore ilk değeri önbelleğe aldığı için ek maliyet
+     * getirmez; yalnız "doğru değer" garantisi verir.
+     */
+    override suspend fun loadCities(): List<City> = preferences.cities().first()
+
     override suspend fun add(city: City): List<City> = mutate { current ->
         // Zaten varsa üzerine yazma: mükerrer kayıt oluşmasın.
         if (current.any { it.id == city.id }) current else current + city
