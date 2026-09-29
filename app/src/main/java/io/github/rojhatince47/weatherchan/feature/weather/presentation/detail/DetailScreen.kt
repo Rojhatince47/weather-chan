@@ -102,69 +102,69 @@ fun DetailScreen(
             onRefresh = onRefresh,
             modifier = Modifier.testTag("pull_refresh")
         ) {
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            when (val content = uiState.content) {
-                is UiState.Success -> LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(HavaSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.lg)
-                ) {
-                    item {
-                        CurrentWeatherCard(
-                            temperatureText = content.data.currentWeather.temperatureText,
-                            conditionEmoji = content.data.currentWeather.conditionEmoji,
-                            conditionLabel = content.data.currentWeather.conditionLabel.asString(),
-                            windSpeedText = content.data.currentWeather.windSpeedText,
-                            humidityText = content.data.currentWeather.humidityText
-                        )
+            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                when (val content = uiState.content) {
+                    is UiState.Success -> LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(HavaSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(HavaSpacing.lg)
+                    ) {
+                        item {
+                            CurrentWeatherCard(
+                                temperatureText = content.data.currentWeather.temperatureText,
+                                conditionEmoji = content.data.currentWeather.conditionEmoji,
+                                conditionLabel = content.data.currentWeather.conditionLabel.asString(),
+                                windSpeedText = content.data.currentWeather.windSpeedText,
+                                humidityText = content.data.currentWeather.humidityText
+                            )
+                        }
+                        item {
+                            SectionHeader(text = stringResource(R.string.section_hourly))
+                        }
+                        items(content.data.hourlyForecast, key = { it.timeText }) { hourly ->
+                            HourlyForecastItem(hourly)
+                        }
+                        item {
+                            SectionHeader(text = stringResource(R.string.section_daily))
+                        }
+                        // key Bundle'da saklanabilir olmalı; UiText saklanamaz,
+                        // bu yüzden dayOffset (Int) kullanılır.
+                        items(content.data.dailyForecast, key = { it.dayOffset }) { daily ->
+                            DailyForecastItem(daily)
+                        }
                     }
-                    item {
-                        SectionHeader(text = stringResource(R.string.section_hourly))
-                    }
-                    items(content.data.hourlyForecast, key = { it.timeText }) { hourly ->
-                        HourlyForecastItem(hourly)
-                    }
-                    item {
-                        SectionHeader(text = stringResource(R.string.section_daily))
-                    }
-                    // key Bundle'da saklanabilir olmalı; UiText saklanamaz,
-                    // bu yüzden dayOffset (Int) kullanılır.
-                    items(content.data.dailyForecast, key = { it.dayOffset }) { daily ->
-                        DailyForecastItem(daily)
-                    }
-                }
-                // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
-                // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
-                // çalışmaz.
-                else -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
-                ) {
-                    when (content) {
-                        is UiState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier.padding(HavaSpacing.xl)
-                        )
-                        is UiState.Empty -> Text(
-                            text = stringResource(R.string.state_empty_detail),
-                            modifier = Modifier.padding(HavaSpacing.xl)
-                        )
-                        is UiState.Error -> {
-                            Text(
-                                text = content.message.asString(),
+                    // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
+                    // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
+                    // çalışmaz.
+                    else -> Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
+                    ) {
+                        when (content) {
+                            is UiState.Loading -> CircularProgressIndicator(
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
-                            Button(onClick = onRetry) {
-                                Text(text = stringResource(R.string.action_retry))
+                            is UiState.Empty -> Text(
+                                text = stringResource(R.string.state_empty_detail),
+                                modifier = Modifier.padding(HavaSpacing.xl)
+                            )
+                            is UiState.Error -> {
+                                Text(
+                                    text = content.message.asString(),
+                                    modifier = Modifier.padding(HavaSpacing.xl)
+                                )
+                                Button(onClick = onRetry) {
+                                    Text(text = stringResource(R.string.action_retry))
+                                }
                             }
+                            is UiState.Success -> Unit
                         }
-                        is UiState.Success -> Unit
                     }
                 }
             }
-        }
         }
     }
 }

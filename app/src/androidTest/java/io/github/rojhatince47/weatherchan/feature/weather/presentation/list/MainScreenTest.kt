@@ -199,7 +199,7 @@ class MainScreenTest {
     }
 
     @Test
-    fun mainScreenHasNoRefreshButtonAndKeepsContentWhileRefreshing() {
+    fun mainScreenKeepsContentWhileRefreshing() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it, isFavorite = false)
@@ -230,10 +230,9 @@ class MainScreenTest {
 
         // Yenileme sırasında mevcut içerik korunur. Göstergeyi M3'ün kendi
         // IndicatorBox'ı üretir ve testTag taşıyamaz; görünürlüğü cihazda
-        // doğrulanır. Buradaki söz: buton gitti, içerik gitti.
+        // doğrulanır.
         composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
         composeRule.onNodeWithTag("pull_refresh").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Yenile").assertDoesNotExist()
     }
 
     @Test

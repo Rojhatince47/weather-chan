@@ -93,136 +93,136 @@ fun MainScreen(
             onRefresh = onRefresh,
             modifier = Modifier.testTag("pull_refresh")
         ) {
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
-            // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
-            val isDarkTheme = themeMode.resolveIsDark()
-            val themeModeName = stringResource(
-                when (themeMode) {
-                    ThemeMode.SYSTEM -> R.string.theme_mode_system
-                    ThemeMode.LIGHT -> R.string.theme_mode_light
-                    ThemeMode.DARK -> R.string.theme_mode_dark
-                }
-            )
-            val themeLabel = stringResource(R.string.theme_toggle, themeModeName)
+            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
+                // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
+                val isDarkTheme = themeMode.resolveIsDark()
+                val themeModeName = stringResource(
+                    when (themeMode) {
+                        ThemeMode.SYSTEM -> R.string.theme_mode_system
+                        ThemeMode.LIGHT -> R.string.theme_mode_light
+                        ThemeMode.DARK -> R.string.theme_mode_dark
+                    }
+                )
+                val themeLabel = stringResource(R.string.theme_toggle, themeModeName)
 
-            HomeHeader(
-                title = stringResource(R.string.home_title),
-                description = stringResource(R.string.home_description)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = HavaSpacing.lg),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onToggleThemeMode,
-                    modifier = Modifier
-                        .testTag("theme_toggle")
-                        // ThemeModeIcon bir Canvas olduğu için erişilebilirlik
-                        // etiketi düğmenin kendisine verilir. semantics bloğu
-                        // composable olmadığından metin burada önceden çözülür.
-                        .semantics { contentDescription = themeLabel }
+                HomeHeader(
+                    title = stringResource(R.string.home_title),
+                    description = stringResource(R.string.home_description)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = HavaSpacing.lg),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemeModeIcon(themeMode = themeMode)
-                }
-                TextButton(onClick = onToggleUnit) {
-                    Text(
-                        text = if (unit.unit == TemperatureUnit.CELSIUS) {
-                            stringResource(R.string.unit_celsius)
-                        } else {
-                            stringResource(R.string.unit_fahrenheit)
-                        }
-                    )
-                }
-            }
-            CitySearchField(
-                value = uiState.query,
-                onValueChange = onQueryChange
-            )
-            // Canlı arama göstergeleri ince ve sabittir; sonuç satırları ise
-            // kaydırılabilir listenin başına gömülür — 10 sonuç yerel listeyi
-            // ekran dışına itmesin diye sabit bölüm kullanılmaz.
-            when (val search = uiState.searchState) {
-                SearchUiState.Idle -> Unit
-                SearchUiState.Loading -> LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().testTag("search_indicator")
-                )
-                is SearchUiState.Failure -> Text(
-                    text = search.error.toUiText().asString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(
-                        horizontal = HavaSpacing.lg,
-                        vertical = HavaSpacing.sm
-                    )
-                )
-                is SearchUiState.Success ->
-                    if (uiState.content !is UiState.Success && search.results.isNotEmpty()) {
-                        LiveSearchResults(
-                            results = search.results,
-                            onAddCity = onAddCity,
-                            onOpenCity = onOpenCity
+                    IconButton(
+                        onClick = onToggleThemeMode,
+                        modifier = Modifier
+                            .testTag("theme_toggle")
+                            // ThemeModeIcon bir Canvas olduğu için erişilebilirlik
+                            // etiketi düğmenin kendisine verilir. semantics bloğu
+                            // composable olmadığından metin burada önceden çözülür.
+                            .semantics { contentDescription = themeLabel }
+                    ) {
+                        ThemeModeIcon(themeMode = themeMode)
+                    }
+                    TextButton(onClick = onToggleUnit) {
+                        Text(
+                            text = if (unit.unit == TemperatureUnit.CELSIUS) {
+                                stringResource(R.string.unit_celsius)
+                            } else {
+                                stringResource(R.string.unit_fahrenheit)
+                            }
                         )
                     }
-            }
-            // Yenileme sırasında mevcut içerik korunur; göstergeyi
-            // PullToRefreshBox üretir. Tam ekran Loading sadece ilk
-            // yüklemede (içerik yokken) gösterilir.
-            when (val content = uiState.content) {
-                is UiState.Success -> LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(HavaSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
-                ) {
-                    val search = uiState.searchState
-                    if (search is SearchUiState.Success && search.results.isNotEmpty()) {
-                        item(key = "live_search_results") {
+                }
+                CitySearchField(
+                    value = uiState.query,
+                    onValueChange = onQueryChange
+                )
+                // Canlı arama göstergeleri ince ve sabittir; sonuç satırları ise
+                // kaydırılabilir listenin başına gömülür — 10 sonuç yerel listeyi
+                // ekran dışına itmesin diye sabit bölüm kullanılmaz.
+                when (val search = uiState.searchState) {
+                    SearchUiState.Idle -> Unit
+                    SearchUiState.Loading -> LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth().testTag("search_indicator")
+                    )
+                    is SearchUiState.Failure -> Text(
+                        text = search.error.toUiText().asString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(
+                            horizontal = HavaSpacing.lg,
+                            vertical = HavaSpacing.sm
+                        )
+                    )
+                    is SearchUiState.Success ->
+                        if (uiState.content !is UiState.Success && search.results.isNotEmpty()) {
                             LiveSearchResults(
                                 results = search.results,
                                 onAddCity = onAddCity,
                                 onOpenCity = onOpenCity
                             )
                         }
-                    }
-                    items(content.data, key = { it.cityId }) { cityWeather ->
-                        CityWeatherCard(
-                            cityWeather = cityWeather,
-                            isDarkTheme = isDarkTheme,
-                            onClick = { onCityClick(cityWeather.cityId) },
-                            onLongClick = {
-                                pendingDelete = cityWeather.cityId to cityWeather.name
-                            },
-                            onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
-                        )
-                    }
                 }
-                // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
-                // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
-                // çalışmaz.
-                else -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    when (content) {
-                        is UiState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier.padding(HavaSpacing.xl)
-                        )
-                        is UiState.Empty -> Text(
-                            text = stringResource(R.string.state_empty_list),
-                            modifier = Modifier.padding(HavaSpacing.xl)
-                        )
-                        is UiState.Error -> Text(
-                            text = content.message.asString(),
-                            modifier = Modifier.padding(HavaSpacing.xl)
-                        )
-                        is UiState.Success -> Unit
+                // Yenileme sırasında mevcut içerik korunur; göstergeyi
+                // PullToRefreshBox üretir. Tam ekran Loading sadece ilk
+                // yüklemede (içerik yokken) gösterilir.
+                when (val content = uiState.content) {
+                    is UiState.Success -> LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(HavaSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
+                    ) {
+                        val search = uiState.searchState
+                        if (search is SearchUiState.Success && search.results.isNotEmpty()) {
+                            item(key = "live_search_results") {
+                                LiveSearchResults(
+                                    results = search.results,
+                                    onAddCity = onAddCity,
+                                    onOpenCity = onOpenCity
+                                )
+                            }
+                        }
+                        items(content.data, key = { it.cityId }) { cityWeather ->
+                            CityWeatherCard(
+                                cityWeather = cityWeather,
+                                isDarkTheme = isDarkTheme,
+                                onClick = { onCityClick(cityWeather.cityId) },
+                                onLongClick = {
+                                    pendingDelete = cityWeather.cityId to cityWeather.name
+                                },
+                                onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
+                            )
+                        }
+                    }
+                    // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
+                    // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
+                    // çalışmaz.
+                    else -> Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        when (content) {
+                            is UiState.Loading -> CircularProgressIndicator(
+                                modifier = Modifier.padding(HavaSpacing.xl)
+                            )
+                            is UiState.Empty -> Text(
+                                text = stringResource(R.string.state_empty_list),
+                                modifier = Modifier.padding(HavaSpacing.xl)
+                            )
+                            is UiState.Error -> Text(
+                                text = content.message.asString(),
+                                modifier = Modifier.padding(HavaSpacing.xl)
+                            )
+                            is UiState.Success -> Unit
+                        }
                     }
                 }
             }
-        }
         }
 
         pendingDelete?.let { (cityId, cityName) ->

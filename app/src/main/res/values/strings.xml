@@ -4,7 +4,6 @@
     <string name="home_title">Weather-chan</string>
     <string name="home_description">Şehirlerin havasını sevimli takip et</string>
 
-    <string name="action_refresh">Yenile</string>
     <string name="action_retry">Tekrar dene</string>
     <string name="action_back">Geri</string>
     <string name="search_placeholder">Şehir ara</string>

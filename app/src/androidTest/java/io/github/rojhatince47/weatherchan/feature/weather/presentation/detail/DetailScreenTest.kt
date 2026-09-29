@@ -167,7 +167,7 @@ class DetailScreenTest {
     }
 
     @Test
-    fun detailScreenHasNoRefreshButtonAndKeepsContentWhileRefreshing() {
+    fun detailScreenKeepsContentWhileRefreshing() {
         composeRule.setContent {
             HavaTheme {
                 DetailScreen(
@@ -187,7 +187,6 @@ class DetailScreenTest {
 
         composeRule.onNodeWithText("İstanbul").assertIsDisplayed()
         composeRule.onNodeWithTag("pull_refresh").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Yenile").assertDoesNotExist()
     }
 
     private fun detailUiModel(): ForecastDetailUiModel = WeatherUiMapper()
