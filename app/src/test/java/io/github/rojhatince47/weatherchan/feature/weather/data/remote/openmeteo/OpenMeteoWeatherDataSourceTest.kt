@@ -10,8 +10,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -100,23 +102,47 @@ class OpenMeteoWeatherDataSourceTest {
         assertTrue(path.contains("count=10"))
     }
 
-    private fun testCity(name: String = "İstanbul"): City = City(
+    private fun testCity(
+        name: String = "İstanbul",
+        latitude: Double = 41.01,
+        longitude: Double = 28.98
+    ): City = City(
         name = name,
         region = "Marmara",
         country = "Türkiye",
-        coordinates = Coordinates(latitude = 41.01, longitude = 28.98)
+        coordinates = Coordinates(latitude = latitude, longitude = longitude)
     )
+
+    private val istanbul = testCity()
+    private val ankara = testCity(name = "Ankara", latitude = 39.92, longitude = 32.85)
+
+    /**
+     * Yanıtı **koordinata göre** eşler.
+     *
+     * Kuyruk (`enqueue`) sıra tabanlıdır ama `batchAll` istekleri `async` ile
+     * başlatır; gönderim sırası garanti değildir. İki şehir aynı koordinatı
+     * taşıdığında istekler ayırt edilemez ve test rastgele başarısız olurdu.
+     * Koordinata göre eşleme bu yarışı tamamen ortadan kaldırır.
+     */
+    private fun respondByLatitude(vararg rules: Pair<Double, MockResponse>) {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path.orEmpty()
+                val rule = rules.firstOrNull { (latitude, _) -> path.contains("latitude=$latitude") }
+                return rule?.second ?: MockResponse().setResponseCode(500)
+            }
+        }
+    }
 
     // --- kısmi başarısızlık ---------------------------------------------------
 
     @Test
     fun `tek sehir basarisiz olsa bile listeyi bosaltmaz`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(500))
-        server.enqueue(MockResponse().setBody(FORECAST_JSON))
+        respondByLatitude(
+            ankara.coordinates.latitude to MockResponse().setBody(FORECAST_JSON)
+        ) // İstanbul için kural yok -> 500
 
-        val result = dataSource.cityWeathers(
-            listOf(testCity(), testCity(name = "Ankara"))
-        )
+        val result = dataSource.cityWeathers(listOf(istanbul, ankara))
 
         assertTrue(
             "Bir şehir hata verse de diğeri başarılıysa liste boşalmamalı",
@@ -131,9 +157,7 @@ class OpenMeteoWeatherDataSourceTest {
         server.enqueue(MockResponse().setResponseCode(500))
         server.enqueue(MockResponse().setResponseCode(503))
 
-        val result = dataSource.cityWeathers(
-            listOf(testCity(), testCity(name = "Ankara"))
-        )
+        val result = dataSource.cityWeathers(listOf(istanbul, ankara))
 
         assertTrue(
             "Hiçbir şehir gelemiyorsa hata yutulmamalı, kullanıcıya bildirilmeli",

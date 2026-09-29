@@ -91,13 +91,20 @@ class CityPreferences @Inject constructor(
     private fun decode(raw: String): List<City> = runCatching { json.decodeFromString<List<CityDto>>(raw).map { it.toCity() } }
         .getOrDefault(emptyList())
 
+    /**
+     * Diskteki kayıt.
+     *
+     * `isLocation` varsayılan değerlidir: bu alan eklenmeden yazılmış eski
+     * kayıtlar çözümlenmeye devam eder ve `false` konum olarak yorumlanır.
+     */
     @Serializable
     private data class CityDto(
         val name: String,
         val region: String? = null,
         val country: String? = null,
         val latitude: Double,
-        val longitude: Double
+        val longitude: Double,
+        val isLocation: Boolean = false
     )
 
     private fun City.toDto() = CityDto(
@@ -105,13 +112,15 @@ class CityPreferences @Inject constructor(
         region = region,
         country = country,
         latitude = coordinates.latitude,
-        longitude = coordinates.longitude
+        longitude = coordinates.longitude,
+        isLocation = isLocation
     )
 
     private fun CityDto.toCity() = City(
         name = name,
         region = region,
         country = country,
-        coordinates = Coordinates(latitude = latitude, longitude = longitude)
+        coordinates = Coordinates(latitude = latitude, longitude = longitude),
+        isLocation = isLocation
     )
 }

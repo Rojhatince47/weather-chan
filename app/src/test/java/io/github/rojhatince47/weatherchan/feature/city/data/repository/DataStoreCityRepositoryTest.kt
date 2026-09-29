@@ -177,6 +177,46 @@ class DataStoreCityRepositoryTest {
         )
     }
 
+    // --- konum işareti serileştirmesi ---
+
+    @Test
+    fun `konum isareti yazilip okununca korunur`() = runTest {
+        val dataStore = createDataStore()
+        val first = createRepository(dataStore)
+        first.cities.first() // göçü tetikler
+
+        val preferences = CityPreferences(dataStore)
+        preferences.write(listOf(bursa.copy(isLocation = true), ankara))
+
+        val read = CityPreferences(dataStore).cities().first()
+
+        assertEquals(
+            "Konum olarak kaydedilen şehrin işareti yeni okumada da durmalı",
+            listOf(true, false),
+            read.map { it.isLocation }
+        )
+    }
+
+    @Test
+    fun `isLocation alani olmayan eski kayit varsayilan olarak false okunur`() = runTest {
+        val dataStore = createDataStore()
+        dataStore.markMigrated()
+        // Bu alan eklenmeden yazılmış kayıt: çözümlenmeli, patlamamalı.
+        dataStore.edit {
+            it[stringPreferencesKey("cities_json")] = """
+                [{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98}]
+""".trimIndent()
+        }
+
+        val read = CityPreferences(dataStore).cities().first()
+
+        assertEquals(listOf("Istanbul"), read.map { it.name })
+        assertFalse(
+            "Eski kayıtlar konum olarak işaretlenmemeli",
+            read.single().isLocation
+        )
+    }
+
     // --- izin bayrağı ---------------------------------------------------------
 
     @Test
