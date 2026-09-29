@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -64,6 +65,8 @@ fun MainScreen(
     onAddCity: (City) -> Unit,
     onOpenCity: (City) -> Unit,
     onDeleteCity: (Long) -> Unit,
+    onAddLocation: () -> Unit,
+    onRetryLocation: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
@@ -194,6 +197,19 @@ fun MainScreen(
                                 }
                             )
                         }
+                        // Konum kaydı silinmişse ya da hiç okunamamışsa geri
+                        // eklenebilir. Liste doluyken de görünür olmalı: aksi
+                        // halde kullanıcı konumu yalnız listeyi boşaltarak geri
+                        // getirebilirdi.
+                        if (uiState.locationState !is LocationState.Resolved) {
+                            item(key = "add_location") {
+                                AddLocationRow(
+                                    locationState = uiState.locationState,
+                                    onAddLocation = onAddLocation,
+                                    onRetryLocation = onRetryLocation
+                                )
+                            }
+                        }
                     }
                     // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
                     // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
@@ -218,9 +234,10 @@ fun MainScreen(
                             is UiState.Empty -> {
                                 val search = uiState.searchState
                                 when {
-                                    uiState.query.isBlank() -> Text(
-                                        text = stringResource(R.string.state_empty_list),
-                                        modifier = Modifier.padding(HavaSpacing.xl)
+                                    uiState.query.isBlank() -> LocationEmptyState(
+                                        locationState = uiState.locationState,
+                                        onAddLocation = onAddLocation,
+                                        onRetryLocation = onRetryLocation
                                     )
                                     search is SearchUiState.Success && search.results.isEmpty() -> Text(
                                         text = stringResource(R.string.state_empty_search),
@@ -253,6 +270,76 @@ fun MainScreen(
     }
 }
 
+/**
+ * Liste boşken gösterilen konum eylemi.
+ *
+ * Konum okunamadıysa mesaj **nedenini** anlatır ve eylem "Tekrar dene" olur;
+ * aksi halde "Konumumu ekle" gösterilir. Konum okunuyorsa kısa bir bekleme
+ * metni çıkar. Hiçbir dalda arama kutusu kaldırılmaz: konum eklenemezse
+ * kullanıcı şehir aramayla ilerleyebilmelidir.
+ */
+@Composable
+private fun LocationEmptyState(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(HavaSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
+    ) {
+        when (locationState) {
+            is LocationState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.padding(HavaSpacing.sm))
+                Text(
+                    text = stringResource(R.string.location_loading),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            is LocationState.Unavailable -> {
+                Text(
+                    text = stringResource(R.string.location_unavailable),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Button(onClick = onRetryLocation) {
+                    Text(text = stringResource(R.string.location_retry))
+                }
+            }
+            else -> {
+                Text(
+                    text = stringResource(R.string.location_permission_rationale),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Button(onClick = onAddLocation) {
+                    Text(text = stringResource(R.string.location_add_action))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Liste doluyken gösterilen konum geri ekleme satırı.
+ *
+ * Liste boşken eklenen eylem burada da görünür olmalıdır: aksi halde kullanıcı
+ * konumu yalnız listeyi boşaltarak geri getirebilirdi.
+ */
+@Composable
+private fun AddLocationRow(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit) {
+    val retry = locationState is LocationState.Unavailable
+    Button(
+        onClick = if (retry) onRetryLocation else onAddLocation,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = if (retry) {
+                stringResource(R.string.location_retry)
+            } else {
+                stringResource(R.string.location_add_action)
+            }
+        )
+    }
+}
+
 @Preview(showBackground = true, widthDp = 360)
 @Composable
 private fun MainScreenCompactPreview() {
@@ -269,7 +356,9 @@ private fun MainScreenCompactPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {}
+            onToggleThemeMode = {},
+            onAddLocation = {},
+            onRetryLocation = {}
         )
     }
 }
@@ -290,7 +379,9 @@ private fun MainScreenMediumPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {}
+            onToggleThemeMode = {},
+            onAddLocation = {},
+            onRetryLocation = {}
         )
     }
 }
@@ -311,7 +402,9 @@ private fun MainScreenExpandedPreview() {
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {},
-            onToggleThemeMode = {}
+            onToggleThemeMode = {},
+            onAddLocation = {},
+            onRetryLocation = {}
         )
     }
 }

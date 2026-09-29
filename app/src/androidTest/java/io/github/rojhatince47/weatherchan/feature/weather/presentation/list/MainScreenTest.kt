@@ -6,12 +6,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
@@ -55,6 +58,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -65,6 +70,11 @@ class MainScreenTest {
         composeRule.onNodeWithText("Şehir ara").assertIsDisplayed()
     }
 
+    /**
+     * Boş listenin nedeni "sonuç bulunamadı" değildir: liste, içinde ne konum
+     * ne de şehir bulunmadığı için boştur. Ekran bu yüzden konum eklemeyi
+     * önerir ve arama kutusu durur.
+     */
     @Test
     fun mainScreenShowsEmptyState() {
         composeRule.setContent {
@@ -80,13 +90,16 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
             }
         }
 
-        composeRule.onNodeWithText("Sonuç bulunamadı").assertIsDisplayed()
+        composeRule.onNodeWithText("Konumumu ekle").assertIsDisplayed()
+        composeRule.onNodeWithText("Sonuç bulunamadı").assertDoesNotExist()
     }
 
     @Test
@@ -111,6 +124,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM,
                     listState = LazyListState(firstVisibleItemIndex = 3)
@@ -144,6 +159,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = { toggled = true },
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -176,7 +193,9 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = { refreshed = true },
                     onToggleUnit = {},
-                    onToggleThemeMode = {}
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {}
                 )
             }
         }
@@ -217,7 +236,9 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
-                    onToggleThemeMode = {}
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {}
                 )
             }
         }
@@ -251,7 +272,9 @@ class MainScreenTest {
                         onRetry = {},
                         onRefresh = {},
                         onToggleUnit = {},
-                        onToggleThemeMode = {}
+                        onToggleThemeMode = {},
+                        onAddLocation = {},
+                        onRetryLocation = {}
                     )
                 }
             }
@@ -278,7 +301,9 @@ class MainScreenTest {
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {},
-                    onToggleThemeMode = { themeMode.value = current.next() }
+                    onToggleThemeMode = { themeMode.value = current.next() },
+                    onAddLocation = {},
+                    onRetryLocation = {}
                 )
             }
         }
@@ -312,6 +337,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -347,6 +374,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -382,6 +411,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -436,6 +467,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -469,6 +502,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -502,6 +537,8 @@ class MainScreenTest {
                     onRefresh = {},
                     onToggleUnit = {},
                     onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM
                 )
@@ -510,6 +547,230 @@ class MainScreenTest {
 
         composeRule.onNodeWithText("Sonuç bulunamadı").assertDoesNotExist()
         composeRule.onNodeWithText("Aramanızla eşleşen şehir bulunamadı").assertDoesNotExist()
+    }
+
+    // --- konum: liste ilk kez boş olduğunda -----------------------------------
+
+    @Test
+    fun emptyListShowsAddMyLocationAction() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Empty),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Konumumu ekle").assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyListShowsSearchHintAlongsideLocationAction() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Empty),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        // Kullanıcı konum ekleyemezse aramayla şehir bulabilmeli.
+        composeRule.onNodeWithText("Şehir ara").assertIsDisplayed()
+    }
+
+    @Test
+    fun addMyLocationActionInvokesCallback() {
+        var clicked = false
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Empty),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = { clicked = true },
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Konumumu ekle").performClick()
+
+        assertEquals("Konum ekleme geri çağrısı tetiklenmeli", true, clicked)
+    }
+
+    @Test
+    fun unavailableLocationOffersRetryInsteadOfAddAction() {
+        var retried = false
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Empty,
+                        locationState = LocationState.Unavailable
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = { retried = true },
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Tekrar dene").assertIsDisplayed()
+        composeRule.onNodeWithText("Tekrar dene").performClick()
+        assertEquals("Yeniden deneme geri çağrısı tetiklenmeli", true, retried)
+    }
+
+    // --- konum: liste boş değilken ------------------------------------------
+
+    @Test
+    fun locationIsReAddableWhenListIsNotEmptyAndLocationMissing() {
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map { mapper.toCityWeatherUiModel(it) }
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers),
+                        // Konum hiç okunmamış (ya da kartı silinmiş).
+                        locationState = LocationState.Idle
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        // Liste doluyken de konum geri eklenebilmeli: aksi halde kullanıcı
+        // konumu yalnız listeyi boşaltarak geri getirebilirdi.
+        composeRule
+            .onNode(hasScrollAction())
+            .performScrollToNode(hasText("Konumumu ekle"))
+        composeRule.onNodeWithText("Konumumu ekle").assertIsDisplayed()
+    }
+
+    @Test
+    fun unavailableLocationRowOffersRetryWhenListIsNotEmpty() {
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map { mapper.toCityWeatherUiModel(it) }
+        var retried = false
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers),
+                        // Konum kartı silinmiş: okunamadı, yeniden denenecek.
+                        locationState = LocationState.Unavailable
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = { retried = true },
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule
+            .onNode(hasScrollAction())
+            .performScrollToNode(hasText("Tekrar dene"))
+        composeRule.onNodeWithText("Tekrar dene").performClick()
+        assertEquals("Yeniden deneme geri çağrısı tetiklenmeli", true, retried)
+    }
+
+    @Test
+    fun noAddLocationRowWhenLocationIsResolved() {
+        val mapper = WeatherUiMapper()
+        val cityWeathers = syntheticCityWeathers().map { mapper.toCityWeatherUiModel(it) }
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(cityWeathers),
+                        locationState = LocationState.Resolved
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        // Konum listedeyken gereksiz "ekle" satırı gösterilmemeli.
+        composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
     }
 
     private fun syntheticCityWeathers() = listOf(

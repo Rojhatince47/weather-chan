@@ -948,4 +948,45 @@ class MainViewModelTest {
             names
         )
     }
+
+    @Test
+    fun `konum silinince geri ekleme gorunur olur`() = runTest {
+        val konum = ankara.copy(isLocation = true)
+        val cities = FakeCityRepository(initial = listOf(istanbul, konum))
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = FakeLocationProvider(konum.coordinates)
+        )
+        runCurrent()
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+
+        viewModel.onDeleteCity(konum.id)
+        runCurrent()
+
+        assertEquals(
+            "Konum silinince geri eklenebilmeli",
+            LocationState.Unavailable,
+            viewModel.uiState.value.locationState
+        )
+    }
+
+    @Test
+    fun `konum haricindeki sehir silinince konum durumu degismez`() = runTest {
+        val konum = ankara.copy(isLocation = true)
+        val cities = FakeCityRepository(initial = listOf(istanbul, konum))
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = FakeLocationProvider(konum.coordinates)
+        )
+        runCurrent()
+
+        viewModel.onDeleteCity(istanbul.id)
+        runCurrent()
+
+        assertEquals(
+            "Konum hâlâ listede, durum değişmemeli",
+            LocationState.Resolved,
+            viewModel.uiState.value.locationState
+        )
+    }
 }

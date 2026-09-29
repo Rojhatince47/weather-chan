@@ -259,6 +259,12 @@ class MainViewModel @Inject constructor(
     fun onDeleteCity(cityId: Long) {
         val deleted = storedCities.firstOrNull { it.id == cityId } ?: return
         viewModelScope.launch { cityRepository.remove(cityId) }
+        if (deleted.isLocation) {
+            // Konum kartı silindi. Durum `Resolved` kalırsa "Konumumu ekle"
+            // satırı hiç görünmez ve kullanıcı konumu yalnız uygulamayı
+            // yeniden başlatarak geri getirebilirdi.
+            _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+        }
         _events.trySend(
             MainEvent.ShowSnackbar(
                 message = UiText.Resource(R.string.city_deleted, deleted.name),

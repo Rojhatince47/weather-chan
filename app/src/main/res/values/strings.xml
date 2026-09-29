@@ -17,6 +17,15 @@
     <string name="section_current">Şu an</string>
 
     <string name="state_empty_list">Sonuç bulunamadı</string>
+
+    <!-- Konum: liste yalnız mevcut konumu içermelidir, tohum şehir yoktur. -->
+    <string name="location_add_action">Konumumu ekle</string>
+    <string name="location_unavailable">Konum alınamadı. Listeye bir şehir arayabilir veya konumunuzu tekrar deneyebilirsiniz.</string>
+    <string name="location_retry">Tekrar dene</string>
+    <string name="location_locating">Konumunuz bulunuyor…</string>
+    <string name="location_loading">Konum okunuyor…</string>
+    <string name="location_permission_rationale">Hava durumunuzu bulunduğunuz yere göre görmek için konum iznine ihtiyacımız var.</string>
+    <string name="location_card_label">Konumunuz</string>
     <string name="state_empty_search">Aramanızla eşleşen şehir bulunamadı</string>
     <string name="state_empty_detail">Veri bulunamadı</string>
 
