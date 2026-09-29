@@ -156,4 +156,21 @@ class DataStoreCityRepositoryTest {
 
         assertTrue(repository.cities.first { it.isNotEmpty() }.isNotEmpty())
     }
+
+    @Test
+    fun `eski kayittaki favori alani siralamayi degistirmez`() = runTest {
+        val dataStore = createDataStore()
+        dataStore.edit {
+            it[stringPreferencesKey("cities_json")] =
+                """[{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98,"isFavorite":false},""" +
+                """{"name":"Ankara","region":"Ic Anadolu","country":"Turkiye","latitude":39.92,"longitude":32.85,"isFavorite":true},""" +
+                """{"name":"Izmir","region":"Ege","country":"Turkiye","latitude":38.42,"longitude":27.14,"isFavorite":false}]"""
+        }
+
+        val repository = createRepository(dataStore)
+
+        val names = repository.cities.first { list -> list.size == 3 }.map { it.name }
+
+        assertEquals(listOf("Istanbul", "Ankara", "Izmir"), names)
+    }
 }
