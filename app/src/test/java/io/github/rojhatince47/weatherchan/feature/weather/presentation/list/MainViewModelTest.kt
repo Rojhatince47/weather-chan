@@ -7,15 +7,18 @@ import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
@@ -50,14 +53,20 @@ class MainViewModelTest {
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
     private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
 
-    private fun TestScope.mainViewModel(fakeWeather: FakeWeatherRepository, fakeCities: CityRepository = FakeCityRepository()) =
-        MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(fakeWeather),
-            searchCities = SearchCitiesUseCase(fakeWeather),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = fakeCities
-        )
+    private fun TestScope.mainViewModel(
+        fakeWeather: FakeWeatherRepository,
+        fakeCities: CityRepository = FakeCityRepository(),
+        locationProvider: LocationProvider = FakeLocationProvider(coordinates = null),
+        permissions: CityPermissions = FakeCityPermissions(asked = true)
+    ) = MainViewModel(
+        getCityWeathers = GetCityWeathersUseCase(fakeWeather),
+        searchCities = SearchCitiesUseCase(fakeWeather),
+        uiMapper = WeatherUiMapper(),
+        unitRepository = FakeTemperatureUnitRepository(),
+        cityRepository = fakeCities,
+        getLocationCity = GetLocationCityUseCase(locationProvider, fakeWeather),
+        cityPermissions = permissions
+    )
 
     @Before
     fun setUp() {
@@ -76,7 +85,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -97,7 +108,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -120,7 +133,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.onQueryChange("Ankara")
@@ -151,7 +166,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         // İlk yükleme tamamlanır; sonrasında ağ kapılı kalır.
@@ -178,7 +195,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
         repository.completeAllCityWeathersGates()
         val callsAfterLoad = repository.finishedCityWeathersCalls
@@ -204,7 +223,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.onQueryChange("zzz")
@@ -223,7 +244,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -253,7 +276,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -282,7 +307,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.loadState.test {
@@ -309,7 +336,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -329,7 +358,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.loadState.test {
@@ -354,7 +385,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         // Init başlattı; arama/sorgu yok, yalnızca depo akışları tetiklendi.
@@ -388,7 +421,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -423,7 +458,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository()
+            cityRepository = FakeCityRepository(),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -743,7 +780,9 @@ class MainViewModelTest {
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = FakeCityRepository(initial = listOf(istanbul, ankara, izmir))
+            cityRepository = FakeCityRepository(initial = listOf(istanbul, ankara, izmir)),
+            getLocationCity = GetLocationCityUseCase(FakeLocationProvider(coordinates = null), FakeWeatherRepository()),
+            cityPermissions = FakeCityPermissions(asked = true)
         )
 
         viewModel.uiState.test {
@@ -757,6 +796,156 @@ class MainViewModelTest {
             "Ilk istek eksik liste taşimamalı; eklenen şehirler atlanmamalı",
             3,
             firstRequest.size
+        )
+    }
+
+    // --- konum testleri için sahteler -----------------------------------------
+
+    private val locationCoordinates = Coordinates(41.01, 28.98)
+
+    /** Sabit konum döndüren sahte; `null` verirsen konum okunamaz. */
+    private class FakeLocationProvider(private val coordinates: Coordinates?) : LocationProvider {
+        var callCount: Int = 0
+            private set
+
+        override suspend fun currentCoordinates(): Coordinates? {
+            callCount++
+            return coordinates
+        }
+    }
+
+    /** Kalıcı "diyalog gösterildi" bayrağının sahtesi. */
+    private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
+        val askedFlag: Boolean get() = asked
+
+        override suspend fun wasAsked(): Boolean = asked
+
+        override suspend fun markAsked() {
+            asked = true
+        }
+    }
+
+    private fun TestScope.viewModelWithLocation(
+        cities: CityRepository = FakeCityRepository(),
+        provider: LocationProvider = FakeLocationProvider(locationCoordinates),
+        permissions: CityPermissions = FakeCityPermissions(asked = true),
+        locationWeather: FakeWeatherRepository = FakeWeatherRepository(),
+        weather: FakeWeatherRepository = FakeWeatherRepository().apply { autoCompleteGates = true }
+    ) = MainViewModel(
+        getCityWeathers = GetCityWeathersUseCase(weather),
+        searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
+        uiMapper = WeatherUiMapper(),
+        unitRepository = FakeTemperatureUnitRepository(),
+        cityRepository = cities,
+        getLocationCity = GetLocationCityUseCase(provider, locationWeather),
+        cityPermissions = permissions
+    )
+
+    @Test
+    fun `ilk acilista izin sorulmadi durumundadir`() = runTest {
+        val viewModel = viewModelWithLocation(permissions = FakeCityPermissions(asked = false))
+        runCurrent()
+
+        assertEquals(
+            "Diyalog bir kez gösterilmeli",
+            LocationPermissionState.NotAsked,
+            viewModel.uiState.value.permissionState
+        )
+    }
+
+    @Test
+    fun `bayrak varsa diyalog yeniden acilmaz konum dogrudan okunur`() = runTest {
+        val provider = FakeLocationProvider(locationCoordinates)
+        val viewModel = viewModelWithLocation(provider = provider, permissions = FakeCityPermissions(asked = true))
+        runCurrent()
+
+        // Cevap bayrağa yazılmaz; konum okunarak gerçek durum belirlenir.
+        assertEquals(LocationPermissionState.Asked, viewModel.uiState.value.permissionState)
+        assertEquals("Bayrak varsa konum yine de okunmalı", 1, provider.callCount)
+    }
+
+    @Test
+    fun `izin verildiginde konum listeye eklenir`() = runTest {
+        val cities = FakeCityRepository(initial = emptyList())
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onPermissionResult(granted = true)
+        runCurrent()
+
+        val stored = cities.current()
+        assertEquals("Konum listeye eklenmeli", 1, stored.size)
+        assertTrue("Konum olarak işaretlenmeli", stored.single().isLocation)
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+    }
+
+    @Test
+    fun `izin reddedilince konum okunmaz bos durum gosterilir`() = runTest {
+        val provider = FakeLocationProvider(locationCoordinates)
+        val cities = FakeCityRepository(initial = emptyList())
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = provider,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onPermissionResult(granted = false)
+        runCurrent()
+
+        assertEquals(LocationPermissionState.Denied, viewModel.uiState.value.permissionState)
+        assertEquals(0, provider.callCount)
+        assertTrue("Reddedilince listeye eklenmemeli", cities.current().isEmpty())
+        assertEquals(LocationState.Unavailable, viewModel.uiState.value.locationState)
+    }
+
+    @Test
+    fun `konum okunamazsa akis durmaz bos durum gosterilir`() = runTest {
+        val cities = FakeCityRepository(initial = emptyList())
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = FakeLocationProvider(coordinates = null)
+        )
+        runCurrent()
+
+        assertEquals(
+            "Konum alınamadıysa akış hata vermemeli",
+            LocationState.Unavailable,
+            viewModel.uiState.value.locationState
+        )
+        assertTrue(cities.current().isEmpty())
+    }
+
+    @Test
+    fun `konum listenin basinda gorunur`() = runTest {
+        val cities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = FakeLocationProvider(ankara.coordinates),
+            // Ad çözülemezse kullanıcı "Konum" görür; sıralama testi için
+            // gerçek adın geldiği durum kurulur.
+            locationWeather = FakeWeatherRepository().apply {
+                searchResult = AppResult.Success(listOf(ankara.copy(isLocation = true)))
+            },
+            // Ağ cevabı depodaki sıranın TERSİ döner. Sıralama ağdan değil
+            // depodan okunmalıdır; bu olmadan test tesadüfen geçer.
+            weather = FakeWeatherRepository().apply {
+                autoCompleteGates = true
+                reverseCityWeathersOrder = true
+            }
+        )
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Liste yüklenmeli", content is UiState.Success)
+        val names = (content as UiState.Success).data.map { it.name }
+        assertEquals(
+            "Konum başa alınmalı, kalan sıra korunmalı",
+            listOf("Ankara", "İstanbul"),
+            names
         )
     }
 }

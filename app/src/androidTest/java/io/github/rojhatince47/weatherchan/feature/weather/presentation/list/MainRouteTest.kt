@@ -8,12 +8,14 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -22,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +56,10 @@ class MainRouteTest {
             searchCities = SearchCitiesUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
-            cityRepository = fakeCities
+            cityRepository = fakeCities,
+            // Bu test yalnız sil/geri-ala akışını kapsar; konum okunmasın.
+            getLocationCity = GetLocationCityUseCase(NoLocationProvider(), weather),
+            cityPermissions = RouteCityPermissions()
         )
         val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository())
 
@@ -156,5 +162,16 @@ class MainRouteTest {
         )
 
         override suspend fun search(query: String): AppResult<List<City>> = AppResult.Success(emptyList())
+    }
+
+    /** Konum okunamaz: bu test konum davranışını kapsamıyor. */
+    private class NoLocationProvider : LocationProvider {
+        override suspend fun currentCoordinates(): Coordinates? = null
+    }
+
+    /** Diyalog zaten sorulmuş sayılır; testte izin akışı tetiklenmesin. */
+    private class RouteCityPermissions : CityPermissions {
+        override suspend fun wasAsked(): Boolean = true
+        override suspend fun markAsked() = Unit
     }
 }

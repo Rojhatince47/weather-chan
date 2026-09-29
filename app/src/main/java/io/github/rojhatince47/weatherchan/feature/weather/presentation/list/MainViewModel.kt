@@ -9,11 +9,13 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
@@ -37,11 +39,14 @@ class MainViewModel @Inject constructor(
     private val searchCities: SearchCitiesUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
-    private val cityRepository: CityRepository
+    private val cityRepository: CityRepository,
+    private val getLocationCity: GetLocationCityUseCase,
+    private val cityPermissions: CityPermissions
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
+    private var locationJob: Job? = null
     private var searchJob: Job? = null
 
     /**
@@ -76,6 +81,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             unitRepository.unit.collect { rederiveContent() }
         }
+        viewModelScope.launch { restoreLocationPermissionState() }
         // Depo **yayımladığı anda** veri çekilir. `loadData()` burada ayrıca
         // çağrılmaz: depodan bir değer okumak yarış yaratırdı, çünkü yayım
         // gelene kadar listenin ne olduğu bilinmez. Akışın ilk yayımı zaten
@@ -95,6 +101,81 @@ class MainViewModel @Inject constructor(
     }
 
     fun findCity(cityId: Long): City? = loadedCities[cityId]
+
+    // --- konum ---------------------------------------------------------------
+
+    /**
+     * Bayrak **yalnız "diyalog bir kez gösterildi"** bilgisini taşır, izin
+     * cevabını değil. Bu yüzden cevap bayrağa bakılarak tahmin edilmez:
+     *
+     * - Daha önce sorulmamışsa → [LocationPermissionState.NotAsked]; UI bir kez
+     *   sistem diyaloğunu başlatır.
+     * - Daha önce sorulmuşsa → diyalog **yeniden açılmaz**, konum doğrudan
+     *   okunmaya çalışılır. Gerçek izin [GetLocationCityUseCase] içinde sistemde
+     *   sınanır; izin yoksa akış `null` döner ve [LocationState.Unavailable]
+     *   gösterilir.
+     *
+     * Böylece "diyalogu bir kez gördüm" ile "izni veriyorum" karıştırılmaz.
+     */
+    private suspend fun restoreLocationPermissionState() {
+        if (cityPermissions.wasAsked()) {
+            _uiState.update { it.copy(permissionState = LocationPermissionState.Asked) }
+            refreshLocation()
+        }
+    }
+
+    /**
+     * Sistem diyaloğunun cevabı. Diyaloğun gösterildiği an [markAsked] ile
+     * kalıcılaştırılır; cevabın ne olduğu bayrağa yazılmaz.
+     */
+    fun onPermissionResult(granted: Boolean) {
+        viewModelScope.launch {
+            cityPermissions.markAsked()
+            _uiState.update {
+                it.copy(
+                    permissionState = if (granted) {
+                        LocationPermissionState.Granted
+                    } else {
+                        LocationPermissionState.Denied
+                    }
+                )
+            }
+            if (granted) {
+                refreshLocation()
+            } else {
+                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+            }
+        }
+    }
+
+    /**
+     * Konumu okur ve listeye **konum olarak** ekler.
+     *
+     * Yazma kasıtlı olarak ayrı bir tur başlatmaz: `addAsLocation` depoyu
+     * yayımlar ve `init`'deki toplayıcı yeni listeden veri çekmeyi tek yerde
+     * başlatır. Burada ayrıca `fetch` çağırmak her eklemede iki ağ turu
+     * demek olurdu.
+     */
+    fun refreshLocation() {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            _uiState.update { it.copy(locationState = LocationState.Loading) }
+            val city = getLocationCity()
+            if (city == null) {
+                // Konum okunamadı: izin yok, GPS kapalı ya da sinyal yok.
+                // Akış durmaz, kullanıcı boş durumla karşılaşır.
+                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+                return@launch
+            }
+            cityRepository.addAsLocation(city)
+            _uiState.update { it.copy(locationState = LocationState.Resolved) }
+        }
+    }
+
+    /** Konum kartı silindikten sonra "Konumumu ekle" ile geri getirilir. */
+    fun onAddLocation() {
+        refreshLocation()
+    }
 
     fun onQueryChange(query: String) {
         // Sorgu bir kullanıcı girdisidir, bir veri getirme işlemi değil: seçim ve
@@ -299,6 +380,12 @@ class MainViewModel @Inject constructor(
             .filter { cityWeather ->
                 query.isBlank() ||
                     cityWeather.city.name.contains(query, ignoreCase = true)
+            }
+            // Konum her zaman başta. Kaynağın sırasına güvenilmez: ağ cevabı
+            // koordinat sırasına göre karışık gelebilir. Sıralama, listenin
+            // gerçek sahibi olan depodaki kayıt sırasından okunur.
+            .sortedBy { cityWeather ->
+                if (citiesById[cityWeather.city.id]?.isLocation == true) 0 else 1
             }
 
         return if (filtered.isEmpty()) {

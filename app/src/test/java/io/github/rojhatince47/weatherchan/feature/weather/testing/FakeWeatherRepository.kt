@@ -26,6 +26,15 @@ class FakeWeatherRepository : WeatherRepository {
     var failForecast = false
     var failCityWeathers = false
     var autoCompleteGates = false
+
+    /**
+     * Cevabı depodaki sıranın **tersi** olarak döndürür.
+     *
+     * Gerçek sağlayıcılar şehirleri depodaki sırayla değil, kendi
+     * koordinat sıralarıyla döndürebilir. Liste sırasının ağdan değil
+     * **depodan** okunması gerektiğini sınayan testler bunu kullanır.
+     */
+    var reverseCityWeathersOrder = false
     var finishedCityWeathersCalls = 0
         private set
 
@@ -54,7 +63,8 @@ class FakeWeatherRepository : WeatherRepository {
         if (failCityWeathers) {
             return AppResult.Failure(AppError.Network)
         }
-        return AppResult.Success(cities.map { it.toCityWeather() })
+        val ordered = if (reverseCityWeathersOrder) cities.reversed() else cities
+        return AppResult.Success(ordered.map { it.toCityWeather() })
     }
 
     var searchResult: AppResult<List<City>> = AppResult.Success(emptyList())
