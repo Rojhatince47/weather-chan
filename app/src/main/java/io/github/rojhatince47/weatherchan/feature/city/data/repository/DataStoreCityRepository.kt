@@ -2,18 +2,13 @@ package io.github.rojhatince47.weatherchan.feature.city.data.repository
 
 import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
 import io.github.rojhatince47.weatherchan.feature.city.data.local.CityPreferences
-import io.github.rojhatince47.weatherchan.feature.city.data.local.DefaultCitySeed
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 
 @Singleton
 class DataStoreCityRepository @Inject constructor(
@@ -21,17 +16,12 @@ class DataStoreCityRepository @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : CityRepository {
 
-    private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
-
-    override val cities: StateFlow<List<City>> = preferences.cities()
-        .stateIn(scope, SharingStarted.Eagerly, DefaultCitySeed.cities)
-
     /**
-     * `cities` StateFlow'unun başlangıç (tohum) değerini atlar, doğrudan
-     * DataStore'dan okur. DataStore ilk değeri önbelleğe aldığı için ek maliyet
-     * getirmez; yalnız "doğru değer" garantisi verir.
+     * Depo akışı doğrudan yayılır; `stateIn(...)` ile bir başlangıç değeri
+     * eklenmez. DataStore ilk okumada gerçeği önbelleğe alır, dolayısıyla hem
+     * doğruluk hem ek maliyet açısından bu biçim doğrudur.
      */
-    override suspend fun loadCities(): List<City> = preferences.cities().first()
+    override val cities: Flow<List<City>> = preferences.cities()
 
     override suspend fun add(city: City): List<City> = mutate { current ->
         // Zaten varsa üzerine yazma: mükerrer kayıt oluşmasın.
@@ -44,8 +34,8 @@ class DataStoreCityRepository @Inject constructor(
 
     /**
      * Oku-değiştir-yaz ve **yazılan listeyi** döndürür. Dönüş değeri, akışın
-     * (`cities`) yeni değeri yaymasından bağımsızdır: çağıran aynı karede doğru
-     * listeyle devam edebilsin diye. Yazma tek yerde toplanır.
+     * yeni değeri yaymasından bağımsızdır: çağıran aynı karede doğru listeyle
+     * devam edebilsin diye. Yazma tek yerde toplanır.
      */
     private suspend fun mutate(block: (List<City>) -> List<City>): List<City> {
         val current = preferences.cities().first()

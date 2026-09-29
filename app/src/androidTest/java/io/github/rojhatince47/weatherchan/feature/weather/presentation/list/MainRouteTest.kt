@@ -24,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.Weat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,14 +73,14 @@ class MainRouteTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Geri al").fetchSemanticsNodes().isNotEmpty()
         }
-        assertTrue(fakeCities.cities.value.none { it.name == "İstanbul" })
+        assertTrue(fakeCities.current().none { it.name == "İstanbul" })
 
         composeRule.onNodeWithText("Geri al").performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("İstanbul").fetchSemanticsNodes().isNotEmpty()
         }
-        assertTrue(fakeCities.cities.value.any { it.name == "İstanbul" })
+        assertTrue(fakeCities.current().any { it.name == "İstanbul" })
     }
 
     private class RouteUnitRepository : TemperatureUnitRepository {
@@ -104,9 +105,10 @@ class MainRouteTest {
         initial: List<City>
     ) : CityRepository {
         private val state = MutableStateFlow(initial)
-        override val cities: StateFlow<List<City>> = state.asStateFlow()
+        override val cities: Flow<List<City>> = state.asStateFlow()
 
-        override suspend fun loadCities(): List<City> = state.value
+        /** Yalnız test doğrulaması için: depodaki güncel liste. */
+        fun current(): List<City> = state.value
 
         override suspend fun add(city: City): List<City> {
             // İstenen davranış: listede yoksa ekle.

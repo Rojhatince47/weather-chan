@@ -22,6 +22,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRep
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -530,7 +531,7 @@ class MainViewModelTest {
         val berlin = City("Berlin", "Berlin", "Almanya", Coordinates(52.52, 13.405))
         viewModel.onAddCity(berlin)
 
-        assertTrue(fakeCities.cities.value.any { it.id == berlin.id })
+        assertTrue(fakeCities.current().any { it.id == berlin.id })
         assertTrue(fakeWeather.cityWeathersRequests.size > before)
         assertTrue(fakeWeather.cityWeathersRequests.last().any { it.id == berlin.id })
     }
@@ -559,22 +560,18 @@ class MainViewModelTest {
 
     /**
      * Gerçek depoda yazım asenkrondur: `DataStoreCityRepository.mutate` diske
-     * yazar, `cities` akışı ise bir sonraki okumada yansıtır. Bu fake yazılan
-     * listeyi **anında** döndürür ama akışa `flush()` ile geçirir; test böylece
-     * üretimdeki sırayı (çağıran yeni listeyi görür, akış gecikir) yeniden
-     * üretir.
+     * yazar, `cities` akışı ise **bir sonraki okumada** yansıtır. Bu fake
+     * mutasyonu hemen kaydeder ama akışa `flush()` ile geçirir; test böylece
+     * üretimdeki sırayı yeniden üretir.
+     *
+     * ViewModel yalnız akış yayımladığında veri çektiği için, `flush()` çağrılana
+     * kadar listede hiçbir değişiklik görünmemelidir — `flush()`'ın kendisi
+     * yenilemenin tetikleyicisidir.
      */
     private class GatedCityRepository(initial: List<City>) : CityRepository {
         private val state = MutableStateFlow(initial)
         private var pending: List<City>? = null
-        override val cities: StateFlow<List<City>> = state.asStateFlow()
-
-        /**
-         * Bekleyen yazım varsa onu döndürür ama **akışa yansıtmaz**: üretimde de
-         * yazma diske düşer, akış bir sonraki okumada güncellenir. `flush()`'ı
-         * çağırmamak, kapının açık kalmasını korur.
-         */
-        override suspend fun loadCities(): List<City> = pending ?: state.value
+        override val cities: Flow<List<City>> = state.asStateFlow()
 
         override suspend fun add(city: City): List<City> {
             val current = pending ?: state.value
@@ -658,7 +655,7 @@ class MainViewModelTest {
 
         viewModel.onDeleteCity(istanbul.id)
 
-        assertTrue(fakeCities.cities.value.none { it.id == istanbul.id })
+        assertTrue(fakeCities.current().none { it.id == istanbul.id })
         assertTrue(
             "Silme sonrasi hava durumu istegi atilmali",
             fakeWeather.cityWeathersRequests.size > requestsBefore
@@ -704,7 +701,7 @@ class MainViewModelTest {
         action!!.invoke()
         runCurrent()
 
-        assertTrue(fakeCities.cities.value.any { it.id == istanbul.id })
+        assertTrue(fakeCities.current().any { it.id == istanbul.id })
         assertTrue(fakeWeather.cityWeathersRequests.size > requestsBefore)
     }
 
@@ -717,28 +714,29 @@ class MainViewModelTest {
 
         viewModel.onDeleteCity(-1L)
 
-        assertEquals(5, fakeCities.cities.value.size)
+        assertEquals(5, fakeCities.current().size)
         assertEquals(requestsBefore, fakeWeather.cityWeathersRequests.size)
     }
 
     /**
-     * Soğuk açılış yarışı: `cities` StateFlow'u henüz tohumu (tek şehir)
-     * taşırken depoda üç şehir vardır. İlk yükleme **depodaki listeyi**
-     * kullanmalıdır; aksi hâlde eklenen şehirler hiç çekilmez ve görünmez.
+     * Açılışta veri çekimi **yalnız** depo akışının yayımladığı listeden başlar.
+     *
+     * Depo artık `StateFlow` olmadığı için dinleyen ilk değer gerçeğin kendisidir;
+     * "başlangıç (tohum) değeri" diye bir ikinci değer yoktur. Bu testin asıl
+     * güvencesi şudur: **ilk** hava durumu isteği zaten listenin tamamını
+     * içerir. Eski hata tam olarak buradaydı — ilk istek yalnız tohumdaki tek
+     * şehri taşıyor, eklenen şehirler hiç istenmiyordu.
      */
     @Test
-    fun `acilis depodaki tum sehirler icin hava durumu ceger`() = runTest {
+    fun `ilk istek depodaki tum sehirleri icerir`() = runTest {
         val izmir = City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
-        val repository = FakeCityRepository(
-            initial = listOf(istanbul, ankara, izmir),
-            staleStartupValue = listOf(istanbul)
-        )
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
         val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            getCityWeathers = GetCityWeathersUseCase(weather),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = repository
+            cityRepository = FakeCityRepository(initial = listOf(istanbul, ankara, izmir))
         )
 
         viewModel.uiState.test {
@@ -746,5 +744,12 @@ class MainViewModelTest {
             assertTrue(state.content is UiState.Success)
             assertEquals(3, (state.content as UiState.Success).data.size)
         }
+
+        val firstRequest = weather.cityWeathersRequests.first()
+        assertEquals(
+            "Ilk istek eksik liste taşimamalı; eklenen şehirler atlanmamalı",
+            3,
+            firstRequest.size
+        )
     }
 }

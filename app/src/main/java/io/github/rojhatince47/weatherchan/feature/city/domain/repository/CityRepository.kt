@@ -1,31 +1,29 @@
 package io.github.rojhatince47.weatherchan.feature.city.domain.repository
 
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Kullanıcının şehir listesinin tek gerçek kaynağı.
  */
 interface CityRepository {
-    /** Kullanıcının eklediği sırayı korur; yeniden sıralama yapılmaz. */
-    val cities: StateFlow<List<City>>
-
     /**
-     * Depodaki **güncel** listeyi bekleyerek döndürür.
+     * Depodaki liste. **İlk yayım zaten gerçek veridir** — akışta hiçbir zaman
+     * "tahmini" ya da "geçici" bir başlangıç değeri bulunmaz.
      *
-     * `cities` bir `StateFlow`'dur ve soğuk açılışta **başlangıç değerini**
-     * taşır (tohum). DataStore akışı henüz yaymamışken okunan bu değer diskteki
-     * gerçek listeyi yansıtmaz. Veri çekmeden önce depodan okunması gereken
-     * yerlerde bu işlem kullanılır.
+     * Bilerek `StateFlow` değil `Flow` seçildi: `StateFlow` bir **başlangıç
+     * değeri** zorunlu kılar ve o değer diskteki gerçeği yansıtmadığı sürece
+     * (ör. tohum, önbellek) soğuk açılışta yarış yaratır. `Flow` yalnız depodan
+     * gelen değerleri yayar, dolayısıyla dinleyen ilk değer gerçeğin kendisidir.
      */
-    suspend fun loadCities(): List<City>
+    val cities: Flow<List<City>>
 
     /**
      * Zaten listede olan şehir eklenirse mükerrer kayıt oluşmaz.
      *
-     * Mutatörler `suspend` ve **yazılan listeyi** döner: çağıran, yazma bittikten
+     * Mutatörler `suspend` ve **yazılan listeyi** döndürür: çağıran, yazma bittikten
      * sonra elindeki liste neyse onunla devam eder. Yazma asenkrondur (DataStore),
-     * bu yüzden dönen değer `cities.value` okunmadan önce kullanılmalıdır;
+     * bu yüzden dönen değer `cities` akışı okunmadan önce kullanılmalıdır;
      * aksi halde çağıran eski listeyi görüp yanlış veri çeker.
      */
     suspend fun add(city: City): List<City>

@@ -52,14 +52,14 @@ class MainViewModel @Inject constructor(
     private var cachedCityWeathers: List<CityWeather>? = null
 
     /**
-     * Depodan okunan son doğruluk listesi.
+     * Depodan **yayılan** son liste.
      *
-     * `cityRepository.cities` bir `StateFlow`'dur ve soğuk açılışta `stateIn`
-     * **başlangıç (tohum) değerini** taşır. Bu değer diskteki gerçek kaydı
-     * yansıtmaz, bu yüzden doğruluk kaynağı olarak kullanılamaz. Yalnız depoya
-     * yapılan okuma ve mutasyonların dönürdüğü listeler bu alanı günceller.
+     * Başlangıçta boştur ve yalnız `cityRepository.cities` yayımıyla ya da
+     * mutasyonların döndürdüğü yazılan listeyle dolar. Depo artık `StateFlow`
+     * olmadığı için "uydurma tohum değeri" diye bir yarış kaynağı yoktur;
+     * buradaki değer her zaman depodan gelmiştir.
      */
-    private var authoritativeCities: List<City> = cityRepository.cities.value
+    private var storedCities: List<City> = emptyList()
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -73,14 +73,18 @@ class MainViewModel @Inject constructor(
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
 
     init {
-        loadData()
         viewModelScope.launch {
             unitRepository.unit.collect { rederiveContent() }
         }
+        // Depo **yayımladığı anda** veri çekilir. `loadData()` burada ayrıca
+        // çağrılmaz: depodan bir değer okumak yarış yaratırdı, çünkü yayım
+        // gelene kadar listenin ne olduğu bilinmez. Akışın ilk yayımı zaten
+        // gerçek veridir, dolayısıyla ilk yükleme de doğru listeden başlar.
         viewModelScope.launch {
-            cityRepository.cities.collect {
-                rederiveContent()
+            cityRepository.cities.collect { stored ->
+                storedCities = stored
                 refreshSearchInListFlags()
+                fetch(stored, keepContent = _uiState.value.content is UiState.Success)
             }
         }
     }
@@ -105,34 +109,49 @@ class MainViewModel @Inject constructor(
         loadData()
     }
 
-    /**
-     * `cities` verilmezse depodaki güncel liste beklenerek okunur. Sürükle-bırak
-     * yenileme bu yolu kullanır ve soğuk açılışta tohumla değil, gerçek kayıtla
-     * çalışmalıdır.
-     */
-    fun onRefresh(cities: List<City>? = null) {
-        // İçerik varsa mevcut listenin üzerinde yenile; yoksa tam yükleme yap.
+    /** Sürükle-bırak yenileme; içerik varsa korunur, yoksa tam yükleme yapılır. */
+    fun onRefresh() {
         if (_uiState.value.content !is UiState.Success) {
             loadData()
             return
         }
+        fetch(storedCities, keepContent = true)
+    }
+
+    /**
+     * Hava durumunu çeker ve listeyi türetir.
+     *
+     * [keepContent] true ise mevcut içerik **korunur** ve yalnız üstteki
+     * yenileme göstergesi döner; başarısızlık ekranı boşaltmaz, snackbar gösterir.
+     * false ise ilk yüklemedir: ekran yükleme durumuna alınır ve hata görünür.
+     */
+    private fun fetch(stored: List<City>, keepContent: Boolean) {
+        // Önceki yükleme varsa iptal edilir; her çağrı yeni bir tur başlatır ve
+        // eşzamanlı yinelenen istek oluşmaz.
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _uiState.update { it.copy(isRefreshing = true) }
+            if (keepContent) {
+                _uiState.update { it.copy(isRefreshing = true) }
+            } else {
+                _uiState.update { it.copy(content = UiState.Loading) }
+                _loadState.update { LoadState.Loading }
+            }
             try {
-                val requested = cities ?: cityRepository.loadCities().also { authoritativeCities = it }
-                when (val result = getCityWeathers(requested)) {
+                when (val result = getCityWeathers(stored)) {
                     is AppResult.Success -> {
                         applyFetchedData(result.data)
                         _uiState.update { it.copy(isRefreshing = false) }
                     }
-                    // Yenileme başarısızsa eski içerik korunur; kullanıcı bir anda
-                    // uyarılır, ekran boşaltılmaz.
-                    is AppResult.Failure -> {
+                    is AppResult.Failure -> if (keepContent) {
+                        // Yenileme başarısızsa eski içerik korunur; kullanıcı bir
+                        // anda uyarılır, ekran boşaltılmaz.
                         _uiState.update { it.copy(isRefreshing = false) }
                         _events.send(MainEvent.ShowSnackbar(result.error.toUiText()))
+                    } else {
+                        _uiState.update { it.copy(content = UiState.Error(result.error.toUiText())) }
                     }
                 }
+                _loadState.update { _uiState.value.content.toLoadState() }
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e
@@ -141,33 +160,24 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Canlı sonuçtan şehri listeye ekler. Hava durumu önbelleğe alınmalı;
-     * içerik korunarak arka planda yenilenir (onRefresh ile aynı akış).
+     * Canlı sonuçtan şehri listeye ekler.
+     *
+     * Yenileme **bilerek burada yapılmaz**: yazma, depoyu yayımlar ve
+     * `init`'deki toplayıcı yeni listeden veri çekmeyi tek yerde başlatır.
+     * Ekleme hem elle tetikleseydi her değişiklikte iki tur ağ isteği atılır
+     * ve hız sınırına çarpma riski ikiye katlanırdı.
      */
     fun onAddCity(city: City) {
-        viewModelScope.launch {
-            val updated = cityRepository.add(city)
-            authoritativeCities = updated
-            onRefresh(updated)
-        }
+        viewModelScope.launch { cityRepository.add(city) }
     }
 
     /**
-     * Şehri kalıcı listeden siler ve hava durumunu yeniler; geri alma için
-     * son durumdaki City snackbar aksiyonunda kapatılır.
+     * Şehri kalıcı listeden siler; geri alma için son durumdaki City snackbar
+     * aksiyonunda kapatılır.
      */
     fun onDeleteCity(cityId: Long) {
-        // Canlı depodan okunur: loadedCities hava durumu kaynağıdır ve eski
-        // olabilir; geri eklerken eklenen kaydın aynısı kullanılmalı.
-        val deleted = cityRepository.cities.value.firstOrNull { it.id == cityId }
-            ?: return
-        viewModelScope.launch {
-            // Yazma beklenir: yenileme silme sonrası listeyle yapılmalı, yoksa
-            // silinen şehir bir sonraki tam yüklemeye kadar ekranda kalır.
-            val updated = cityRepository.remove(cityId)
-            authoritativeCities = updated
-            onRefresh(updated)
-        }
+        val deleted = storedCities.firstOrNull { it.id == cityId } ?: return
+        viewModelScope.launch { cityRepository.remove(cityId) }
         _events.trySend(
             MainEvent.ShowSnackbar(
                 message = UiText.Resource(R.string.city_deleted, deleted.name),
@@ -177,39 +187,13 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler ve yeniler. */
+    /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler. */
     fun onUndoDelete(city: City) {
-        viewModelScope.launch {
-            val updated = cityRepository.add(city)
-            authoritativeCities = updated
-            onRefresh(updated)
-        }
+        viewModelScope.launch { cityRepository.add(city) }
     }
 
     fun loadData() {
-        // Önceki yükleme varsa iptal edilir; yeniden deneme her zaman
-        // yeni bir çağrı başlatır ve eşzamanlı yinelenen istek oluşmaz.
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            _uiState.update { it.copy(content = UiState.Loading) }
-            _loadState.update { LoadState.Loading }
-            try {
-                // `cities.value` soğuk açılışta tohumu taşıyor; depodaki gerçek
-                // liste beklenerek okunur ve doğruluk listesi olarak benimsenir.
-                val stored = cityRepository.loadCities()
-                authoritativeCities = stored
-                when (val result = getCityWeathers(stored)) {
-                    is AppResult.Success -> applyFetchedData(result.data)
-                    is AppResult.Failure -> _uiState.update {
-                        it.copy(content = UiState.Error(result.error.toUiText()))
-                    }
-                }
-                _loadState.update { _uiState.value.content.toLoadState() }
-            } catch (e: CancellationException) {
-                // İptal bir hata değildir; hata durumu olarak sunulmaz.
-                throw e
-            }
-        }
+        fetch(storedCities, keepContent = false)
     }
 
     /** Ağdan gelen veriyi önbelleğe alır ve listeyi mevcut seçimlerle türetir. */
@@ -263,7 +247,7 @@ class MainViewModel @Inject constructor(
             _uiState.update { it.copy(searchState = SearchUiState.Loading) }
             when (val result = searchCities(trimmed)) {
                 is AppResult.Success -> {
-                    val cityIds = cityRepository.cities.value.map { it.id }.toSet()
+                    val cityIds = storedCities.mapTo(mutableSetOf()) { it.id }
                     _uiState.update {
                         it.copy(
                             searchState = SearchUiState.Success(
@@ -288,7 +272,7 @@ class MainViewModel @Inject constructor(
     private fun refreshSearchInListFlags() {
         val state = _uiState.value.searchState
         if (state is SearchUiState.Success) {
-            val cityIds = cityRepository.cities.value.map { it.id }.toSet()
+            val cityIds = storedCities.mapTo(mutableSetOf()) { it.id }
             _uiState.update {
                 it.copy(
                     searchState = state.copy(
@@ -306,13 +290,11 @@ class MainViewModel @Inject constructor(
      * ağ verisi önbellekten gelir, depo doğruluk kaynağıdır.
      */
     private fun deriveContent(source: List<CityWeather>, query: String): UiState<List<CityWeatherUiModel>> {
-        val citiesById = authoritativeCities.associateBy { it.id }
+        val citiesById = storedCities.associateBy { it.id }
         val unit = unitRepository.unit.value
         val filtered = source
             // Depo doğruluk kaynağıdır: hava durumu önbelleği silinen şehri
-            // bir süre daha taşır (yazım asenkrondur ve liste ilk yüklemede
-            // tohum değerle açılabilir). Kesişim olmazsa silinen şehir ekranda
-            // kalır.
+            // bir süre daha taşır. Kesişim olmazsa silinen şehir ekranda kalır.
             .filter { cityWeather -> cityWeather.city.id in citiesById }
             .filter { cityWeather ->
                 query.isBlank() ||
