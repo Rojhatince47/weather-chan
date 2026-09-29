@@ -102,11 +102,7 @@ class OpenMeteoWeatherDataSourceTest {
         assertTrue(path.contains("count=10"))
     }
 
-    private fun testCity(
-        name: String = "İstanbul",
-        latitude: Double = 41.01,
-        longitude: Double = 28.98
-    ): City = City(
+    private fun testCity(name: String = "İstanbul", latitude: Double = 41.01, longitude: Double = 28.98): City = City(
         name = name,
         region = "Marmara",
         country = "Türkiye",

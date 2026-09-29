@@ -262,7 +262,7 @@ class DataStoreCityRepositoryTest {
         dataStore.edit {
             it[stringPreferencesKey("cities_json")] = """
                 [{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98}]
-""".trimIndent()
+            """.trimIndent()
         }
 
         val read = CityPreferences(dataStore).cities().first()

@@ -3,6 +3,18 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Konum birinci liste: cihazın o anki konumunu okumak için.
+         coarse, fine'ın ikisini de istiyoruz: kullanıcı yalnız yaklaşık
+         konuma izin verse bile akış çalışsın. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Konum donanimı olmayan cihazlarda uygulama kurulabilir kalmalı;
+         eksik donanımda konum okunamaz, liste boş duruma düşer. -->
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+
     <application
         android:name=".HavaApplication"
         android:allowBackup="true"

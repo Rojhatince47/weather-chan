@@ -122,6 +122,13 @@ class MainRouteTest {
             state.value = updated
             return updated
         }
+
+        override suspend fun addAsLocation(city: City): List<City> {
+            val location = city.copy(isLocation = true)
+            val updated = listOf(location) + state.value.filterNot { it.id == location.id }
+            state.value = updated
+            return updated
+        }
     }
 
     private class RouteWeatherRepository : WeatherRepository {
