@@ -329,10 +329,18 @@ class MainViewModel @Inject constructor(
      * yalnız aynı id'li kayıt yerini yenisiyle değiştirir.
      * [applyFetchedData] yeniden kullanılır: `loadedCities` (detay ekranı
      * gezinmesi bunu okur) böylece tutarsız kalmaz.
+     *
+     * Eşzamanlılık notu: retry'dan önce başlamış bir tam liste yüklemesi
+     * retry'dan sonra biterse önbelleği bütünüyle değiştirir ("son yazan
+     * kazanır"). Bu bilinçli bir seçimdir: taze bir tam liste, tek şehrin
+     * eski sonucundan daha güvenilirdir. Kısa bir "düzeldi sonra bozuldu"
+     * penceresi oluşabilir; bir sonraki yenileme kendini düzeltir.
      */
     private fun mergeCityWeathers(newWeathers: List<CityWeather>) {
         val merged = cachedCityWeathers.orEmpty()
-            .filterNot { existing -> newWeathers.any { it.city.id == existing.city.id } } + newWeathers
+            .filterNot { existing ->
+                newWeathers.any { new -> new.city.id == existing.city.id }
+            } + newWeathers
         applyFetchedData(merged)
     }
 

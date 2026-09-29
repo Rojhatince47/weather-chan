@@ -227,8 +227,12 @@ class MainViewModelTest {
 
         viewModel.uiState.test {
             val state = awaitItem()
-            val ankaraItem = (state.content as UiState.Success).data.first { it.cityId == ankara.id }
-            assertTrue(ankaraItem.weather is CardWeather.Loaded)
+            val items = (state.content as UiState.Success).data
+            // Ankara yüklendi VE İstanbul korunmalı: merge'in tanımlayıcı
+            // özelliği budur. Önbellek ezilip yalnız ankara yazılsaydı
+            // İstanbul Unavailable'a düşerdi ve bu assertion yakalardı.
+            assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Loaded)
+            assertTrue(items.first { it.cityId == istanbul.id }.weather is CardWeather.Loaded)
             assertTrue("Deneme bitince kilit kalmalı", state.retryingCityIds.isEmpty())
         }
     }
@@ -250,14 +254,17 @@ class MainViewModelTest {
         )
 
         // Deneme bu kez tümüyle başarısız: depo Failure döndürür.
-        fakeWeather.omitCities = emptySet()
+        // (failCityWeathers, sahtede omit filtresinden önce döndüğü için
+        // ayrıca omitCities temizlemek gereksizdir.)
         fakeWeather.failCityWeathers = true
         viewModel.onRetryCity(ankara.id)
 
         viewModel.uiState.test {
             val state = awaitItem()
-            val ankaraItem = (state.content as UiState.Success).data.first { it.cityId == ankara.id }
-            assertTrue(ankaraItem.weather is CardWeather.Unavailable)
+            val items = (state.content as UiState.Success).data
+            assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Unavailable)
+            // Başarısız deneme önbelleğe dokunmaz: İstanbul yüklü kalmalı.
+            assertTrue(items.first { it.cityId == istanbul.id }.weather is CardWeather.Loaded)
             assertTrue("Başarısız deneme kilidi bırakmalı", state.retryingCityIds.isEmpty())
         }
     }
