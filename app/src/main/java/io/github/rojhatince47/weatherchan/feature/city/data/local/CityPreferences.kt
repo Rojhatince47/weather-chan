@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.rojhatince47.weatherchan.core.di.CityDataStore
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import javax.inject.Inject
@@ -26,7 +27,7 @@ import kotlinx.serialization.json.Json
  */
 @Singleton
 class CityPreferences @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    @CityDataStore private val dataStore: DataStore<Preferences>
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 

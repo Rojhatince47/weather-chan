@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -36,23 +37,27 @@ class SettingsViewModel @Inject constructor(
     // Eagerly başlatma ve initialValue kırılma riskini eklerdi. Doğrudan yayınla.
     val themeMode: StateFlow<ThemeMode> = themeModeRepository.themeMode
 
+    // Yazma artık disk erişimi yaptığı için suspend; ViewModel kapsamında
+    // başlatılır, çağıran (ekran) beklemez.
     fun onToggleUnit() {
         val next = when (repository.unit.value) {
             TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
             TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
         }
-        repository.setUnit(next)
+        viewModelScope.launch { repository.setUnit(next) }
     }
 
     fun onUnitSelected(unit: TemperatureUnit) {
-        repository.setUnit(unit)
+        viewModelScope.launch { repository.setUnit(unit) }
     }
 
     fun onCycleThemeMode() {
-        themeModeRepository.setThemeMode(themeModeRepository.themeMode.value.next())
+        viewModelScope.launch {
+            themeModeRepository.setThemeMode(themeModeRepository.themeMode.value.next())
+        }
     }
 
     fun onThemeModeSelected(themeMode: ThemeMode) {
-        themeModeRepository.setThemeMode(themeMode)
+        viewModelScope.launch { themeModeRepository.setThemeMode(themeMode) }
     }
 }

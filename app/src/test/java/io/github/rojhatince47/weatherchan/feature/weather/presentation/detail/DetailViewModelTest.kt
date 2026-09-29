@@ -5,7 +5,7 @@ import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
@@ -53,7 +53,7 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -69,7 +69,7 @@ class DetailViewModelTest {
             savedStateHandle = SavedStateHandle(),
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -101,7 +101,7 @@ class DetailViewModelTest {
                 }
             ),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -131,7 +131,7 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -168,7 +168,7 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -210,7 +210,7 @@ class DetailViewModelTest {
             savedStateHandle = savedStateHandle,
             getForecast = GetForecastUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 

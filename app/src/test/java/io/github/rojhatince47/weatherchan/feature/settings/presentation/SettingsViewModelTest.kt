@@ -2,10 +2,10 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -126,7 +126,7 @@ class SettingsViewModelTest {
     }
 
     private fun newViewModel(): SettingsViewModel = SettingsViewModel(
-        InMemoryTemperatureUnitRepository(),
-        InMemoryThemeModeRepository()
+        FakeTemperatureUnitRepository(),
+        FakeThemeModeRepository()
     )
 }

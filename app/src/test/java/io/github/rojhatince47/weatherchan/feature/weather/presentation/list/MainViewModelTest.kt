@@ -10,10 +10,10 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
@@ -57,7 +57,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeWeather),
             searchCities = SearchCitiesUseCase(fakeWeather),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = fakeCities
         )
 
@@ -77,7 +77,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -98,7 +98,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -121,7 +121,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -152,7 +152,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(repository),
             searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -179,7 +179,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(repository),
             searchCities = SearchCitiesUseCase(repository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
         repository.completeAllCityWeathersGates()
@@ -205,7 +205,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -219,7 +219,7 @@ class MainViewModelTest {
 
     @Test
     fun `unit change from shared source converts temperatures to fahrenheit`() = runTest {
-        val unitRepository = InMemoryTemperatureUnitRepository()
+        val unitRepository = FakeTemperatureUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
@@ -248,8 +248,8 @@ class MainViewModelTest {
 
     @Test
     fun `toggle from shared settings view model updates list temperatures`() = runTest {
-        val unitRepository = InMemoryTemperatureUnitRepository()
-        val settingsViewModel = SettingsViewModel(unitRepository, InMemoryThemeModeRepository())
+        val unitRepository = FakeTemperatureUnitRepository()
+        val settingsViewModel = SettingsViewModel(unitRepository, FakeThemeModeRepository())
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
@@ -283,7 +283,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -310,7 +310,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -330,7 +330,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -355,7 +355,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -389,7 +389,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = cityRepository
         )
 
@@ -411,7 +411,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = cityRepository
         )
         viewModel.uiState.test {
@@ -431,7 +431,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = cityRepository
         )
         val detailViewModel = DetailViewModel(
@@ -446,7 +446,7 @@ class MainViewModelTest {
             ),
             getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = cityRepository
         )
 
@@ -479,7 +479,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 
@@ -514,7 +514,7 @@ class MainViewModelTest {
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             searchCities = SearchCitiesUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
-            unitRepository = InMemoryTemperatureUnitRepository(),
+            unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
 

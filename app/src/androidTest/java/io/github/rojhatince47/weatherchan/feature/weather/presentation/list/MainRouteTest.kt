@@ -9,8 +9,10 @@ import androidx.compose.ui.test.performTouchInput
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
@@ -44,7 +46,7 @@ class MainRouteTest {
         val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
         val fakeCities = RouteCityRepository(listOf(istanbul, City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))))
         val weather = RouteWeatherRepository()
-        val unitRepository = InMemoryTemperatureUnitRepository()
+        val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
             searchCities = SearchCitiesUseCase(weather),
@@ -52,7 +54,7 @@ class MainRouteTest {
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
-        val settingsViewModel = SettingsViewModel(unitRepository, InMemoryThemeModeRepository())
+        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository())
 
         composeRule.setContent {
             HavaTheme {
@@ -78,6 +80,24 @@ class MainRouteTest {
             composeRule.onAllNodesWithText("İstanbul").fetchSemanticsNodes().isNotEmpty()
         }
         assertTrue(fakeCities.cities.value.any { it.name == "İstanbul" })
+    }
+
+    private class RouteUnitRepository : TemperatureUnitRepository {
+        private val state = MutableStateFlow(TemperatureUnit.CELSIUS)
+        override val unit: StateFlow<TemperatureUnit> = state.asStateFlow()
+
+        override suspend fun setUnit(unit: TemperatureUnit) {
+            state.value = unit
+        }
+    }
+
+    private class RouteThemeRepository : ThemeModeRepository {
+        private val state = MutableStateFlow(ThemeMode.SYSTEM)
+        override val themeMode: StateFlow<ThemeMode> = state.asStateFlow()
+
+        override suspend fun setThemeMode(themeMode: ThemeMode) {
+            state.value = themeMode
+        }
     }
 
     private class RouteCityRepository(

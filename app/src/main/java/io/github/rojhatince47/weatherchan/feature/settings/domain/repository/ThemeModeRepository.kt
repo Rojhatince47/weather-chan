@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.StateFlow
 interface ThemeModeRepository {
     val themeMode: StateFlow<ThemeMode>
 
-    fun setThemeMode(themeMode: ThemeMode)
+    suspend fun setThemeMode(themeMode: ThemeMode)
 }

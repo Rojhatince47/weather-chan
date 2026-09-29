@@ -1,21 +1,38 @@
 package io.github.rojhatince47.weatherchan.feature.settings.data.di
 
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryTemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.settings.data.repository.InMemoryThemeModeRepository
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
+import io.github.rojhatince47.weatherchan.core.di.SettingsDataStore
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "hava_settings")
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SettingsDataModule {
 
     @Binds
-    abstract fun bindTemperatureUnitRepository(impl: InMemoryTemperatureUnitRepository): TemperatureUnitRepository
+    abstract fun bindTemperatureUnitRepository(impl: DataStoreTemperatureUnitRepository): TemperatureUnitRepository
 
     @Binds
-    abstract fun bindThemeModeRepository(impl: InMemoryThemeModeRepository): ThemeModeRepository
+    abstract fun bindThemeModeRepository(impl: DataStoreThemeModeRepository): ThemeModeRepository
+
+    companion object {
+        @Provides
+        @Singleton
+        @SettingsDataStore
+        fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> = context.settingsDataStore
+    }
 }

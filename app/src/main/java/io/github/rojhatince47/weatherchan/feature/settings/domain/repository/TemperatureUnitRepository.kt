@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.StateFlow
 interface TemperatureUnitRepository {
     val unit: StateFlow<TemperatureUnit>
 
-    fun setUnit(unit: TemperatureUnit)
+    suspend fun setUnit(unit: TemperatureUnit)
 }

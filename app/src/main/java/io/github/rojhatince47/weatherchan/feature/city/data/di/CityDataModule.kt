@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import io.github.rojhatince47.weatherchan.core.di.CityDataStore
 import io.github.rojhatince47.weatherchan.feature.city.data.repository.DataStoreCityRepository
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import dagger.Binds
@@ -26,6 +27,7 @@ abstract class CityDataModule {
     companion object {
         @Provides
         @Singleton
+        @CityDataStore
         fun provideCityDataStore(@ApplicationContext context: Context): DataStore<Preferences> = context.cityDataStore
     }
 }
