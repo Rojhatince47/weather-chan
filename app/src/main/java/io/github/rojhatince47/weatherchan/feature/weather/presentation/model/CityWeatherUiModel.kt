@@ -11,6 +11,5 @@ data class CityWeatherUiModel(
     val temperatureText: String,
     val condition: WeatherCondition,
     val conditionEmoji: String,
-    val conditionLabel: UiText,
-    val isFavorite: Boolean
+    val conditionLabel: UiText
 )

@@ -101,10 +101,6 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun onFavoriteClick() {
-        city?.let { viewModelScope.launch { cityRepository.toggleFavorite(it.id) } }
-    }
-
     fun loadData() {
         // Önceki yükleme varsa iptal edilir; yeniden deneme her zaman
         // yeni bir çağrı başlatır ve eşzamanlı yinelenen istek oluşmaz.
@@ -132,8 +128,6 @@ class DetailViewModel @Inject constructor(
             is AppResult.Success -> UiState.Success(
                 uiMapper.toForecastDetailUiModel(
                     forecast = result.data,
-                    isFavorite = cityRepository.cities.value
-                        .firstOrNull { it.id == city.id }?.isFavorite == true,
                     unit = unit
                 )
             )

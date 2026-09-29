@@ -124,11 +124,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onFavoriteClick(cityId: Long) {
-        if (cityId !in loadedCities) return
-        viewModelScope.launch { cityRepository.toggleFavorite(cityId) }
-    }
-
     /**
      * Canlı sonuçtan şehri listeye ekler. Hava durumu önbelleğe alınmalı;
      * içerik korunarak arka planda yenilenir (onRefresh ile aynı akış).
@@ -139,11 +134,11 @@ class MainViewModel @Inject constructor(
 
     /**
      * Şehri kalıcı listeden siler ve hava durumunu yeniler; geri alma için
-     * son durumdaki City (favori bayrağıyla) snackbar aksiyonunda kapatılır.
+     * son durumdaki City snackbar aksiyonunda kapatılır.
      */
     fun onDeleteCity(cityId: Long) {
-        // Canlı depodan okunur: loadedCities hava durumu kaynağıdır ve favori
-        // bayrağıyla güncel olmayabilir; geri eklerken yıldız korunmalı.
+        // Canlı depodan okunur: loadedCities hava durumu kaynağıdır ve eski
+        // olabilir; geri eklerken eklenen kaydın aynısı kullanılmalı.
         val deleted = cityRepository.cities.value.firstOrNull { it.id == cityId }
             ?: return
         viewModelScope.launch {
@@ -257,7 +252,7 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Liste değişince (ekleme/çıkarma/favori) canlı sonuçlardaki
+     * Liste değişince (ekleme/çıkarma) canlı sonuçlardaki
      * "listede mi" bayrakları tazelenir; istek tekrarlanmaz.
      */
     private fun refreshSearchInListFlags() {
@@ -277,9 +272,8 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Favori durumu önbellekteki değil canlı [CityRepository] durumundan okunur:
-     * ağ verisi çekildikten sonra yıldız değişirse önbellekteki City nesneleri
-     * bayat kalırdı. Sıralama favorileri en üste alır.
+     * Canlı depodan okuma ve kayıt sırasının korunması burada toplanır:
+     * ağ verisi önbellekten gelir, depo doğruluk kaynağıdır.
      */
     private fun deriveContent(source: List<CityWeather>, query: String): UiState<List<CityWeatherUiModel>> {
         val citiesById = cityRepository.cities.value.associateBy { it.id }
@@ -294,9 +288,6 @@ class MainViewModel @Inject constructor(
                 query.isBlank() ||
                     cityWeather.city.name.contains(query, ignoreCase = true)
             }
-            .sortedByDescending { cityWeather ->
-                citiesById[cityWeather.city.id]?.isFavorite == true
-            }
 
         return if (filtered.isEmpty()) {
             UiState.Empty
@@ -305,7 +296,6 @@ class MainViewModel @Inject constructor(
                 filtered.map { cityWeather ->
                     uiMapper.toCityWeatherUiModel(
                         cityWeather,
-                        isFavorite = citiesById[cityWeather.city.id]?.isFavorite == true,
                         unit = unit
                     )
                 }

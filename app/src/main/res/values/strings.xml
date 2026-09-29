@@ -11,9 +11,6 @@
     <string name="action_open_detail">Detayı aç</string>
     <string name="search_result_in_list">Listede</string>
 
-    <string name="favorite_add">Favorilere ekle</string>
-    <string name="favorite_remove">Favoriden çıkar</string>
-
     <string name="detail_title">Hava Durumu</string>
     <string name="section_hourly">Saatlik Tahmin</string>
     <string name="section_daily">Günlük Tahmin</string>

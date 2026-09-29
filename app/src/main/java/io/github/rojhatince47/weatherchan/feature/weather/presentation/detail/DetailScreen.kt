@@ -51,7 +51,6 @@ fun DetailScreen(
     uiState: DetailUiState,
     unit: TemperatureUnitUiModel,
     onBack: () -> Unit,
-    onFavoriteClick: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onToggleUnit: () -> Unit,
@@ -272,7 +271,6 @@ private fun DetailScreenPreview() {
             uiState = DetailUiState(content = UiState.Loading),
             unit = TemperatureUnit.CELSIUS.toUiModel(),
             onBack = {},
-            onFavoriteClick = {},
             onRetry = {},
             onRefresh = {},
             onToggleUnit = {}

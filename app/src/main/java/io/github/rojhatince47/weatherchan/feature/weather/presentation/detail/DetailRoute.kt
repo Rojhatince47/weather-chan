@@ -53,7 +53,6 @@ fun DetailRoute(
         uiState = uiState,
         unit = unit,
         onBack = onBack,
-        onFavoriteClick = viewModel::onFavoriteClick,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,

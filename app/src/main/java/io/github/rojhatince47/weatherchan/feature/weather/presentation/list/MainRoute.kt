@@ -60,7 +60,6 @@ fun MainRoute(
         themeMode = themeMode,
         onQueryChange = viewModel::onQueryChange,
         onCityClick = { cityId -> viewModel.findCity(cityId)?.let(onCityClick) },
-        onFavoriteClick = viewModel::onFavoriteClick,
         onAddCity = viewModel::onAddCity,
         onOpenCity = onCityClick,
         onDeleteCity = viewModel::onDeleteCity,

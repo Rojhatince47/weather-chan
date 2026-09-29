@@ -22,7 +22,7 @@ import kotlinx.serialization.json.Json
  * DataStore anahtarları ve şehir serileştirmesi.
  *
  * Anahtarlar:
- * - `cities_json`: şehir listesi, JSON dizisi, favoriler üstte sıralı yazılır.
+ * - `cities_json`: şehir listesi, JSON dizisi, ekleme sırası korunur.
  * - `location_permission_asked`: konum izni bir kez soruldu mu (Plan 3'te kullanılır).
  */
 @Singleton
@@ -76,8 +76,7 @@ class CityPreferences @Inject constructor(
         val region: String? = null,
         val country: String? = null,
         val latitude: Double,
-        val longitude: Double,
-        val isFavorite: Boolean = false
+        val longitude: Double
     )
 
     private fun City.toDto() = CityDto(
@@ -85,15 +84,13 @@ class CityPreferences @Inject constructor(
         region = region,
         country = country,
         latitude = coordinates.latitude,
-        longitude = coordinates.longitude,
-        isFavorite = isFavorite
+        longitude = coordinates.longitude
     )
 
     private fun CityDto.toCity() = City(
         name = name,
         region = region,
         country = country,
-        coordinates = Coordinates(latitude = latitude, longitude = longitude),
-        isFavorite = isFavorite
+        coordinates = Coordinates(latitude = latitude, longitude = longitude)
     )
 }

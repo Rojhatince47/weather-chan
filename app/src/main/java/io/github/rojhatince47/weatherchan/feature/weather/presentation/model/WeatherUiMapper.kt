@@ -10,65 +10,57 @@ import javax.inject.Inject
 
 class WeatherUiMapper @Inject constructor() {
 
-    fun toCityWeatherUiModel(
-        cityWeather: CityWeather,
-        isFavorite: Boolean,
-        unit: TemperatureUnit = TemperatureUnit.CELSIUS
-    ): CityWeatherUiModel = CityWeatherUiModel(
-        cityId = cityWeather.city.id,
-        name = cityWeather.city.name,
-        region = cityWeather.city.region,
-        country = cityWeather.city.country,
-        temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
-        condition = cityWeather.currentWeather.condition,
-        conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
-        conditionLabel = labelFor(cityWeather.currentWeather.condition),
-        isFavorite = isFavorite
-    )
+    fun toCityWeatherUiModel(cityWeather: CityWeather, unit: TemperatureUnit = TemperatureUnit.CELSIUS): CityWeatherUiModel =
+        CityWeatherUiModel(
+            cityId = cityWeather.city.id,
+            name = cityWeather.city.name,
+            region = cityWeather.city.region,
+            country = cityWeather.city.country,
+            temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
+            condition = cityWeather.currentWeather.condition,
+            conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
+            conditionLabel = labelFor(cityWeather.currentWeather.condition)
+        )
 
-    fun toForecastDetailUiModel(
-        forecast: Forecast,
-        isFavorite: Boolean,
-        unit: TemperatureUnit = TemperatureUnit.CELSIUS
-    ): ForecastDetailUiModel = ForecastDetailUiModel(
-        city = CityUiModel(
-            id = forecast.city.id,
-            name = forecast.city.name,
-            region = forecast.city.region,
-            country = forecast.city.country,
-            latitude = forecast.city.coordinates.latitude,
-            longitude = forecast.city.coordinates.longitude
-        ),
-        currentWeather = CurrentWeatherUiModel(
-            temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
-            conditionEmoji = emojiFor(forecast.currentWeather.condition),
-            conditionLabel = labelFor(forecast.currentWeather.condition),
-            windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
-            humidityText = "%${forecast.currentWeather.humidityPercent}"
-        ),
-        hourlyForecast = forecast.hourlyForecast.map { hourly ->
-            HourlyForecastUiModel(
-                timeText = formatHour(hourly.hourOfDay),
-                temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
-                conditionEmoji = emojiFor(hourly.condition),
-                precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
-            )
-        },
-        dailyForecast = forecast.dailyForecast.map { daily ->
-            DailyForecastUiModel(
-                dayOffset = daily.dayOffset,
-                dateText = if (daily.dayOffset == 0) {
-                    UiText.Resource(R.string.forecast_today)
-                } else {
-                    UiText.Resource(R.string.forecast_day_offset, daily.dayOffset)
-                },
-                minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
-                maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
-                conditionEmoji = emojiFor(daily.condition)
-            )
-        },
-        isFavorite = isFavorite
-    )
+    fun toForecastDetailUiModel(forecast: Forecast, unit: TemperatureUnit = TemperatureUnit.CELSIUS): ForecastDetailUiModel =
+        ForecastDetailUiModel(
+            city = CityUiModel(
+                id = forecast.city.id,
+                name = forecast.city.name,
+                region = forecast.city.region,
+                country = forecast.city.country,
+                latitude = forecast.city.coordinates.latitude,
+                longitude = forecast.city.coordinates.longitude
+            ),
+            currentWeather = CurrentWeatherUiModel(
+                temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
+                conditionEmoji = emojiFor(forecast.currentWeather.condition),
+                conditionLabel = labelFor(forecast.currentWeather.condition),
+                windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
+                humidityText = "%${forecast.currentWeather.humidityPercent}"
+            ),
+            hourlyForecast = forecast.hourlyForecast.map { hourly ->
+                HourlyForecastUiModel(
+                    timeText = formatHour(hourly.hourOfDay),
+                    temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
+                    conditionEmoji = emojiFor(hourly.condition),
+                    precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
+                )
+            },
+            dailyForecast = forecast.dailyForecast.map { daily ->
+                DailyForecastUiModel(
+                    dayOffset = daily.dayOffset,
+                    dateText = if (daily.dayOffset == 0) {
+                        UiText.Resource(R.string.forecast_today)
+                    } else {
+                        UiText.Resource(R.string.forecast_day_offset, daily.dayOffset)
+                    },
+                    minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
+                    maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
+                    conditionEmoji = emojiFor(daily.condition)
+                )
+            }
+        )
 
     private fun formatTemperature(celsius: Int, unit: TemperatureUnit): String = when (unit) {
         TemperatureUnit.CELSIUS -> "$celsius°C"

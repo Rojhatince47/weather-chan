@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -34,7 +32,6 @@ fun CityWeatherCard(
     isDarkTheme: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val conditionColors = ConditionPalette.of(cityWeather.condition, isDark = isDarkTheme)
@@ -79,21 +76,6 @@ fun CityWeatherCard(
                     text = cityWeather.temperatureText,
                     style = MaterialTheme.typography.titleLarge,
                     color = conditionColors.onContainer
-                )
-            }
-            IconButton(onClick = onFavoriteClick) {
-                Icon(
-                    imageVector = if (cityWeather.isFavorite) {
-                        Icons.Filled.Favorite
-                    } else {
-                        Icons.Filled.FavoriteBorder
-                    },
-                    contentDescription = if (cityWeather.isFavorite) {
-                        stringResource(R.string.favorite_remove)
-                    } else {
-                        stringResource(R.string.favorite_add)
-                    },
-                    tint = conditionColors.onContainer
                 )
             }
         }

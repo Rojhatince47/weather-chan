@@ -61,7 +61,6 @@ fun MainScreen(
     themeMode: ThemeMode,
     onQueryChange: (String) -> Unit,
     onCityClick: (Long) -> Unit,
-    onFavoriteClick: (Long) -> Unit,
     onAddCity: (City) -> Unit,
     onOpenCity: (City) -> Unit,
     onDeleteCity: (Long) -> Unit,
@@ -192,8 +191,7 @@ fun MainScreen(
                                 onClick = { onCityClick(cityWeather.cityId) },
                                 onLongClick = {
                                     pendingDelete = cityWeather.cityId to cityWeather.name
-                                },
-                                onFavoriteClick = { onFavoriteClick(cityWeather.cityId) }
+                                }
                             )
                         }
                     }
@@ -248,7 +246,6 @@ private fun MainScreenCompactPreview() {
             themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
-            onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
             onDeleteCity = {},
@@ -270,7 +267,6 @@ private fun MainScreenMediumPreview() {
             themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
-            onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
             onDeleteCity = {},
@@ -292,7 +288,6 @@ private fun MainScreenExpandedPreview() {
             themeMode = ThemeMode.SYSTEM,
             onQueryChange = {},
             onCityClick = {},
-            onFavoriteClick = {},
             onAddCity = {},
             onOpenCity = {},
             onDeleteCity = {},
@@ -332,8 +327,7 @@ private fun sampleMainUiState(): MainUiState = MainUiState(
                 temperatureText = "21°C",
                 condition = WeatherCondition.CLEAR,
                 conditionEmoji = "☀️",
-                conditionLabel = UiText.Dynamic("Açık"),
-                isFavorite = false
+                conditionLabel = UiText.Dynamic("Açık")
             )
         )
     )

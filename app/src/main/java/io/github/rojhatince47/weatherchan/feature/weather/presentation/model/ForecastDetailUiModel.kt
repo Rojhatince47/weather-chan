@@ -6,8 +6,7 @@ data class ForecastDetailUiModel(
     val city: CityUiModel,
     val currentWeather: CurrentWeatherUiModel,
     val hourlyForecast: List<HourlyForecastUiModel>,
-    val dailyForecast: List<DailyForecastUiModel>,
-    val isFavorite: Boolean
+    val dailyForecast: List<DailyForecastUiModel>
 )
 
 data class CityUiModel(
