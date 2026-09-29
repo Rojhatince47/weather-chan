@@ -101,6 +101,95 @@ class MainViewModelTest {
         }
     }
 
+    /**
+     * Regresyon (cihazda gözlendi): İzmir eklendi, isteği 429'a düştü ve şehir
+     * listeden kayboldu. Kayıt diskte duruyordu; kullanıcı "eklediğim şehir
+     * silindi" izlenimi edindi. Yüklenemeyen şehir listede kalmalı.
+     */
+    @Test
+    fun `yuklenemeyen sehir hata karti olarak listede kalir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            val items = (state.content as UiState.Success).data
+            assertEquals(2, items.size)
+            assertTrue(items.first { it.cityId == istanbul.id }.weather is CardWeather.Loaded)
+            assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Unavailable)
+        }
+    }
+
+    @Test
+    fun `sorgu filtresi yuksuz sehire de uygulanir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        )
+
+        viewModel.onQueryChange("Ankara")
+
+        viewModel.uiState.test {
+            val items = (awaitItem().content as UiState.Success).data
+            assertEquals(listOf(ankara.id), items.map { it.cityId })
+            assertTrue(items.single().weather is CardWeather.Unavailable)
+        }
+    }
+
+    @Test
+    fun `yuksuz sehirler de konum siralamasini bozmaz`() = runTest {
+        val location = istanbul.copy(isLocation = true)
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(location.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(location, ankara))
+        )
+
+        viewModel.uiState.test {
+            val items = (awaitItem().content as UiState.Success).data
+            assertEquals(
+                "Konum kaydı listenin başında kalmalı; hava durumu yüklensin ya da yüklenmesin",
+                listOf(location.id, ankara.id),
+                items.map { it.cityId }
+            )
+            assertTrue(items.first().weather is CardWeather.Unavailable)
+        }
+    }
+
+    /**
+     * Hata kartı yalnız **kısmi** başarısızlık içindir. Hiçbir şehir
+     * yüklenemezse batchAll Failure döner ve akış tam ekran hataya gider;
+     * kullanıcıya nedeni ve tek "Tekrar dene" eylemi doğru olanıdır.
+     */
+    @Test
+    fun `hicbir sehir yuklenemezse tam ekran hata gosterilir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            failCityWeathers = true
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        )
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem().content is UiState.Error)
+        }
+    }
+
     @Test
     fun `emits loading while repository is slow`() = runTest {
         val fakeRepository = FakeWeatherRepository()

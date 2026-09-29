@@ -35,6 +35,14 @@ class FakeWeatherRepository : WeatherRepository {
      * **depodan** okunması gerektiğini sınayan testler bunu kullanır.
      */
     var reverseCityWeathersOrder = false
+
+    /**
+     * Bu id'li şehirler cevaba **konmaz**; batchAll'un tek bir öğesi
+     * düşürdüğü kısmi başarı durumunu simüle eder. Gerçek sağlayıcıda hata
+     * burada değil veri kaynağı katmanında yakalanır; depo yalnız kısmi
+     * listenin kendisini görür.
+     */
+    var omitCities: Set<Long> = emptySet()
     var finishedCityWeathersCalls = 0
         private set
 
@@ -64,7 +72,7 @@ class FakeWeatherRepository : WeatherRepository {
             return AppResult.Failure(AppError.Network)
         }
         val ordered = if (reverseCityWeathersOrder) cities.reversed() else cities
-        return AppResult.Success(ordered.map { it.toCityWeather() })
+        return AppResult.Success(ordered.filter { it.id !in omitCities }.map { it.toCityWeather() })
     }
 
     var searchResult: AppResult<List<City>> = AppResult.Success(emptyList())

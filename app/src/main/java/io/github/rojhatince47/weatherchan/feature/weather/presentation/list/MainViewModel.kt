@@ -377,38 +377,36 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Canlı depodan okuma ve kayıt sırasının korunması burada toplanır:
-     * ağ verisi önbellekten gelir, depo doğruluk kaynağıdır.
+     * Depo doğruluk kaynağıdır: liste depodaki kayıtlardan kurulur, ağ verisi
+     * yalnız doldurucudur.
+     *
+     * Eski kurulum kesişim alıyordu ve yüklenemeyen şehir listeden sessizce
+     * kayboluyordu — kullanıcı eklediği şehrin "silindiğini" sanıyordu.
+     * Yeni kurulumda her kayıt yer alır; hava durumu yoksa kart
+     * [io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather.Unavailable]
+     * olarak çizilir. Silinen şehir ise depoda olmadığı için doğal olarak
+     * görünmez.
      */
     private fun deriveContent(source: List<CityWeather>, query: String): UiState<List<CityWeatherUiModel>> {
-        val citiesById = storedCities.associateBy { it.id }
+        val weathersByCityId = source.associateBy { it.city.id }
         val unit = unitRepository.unit.value
-        val filtered = source
-            // Depo doğruluk kaynağıdır: hava durumu önbelleği silinen şehri
-            // bir süre daha taşır. Kesişim olmazsa silinen şehir ekranda kalır.
-            .filter { cityWeather -> cityWeather.city.id in citiesById }
-            .filter { cityWeather ->
-                query.isBlank() ||
-                    cityWeather.city.name.contains(query, ignoreCase = true)
+        val visible = storedCities
+            .filter { city ->
+                query.isBlank() || city.name.contains(query, ignoreCase = true)
             }
             // Konum her zaman başta. Kaynağın sırasına güvenilmez: ağ cevabı
             // koordinat sırasına göre karışık gelebilir. Sıralama, listenin
             // gerçek sahibi olan depodaki kayıt sırasından okunur.
-            .sortedBy { cityWeather ->
-                if (citiesById[cityWeather.city.id]?.isLocation == true) 0 else 1
-            }
+            // `sortedBy` kararlıdır: konum dışındakiler depodaki sıralarını korur.
+            .sortedBy { if (it.isLocation) 0 else 1 }
 
-        return if (filtered.isEmpty()) {
-            UiState.Empty
-        } else {
-            UiState.Success(
-                filtered.map { cityWeather ->
-                    uiMapper.toCityWeatherUiModel(
-                        cityWeather,
-                        unit = unit
-                    )
-                }
-            )
-        }
+        if (visible.isEmpty()) return UiState.Empty
+
+        return UiState.Success(
+            visible.map { city ->
+                weathersByCityId[city.id]?.let { uiMapper.toCityWeatherUiModel(it, unit = unit) }
+                    ?: uiMapper.toUnavailable(city)
+            }
+        )
     }
 }
