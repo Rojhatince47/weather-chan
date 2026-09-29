@@ -100,7 +100,15 @@ class MainViewModel @Inject constructor(
         const val SEARCH_DEBOUNCE_MS = 300L
     }
 
-    fun findCity(cityId: Long): City? = loadedCities[cityId]
+    /**
+     * Şehir araması **depoya** düşer; yalnız başarıyla yüklenenlere değil.
+     *
+     * Yüklenemeyen şehrin kartı da çizilir ve tıklanabilir olmalı (detay
+     * ekranı kendi hata durumunu gösterir). `loadedCities` yalnız başarılı
+     * fetch'ten dolduğu için tek başına yeterli değildir: yüksüz kartın
+     * tıklaması sessizce yutulurdu.
+     */
+    fun findCity(cityId: Long): City? = loadedCities[cityId] ?: storedCities.firstOrNull { it.id == cityId }
 
     // --- konum ---------------------------------------------------------------
 

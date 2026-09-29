@@ -190,6 +190,26 @@ class MainViewModelTest {
         }
     }
 
+    /**
+     * Yüklenemeyen şehrin kartı da tıklanabilir olmalı (spec: hata kartı
+     * detayı açar). `findCity` yalnız başarıyla yüklenenlere baksaydı,
+     * yüksüz kartın tıklaması sessizce yutulurdu — kart görünür ama ölü
+     * olurdu.
+     */
+    @Test
+    fun `yuklenemeyen sehrin karti da sehir bulmayi basarir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        )
+
+        assertEquals(ankara, viewModel.findCity(ankara.id))
+    }
+
     @Test
     fun `emits loading while repository is slow`() = runTest {
         val fakeRepository = FakeWeatherRepository()
