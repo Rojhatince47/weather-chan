@@ -69,7 +69,6 @@ class DetailScreenTest {
                     conditionEmoji = "☀️"
                 )
             ),
-            isFavorite = false
         )
 
         composeRule.setContent {
@@ -78,7 +77,6 @@ class DetailScreenTest {
                     uiState = DetailUiState(content = UiState.Success(forecast)),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
-                    onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {}
@@ -101,7 +99,6 @@ class DetailScreenTest {
                     ),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
-                    onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {}
@@ -124,7 +121,6 @@ class DetailScreenTest {
                     uiState = DetailUiState(content = UiState.Loading),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
-                    onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = { toggled = true }
@@ -146,7 +142,6 @@ class DetailScreenTest {
                     uiState = DetailUiState(content = UiState.Success(detailUiModel())),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
-                    onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = { refreshed = true },
                     onToggleUnit = {}
@@ -177,7 +172,6 @@ class DetailScreenTest {
                     ),
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     onBack = {},
-                    onFavoriteClick = {},
                     onRetry = {},
                     onRefresh = {},
                     onToggleUnit = {}
@@ -190,7 +184,7 @@ class DetailScreenTest {
     }
 
     private fun detailUiModel(): ForecastDetailUiModel = WeatherUiMapper()
-        .toForecastDetailUiModel(syntheticForecast(), isFavorite = false)
+        .toForecastDetailUiModel(syntheticForecast())
 
     private fun syntheticForecast() = Forecast(
         city = City(

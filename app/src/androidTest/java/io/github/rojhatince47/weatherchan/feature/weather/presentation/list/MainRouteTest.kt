@@ -119,13 +119,6 @@ class MainRouteTest {
             return updated
         }
 
-        override suspend fun toggleFavorite(cityId: Long): List<City> {
-            val updated = state.value.map {
-                if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it
-            }
-            state.value = updated
-            return updated
-        }
     }
 
     private class RouteWeatherRepository : WeatherRepository {

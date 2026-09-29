@@ -37,7 +37,7 @@ class MainScreenTest {
     fun mainScreenShowsCities() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -48,7 +48,6 @@ class MainScreenTest {
                     ),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -74,7 +73,6 @@ class MainScreenTest {
                     uiState = MainUiState(content = UiState.Empty),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -95,7 +93,7 @@ class MainScreenTest {
     fun mainScreenRestoresScrollPositionFromListState() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -106,7 +104,6 @@ class MainScreenTest {
                     ),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -129,7 +126,7 @@ class MainScreenTest {
         var toggled = false
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -140,7 +137,6 @@ class MainScreenTest {
                     ),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -163,7 +159,7 @@ class MainScreenTest {
         var refreshed = false
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -174,7 +170,6 @@ class MainScreenTest {
                     themeMode = ThemeMode.SYSTEM,
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -202,7 +197,7 @@ class MainScreenTest {
     fun mainScreenKeepsContentWhileRefreshing() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -216,7 +211,6 @@ class MainScreenTest {
                     themeMode = ThemeMode.SYSTEM,
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -251,8 +245,7 @@ class MainScreenTest {
                         themeMode = ThemeMode.SYSTEM,
                         onQueryChange = {},
                         onCityClick = {},
-                        onFavoriteClick = {},
-                        onAddCity = {},
+                            onAddCity = {},
                         onOpenCity = {},
                         onDeleteCity = {},
                         onRetry = {},
@@ -279,7 +272,6 @@ class MainScreenTest {
                     themeMode = current,
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -304,7 +296,7 @@ class MainScreenTest {
     fun longPressCityCardShowsDeleteConfirmationSheet() {
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -313,7 +305,6 @@ class MainScreenTest {
                     uiState = MainUiState(content = UiState.Success(cityWeathers)),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = {},
@@ -339,7 +330,7 @@ class MainScreenTest {
         var deletedId: Long? = null
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
         val istanbulId = syntheticCityWeathers().first().city.id
 
@@ -349,7 +340,6 @@ class MainScreenTest {
                     uiState = MainUiState(content = UiState.Success(cityWeathers)),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = { deletedId = it },
@@ -376,7 +366,7 @@ class MainScreenTest {
         var deleted = false
         val mapper = WeatherUiMapper()
         val cityWeathers = syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
 
         composeRule.setContent {
@@ -385,7 +375,6 @@ class MainScreenTest {
                     uiState = MainUiState(content = UiState.Success(cityWeathers)),
                     onQueryChange = {},
                     onCityClick = {},
-                    onFavoriteClick = {},
                     onAddCity = {},
                     onOpenCity = {},
                     onDeleteCity = { deleted = true },
@@ -409,7 +398,7 @@ class MainScreenTest {
 
     private fun sampleCities() = WeatherUiMapper().let { mapper ->
         syntheticCityWeathers().map {
-            mapper.toCityWeatherUiModel(it, isFavorite = false)
+            mapper.toCityWeatherUiModel(it)
         }
     }
 
