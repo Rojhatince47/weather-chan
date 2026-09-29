@@ -118,7 +118,6 @@ class MainRouteTest {
             state.value = updated
             return updated
         }
-
     }
 
     private class RouteWeatherRepository : WeatherRepository {

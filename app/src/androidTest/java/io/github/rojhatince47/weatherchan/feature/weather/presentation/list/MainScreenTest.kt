@@ -245,7 +245,7 @@ class MainScreenTest {
                         themeMode = ThemeMode.SYSTEM,
                         onQueryChange = {},
                         onCityClick = {},
-                            onAddCity = {},
+                        onAddCity = {},
                         onOpenCity = {},
                         onDeleteCity = {},
                         onRetry = {},

@@ -34,5 +34,4 @@ class FakeCityRepository(
         state.value = updated
         return updated
     }
-
 }

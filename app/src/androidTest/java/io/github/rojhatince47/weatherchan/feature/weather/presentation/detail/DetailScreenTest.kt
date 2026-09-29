@@ -68,7 +68,7 @@ class DetailScreenTest {
                     maxTemperatureText = "24°C",
                     conditionEmoji = "☀️"
                 )
-            ),
+            )
         )
 
         composeRule.setContent {

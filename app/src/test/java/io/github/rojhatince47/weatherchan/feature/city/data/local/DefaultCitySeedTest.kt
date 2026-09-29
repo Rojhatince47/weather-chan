@@ -41,5 +41,4 @@ class DefaultCitySeedTest {
         val isimler = cities.map { it.name }.toSet()
         assertTrue(isimler.containsAll(setOf("İstanbul", "Ankara", "İzmir", "Bursa", "Antalya")))
     }
-
 }
