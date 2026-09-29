@@ -97,6 +97,7 @@ fun MainRoute(
         onAddCity = viewModel::onAddCity,
         onOpenCity = onCityClick,
         onDeleteCity = viewModel::onDeleteCity,
+        onRetryCity = viewModel::onRetryCity,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
         onToggleUnit = settingsViewModel::onToggleUnit,

@@ -66,6 +66,7 @@ fun MainScreen(
     onAddCity: (City) -> Unit,
     onOpenCity: (City) -> Unit,
     onDeleteCity: (Long) -> Unit,
+    onRetryCity: (Long) -> Unit = {},
     onAddLocation: () -> Unit,
     onRetryLocation: () -> Unit,
     onRetry: () -> Unit,
@@ -195,7 +196,9 @@ fun MainScreen(
                                 onClick = { onCityClick(cityWeather.cityId) },
                                 onLongClick = {
                                     pendingDelete = cityWeather.cityId to cityWeather.name
-                                }
+                                },
+                                onRetryCity = { onRetryCity(cityWeather.cityId) },
+                                isRetrying = cityWeather.cityId in uiState.retryingCityIds
                             )
                         }
                         // Konum kaydı silinmişse ya da hiç okunamamışsa geri

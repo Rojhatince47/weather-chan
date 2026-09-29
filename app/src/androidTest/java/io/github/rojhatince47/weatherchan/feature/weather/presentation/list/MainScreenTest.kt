@@ -773,6 +773,102 @@ class MainScreenTest {
         composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
     }
 
+    private fun unavailableCard() = WeatherUiMapper().toUnavailable(
+        City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
+    )
+
+    private fun izmir() = City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
+
+    @Test
+    fun mainScreenShowsUnavailableCardWithRetryAction() {
+        var retriedCityId = -1L
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(listOf(unavailableCard()))),
+                    onRetryCity = { retriedCityId = it },
+                    onQueryChange = {}, onCityClick = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İzmir").assertIsDisplayed()
+        composeRule.onNodeWithText("Hava durumu alınamadı").assertIsDisplayed()
+        composeRule.onNodeWithTag("city_retry_button").performClick()
+        assertEquals(
+            "Yeniden deneme yalnız o şehri hedeflemeli",
+            izmir().id,
+            retriedCityId
+        )
+    }
+
+    @Test
+    fun unavailableCardOpensDetail() {
+        var clickedCityId = -1L
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(listOf(unavailableCard()))),
+                    onCityClick = { clickedCityId = it },
+                    onQueryChange = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İzmir").performClick()
+        assertEquals(izmir().id, clickedCityId)
+    }
+
+    @Test
+    fun unavailableCardCanBeDeletedWithLongPress() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(listOf(unavailableCard()))),
+                    onQueryChange = {}, onCityClick = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İzmir").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Şehri sil").assertIsDisplayed()
+    }
+
+    @Test
+    fun unavailableCardShowsProgressInsteadOfButtonWhileRetrying() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(listOf(unavailableCard())),
+                        retryingCityIds = setOf(izmir().id)
+                    ),
+                    onQueryChange = {}, onCityClick = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("city_retry_button").assertDoesNotExist()
+    }
+
     private fun syntheticCityWeathers() = listOf(
         City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)),
         City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)),
