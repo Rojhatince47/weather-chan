@@ -17,6 +17,7 @@
     <string name="section_current">Şu an</string>
 
     <string name="state_empty_list">Sonuç bulunamadı</string>
+    <string name="state_empty_search">Aramanızla eşleşen şehir bulunamadı</string>
     <string name="state_empty_detail">Veri bulunamadı</string>
 
     <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni

@@ -208,10 +208,27 @@ fun MainScreen(
                             is UiState.Loading -> CircularProgressIndicator(
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
-                            is UiState.Empty -> Text(
-                                text = stringResource(R.string.state_empty_list),
-                                modifier = Modifier.padding(HavaSpacing.xl)
-                            )
+                            // Arama kutusu iki iş yapar: yeni şehir arar ve
+                            // kayıtlı listeyi de filtreler. Sorgu varken liste
+                            // boşluğu "sonuç bulunamadı" demek değildir —
+                            // kullanıcı yeni şehir arıyordur ve ekranın sahibi
+                            // canlı arama bölümüdür. Liste mesajı yalnız gerçekten
+                            // boş listede (sorgu yokken) gösterilir; aramanın kendi
+                            // boşluğu ayrı metinle anlatılır.
+                            is UiState.Empty -> {
+                                val search = uiState.searchState
+                                when {
+                                    uiState.query.isBlank() -> Text(
+                                        text = stringResource(R.string.state_empty_list),
+                                        modifier = Modifier.padding(HavaSpacing.xl)
+                                    )
+                                    search is SearchUiState.Success && search.results.isEmpty() -> Text(
+                                        text = stringResource(R.string.state_empty_search),
+                                        modifier = Modifier.padding(HavaSpacing.xl)
+                                    )
+                                    else -> Unit
+                                }
+                            }
                             is UiState.Error -> Text(
                                 text = content.message.asString(),
                                 modifier = Modifier.padding(HavaSpacing.xl)

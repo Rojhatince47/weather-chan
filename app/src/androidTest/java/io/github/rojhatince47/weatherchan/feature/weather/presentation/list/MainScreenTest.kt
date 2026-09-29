@@ -402,6 +402,116 @@ class MainScreenTest {
         }
     }
 
+    /**
+     * Regresyon: arama kutusu iki iş yapar — yeni şehir arar ve (ayrıca) kayıtlı
+     * listeyi filtreler. Kullanıcı "Paris" yazıp eklemek istediğinde kayıtlı
+     * hiçbir şehir tutmaz, liste `Empty` olur ve ekran "Sonuç bulunamadı" der —
+     * oysa aynı anda canlı arama sonuçları listelenmektedir. Kullanıcı hem
+     * sonuçları hem "sonuç bulunamadı" görür; mesaj kayıtlı listeyi anlatır,
+     * aramayı değil.
+     */
+    @Test
+    fun searchingDoesNotShowListEmptyMessageAlongsideResults() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        query = "Par",
+                        content = UiState.Empty,
+                        searchState = SearchUiState.Success(
+                            listOf(
+                                SearchResultUiModel(
+                                    city = City("Paris", "Île-de-France", "Fransa", Coordinates(48.85, 2.35)),
+                                    isInList = false
+                                )
+                            )
+                        )
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Paris").assertIsDisplayed()
+        composeRule.onNodeWithText("Sonuç bulunamadı").assertDoesNotExist()
+    }
+
+    /**
+     * Arama gerçekten sonuç döndürmediyse kullanıcı bunu bilmeli — ama liste
+     * boşluğunun mesajıyla değil, aramanın kendi mesajıyla.
+     */
+    @Test
+    fun searchingWithNoMatchesShowsSearchMessage() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        query = "Zzzz",
+                        content = UiState.Empty,
+                        searchState = SearchUiState.Success(emptyList())
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Aramanızla eşleşen şehir bulunamadı").assertIsDisplayed()
+        composeRule.onNodeWithText("Sonuç bulunamadı").assertDoesNotExist()
+    }
+
+    /**
+     * Arama sürerken liste boşsa ekran "sonuç bulunamadı" demez: henüz
+     * cevap dönmedi, henüz bir şey bilinmiyor.
+     */
+    @Test
+    fun searchingInProgressDoesNotShowAnyEmptyMessage() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        query = "Par",
+                        content = UiState.Empty,
+                        searchState = SearchUiState.Loading
+                    ),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Sonuç bulunamadı").assertDoesNotExist()
+        composeRule.onNodeWithText("Aramanızla eşleşen şehir bulunamadı").assertDoesNotExist()
+    }
+
     private fun syntheticCityWeathers() = listOf(
         City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)),
         City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)),
