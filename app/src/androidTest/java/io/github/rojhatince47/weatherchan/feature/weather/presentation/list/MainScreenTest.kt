@@ -867,6 +867,7 @@ class MainScreenTest {
         }
 
         composeRule.onNodeWithTag("city_retry_button").assertDoesNotExist()
+        composeRule.onNodeWithTag("city_retry_spinner").assertIsDisplayed()
     }
 
     private fun syntheticCityWeathers() = listOf(

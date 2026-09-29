@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
@@ -77,8 +79,16 @@ fun CityWeatherCard(
                 // Deneme sürerken düğme kilitlenir; çift dokunuş ikinci istek
                 // atamaz. Kart yüklenince bu dal tamamen kaybolur.
                 if (isRetrying) {
+                    // Gösterge anlamsız bir Canvas'tır: düğme anlamlar ağacından
+                    // kalkarken TalkBack odakını ve "yeniden deneniyor" bilgisini
+                    // bu etiket devralır. semantics bloğu composable olmadığından
+                    // metin burada önceden çözülür.
+                    val retryingLabel = stringResource(R.string.city_retrying)
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .testTag("city_retry_spinner")
+                            .semantics { contentDescription = retryingLabel },
                         strokeWidth = 2.dp
                     )
                 } else {
