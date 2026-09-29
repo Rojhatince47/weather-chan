@@ -70,30 +70,17 @@ class DataStoreCityRepositoryTest {
     }
 
     @Test
-    fun `favoriler en ustte sirali`() = runTest {
-        val dataStore = createDataStore()
-        val repository = createRepository(dataStore)
-        repository.cities.first { it.isNotEmpty() }
-
-        repository.toggleFavorite(ankara.id)
-
-        assertEquals("Ankara", repository.cities.first { it.first().name == "Ankara" }.first().name)
-    }
-
-    @Test
-    fun `ayni sehir iki kez eklenmez ve yildizi korunur`() = runTest {
+    fun `ayni sehir iki kez eklenmez`() = runTest {
         val dataStore = createDataStore()
         val repository = createRepository(dataStore)
         repository.cities.first { it.isNotEmpty() }
 
         repository.add(bursa)
-        repository.toggleFavorite(bursa.id)
         repository.add(bursa.copy(name = "Bursa (farklı yazım)"))
 
         val matching = repository.cities.first { list -> list.count { it.id == bursa.id } == 1 }
             .filter { it.id == bursa.id }
         assertEquals(1, matching.size)
-        assertTrue("Yıldız korunmalıydı", matching.first().isFavorite)
     }
 
     @Test
@@ -124,14 +111,11 @@ class DataStoreCityRepositoryTest {
         val dataStore = createDataStore()
         val first = createRepository(dataStore)
         first.cities.first { it.isNotEmpty() }
-        first.toggleFavorite(ankara.id)
+        first.remove(ankara.id)
 
         val second = createRepository(dataStore)
 
-        val ankaraInSecond = second.cities
-            .first { list -> list.any { it.id == ankara.id && it.isFavorite } }
-            .first { it.id == ankara.id }
-        assertTrue(ankaraInSecond.isFavorite)
+        assertTrue(second.cities.first { list -> list.none { it.id == ankara.id } }.none { it.id == ankara.id })
     }
 
     @Test

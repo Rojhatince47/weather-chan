@@ -64,7 +64,7 @@ class WeatherUiMapperTest {
     @Test
     fun `maps city weather to ui model`() {
         val cityWeather = cityWeather()
-        val uiModel = mapper.toCityWeatherUiModel(cityWeather, isFavorite = false)
+        val uiModel = mapper.toCityWeatherUiModel(cityWeather)
 
         assertEquals(cityWeather.city.id, uiModel.cityId)
         assertEquals(cityWeather.city.name, uiModel.name)
@@ -79,7 +79,7 @@ class WeatherUiMapperTest {
     @Test
     fun `maps forecast to detail ui model`() {
         val forecast = forecast()
-        val uiModel = mapper.toForecastDetailUiModel(forecast, isFavorite = false)
+        val uiModel = mapper.toForecastDetailUiModel(forecast)
 
         assertEquals(24, uiModel.hourlyForecast.size)
         assertEquals(7, uiModel.dailyForecast.size)
@@ -96,7 +96,6 @@ class WeatherUiMapperTest {
         val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(
             cityWeather,
-            isFavorite = false,
             unit = TemperatureUnit.FAHRENHEIT
         )
         val expected = cityWeather.currentWeather.temperatureCelsius * 9 / 5 + 32

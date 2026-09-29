@@ -1,6 +1,5 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
-import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
@@ -17,9 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeMode
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -383,96 +380,6 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `favoriler listenin en ustunde gorunur`() = runTest {
-        val cityRepository = FakeCityRepository()
-        val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
-            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = cityRepository
-        )
-
-        viewModel.uiState.test {
-            awaitItem()
-
-            viewModel.onFavoriteClick(cityRepository.cities.value[2].id) // İzmir
-
-            val updated = awaitItem()
-            val names = (updated.content as UiState.Success).data.map { it.name }
-            assertEquals(listOf("İzmir", "İstanbul", "Ankara", "Antalya", "Trabzon"), names)
-        }
-    }
-
-    @Test
-    fun `yildiz kalici depoda saklanir`() = runTest {
-        val cityRepository = FakeCityRepository()
-        val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
-            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = cityRepository
-        )
-        viewModel.uiState.test {
-            awaitItem()
-
-            viewModel.onFavoriteClick(istanbul.id)
-            awaitItem()
-
-            assertTrue(cityRepository.cities.value.first { it.id == istanbul.id }.isFavorite)
-        }
-    }
-
-    @Test
-    fun `favorite selection is shared between list and detail view models`() = runTest {
-        val cityRepository = FakeCityRepository()
-        val viewModel = MainViewModel(
-            getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
-            searchCities = SearchCitiesUseCase(FakeWeatherRepository()),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = cityRepository
-        )
-        val detailViewModel = DetailViewModel(
-            savedStateHandle = SavedStateHandle(
-                mapOf(
-                    "name" to "İstanbul",
-                    "region" to "Marmara",
-                    "country" to "Türkiye",
-                    "latitude" to 41.01,
-                    "longitude" to 28.98
-                )
-            ),
-            getForecast = GetForecastUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
-            uiMapper = WeatherUiMapper(),
-            unitRepository = FakeTemperatureUnitRepository(),
-            cityRepository = cityRepository
-        )
-
-        viewModel.uiState.test {
-            val initial = awaitItem()
-            assertTrue(
-                ((initial.content as UiState.Success).data.first().isFavorite).not()
-            )
-
-            viewModel.onFavoriteClick(istanbul.id)
-            val selected = awaitItem()
-            assertTrue(
-                ((selected.content as UiState.Success).data.first { it.name == "İstanbul" }.isFavorite)
-            )
-        }
-
-        detailViewModel.uiState.test {
-            val detailState = awaitItem()
-            assertTrue(detailState.content is UiState.Success)
-            assertTrue(
-                ((detailState.content as UiState.Success).data.isFavorite)
-            )
-        }
-    }
-
-    @Test
     fun `refresh keeps content and toggles refreshing flag`() = runTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
@@ -675,14 +582,6 @@ class MainViewModelTest {
             return updated
         }
 
-        override suspend fun toggleFavorite(cityId: Long): List<City> {
-            val updated = (pending ?: state.value).map {
-                if (it.id == cityId) it.copy(isFavorite = !it.isFavorite) else it
-            }
-            pending = updated
-            return updated
-        }
-
         /** Bekleyen yazımı tamamlar; DataStore'ın akışa yansıması budur. */
         fun flush() {
             pending?.let { state.value = it }
@@ -800,28 +699,6 @@ class MainViewModelTest {
 
         assertTrue(fakeCities.cities.value.any { it.id == istanbul.id })
         assertTrue(fakeWeather.cityWeathersRequests.size > requestsBefore)
-    }
-
-    @Test
-    fun `undo delete preserves a city that was favorited`() = runTest {
-        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
-        val fakeCities = FakeCityRepository()
-        val viewModel = mainViewModel(fakeWeather, fakeCities)
-
-        viewModel.onFavoriteClick(istanbul.id)
-        runCurrent()
-        viewModel.onDeleteCity(istanbul.id)
-
-        var action: (() -> Unit)? = null
-        viewModel.events.test {
-            val event = awaitItem() as MainEvent.ShowSnackbar
-            action = event.action
-        }
-        action!!.invoke()
-        runCurrent()
-
-        val restored = fakeCities.cities.value.first { it.id == istanbul.id }
-        assertTrue("Geri alinan sehir favoriligi korunmali", restored.isFavorite)
     }
 
     @Test

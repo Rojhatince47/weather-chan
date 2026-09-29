@@ -42,8 +42,4 @@ class DefaultCitySeedTest {
         assertTrue(isimler.containsAll(setOf("İstanbul", "Ankara", "İzmir", "Bursa", "Antalya")))
     }
 
-    @Test
-    fun `hirbir sehir baslangicta favori degil`() {
-        assertTrue(cities.none { it.isFavorite })
-    }
 }
