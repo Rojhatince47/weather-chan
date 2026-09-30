@@ -306,7 +306,13 @@ class MainViewModel @Inject constructor(
             // Konum kartı silindi. Durum `Resolved` kalırsa "Konumumu ekle"
             // satırı hiç görünmez ve kullanıcı konumu yalnız uygulamayı
             // yeniden başlatarak geri getirebilirdi.
-            _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+            //
+            // `Idle`, **okunamadı** anlamına gelen `Unavailable` değildir:
+            // konumu kullanıcı kendisi sildi, hiçbir şey başarısız olmadı.
+            // `Unavailable` seçilseydi ekranda "Konum okunamadı · Tekrar dene"
+            // görünürdü; kullanıcı sanki bir hata çözüyormuş gibi geri almayı
+            // denemek zorunda kalırdı. Doğru olan "Konumumu ekle".
+            _uiState.update { it.copy(locationState = LocationState.Idle) }
         }
         _events.trySend(
             MainEvent.ShowSnackbar(

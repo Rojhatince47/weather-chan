@@ -1394,8 +1394,11 @@ class MainViewModelTest {
         runCurrent()
 
         assertEquals(
-            "Konum silinince geri eklenebilmeli",
-            LocationState.Unavailable,
+            // Konumu kullanıcı silmiştir, okuma **başarısız olmamıştır**. Bu
+            // yüzden "Tekrar dene" değil "Konumumu ekle" görünmeli: "Tekrar
+            // dene" yalnız gerçekten okunamayan konumda anlamlıdır.
+            "Konum silinince geri eklenebilmeli, 'Tekrar dene' dememeli",
+            LocationState.Idle,
             viewModel.uiState.value.locationState
         )
     }
