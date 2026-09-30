@@ -49,6 +49,15 @@ class MainViewModel @Inject constructor(
 
     /** Şehir başına yeniden deneme işleri; tüm liste yüklemesinden bağımsızdır. */
     private val retryJobs = mutableMapOf<Long, Job>()
+
+    /**
+     * Silinen şehrin geri alındığı sıra.
+     *
+     * `add` yeni şehri listenin **sonuna** koyar; geri al da onu kullansaydı
+     * kart ekranın en altında belirir ve tüm liste yer değiştirirdi. Bu yüzden
+     * silme anındaki sıra burada saklanır ve `restore` ile o yere konur.
+     */
+    private val pendingUndoIndexes = mutableMapOf<Long, Int>()
     private var locationJob: Job? = null
     private var searchJob: Job? = null
 
@@ -281,7 +290,10 @@ class MainViewModel @Inject constructor(
      * aksiyonunda kapatılır.
      */
     fun onDeleteCity(cityId: Long) {
-        val deleted = storedCities.firstOrNull { it.id == cityId } ?: return
+        val index = storedCities.indexOfFirst { it.id == cityId }
+        if (index < 0) return
+        val deleted = storedCities[index]
+        pendingUndoIndexes[cityId] = index
         viewModelScope.launch { cityRepository.remove(cityId) }
         if (deleted.isLocation) {
             // Konum kartı silindi. Durum `Resolved` kalırsa "Konumumu ekle"
@@ -298,9 +310,15 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    /** Snackbar "Geri al" aksiyonunun hedefi: silinen şehri geri ekler. */
+    /**
+     * Snackbar "Geri al" aksiyonunun hedefi: silinen şehri **eski sırasına**
+     * geri koyar.
+     */
     fun onUndoDelete(city: City) {
-        viewModelScope.launch { cityRepository.add(city) }
+        // İndis yoksa (ör. uygulama yeniden başladıktan sonra gelen olay) şehir
+        // sona eklenir: kaybolmasındansa yer değiştirmesi yeğdir.
+        val index = pendingUndoIndexes.remove(city.id) ?: storedCities.size
+        viewModelScope.launch { cityRepository.restore(city, index) }
     }
 
     /**

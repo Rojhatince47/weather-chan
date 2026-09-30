@@ -811,6 +811,17 @@ class MainViewModelTest {
             return updated
         }
 
+        override suspend fun restore(city: City, index: Int): List<City> {
+            val current = pending ?: state.value
+            val updated = if (current.any { it.id == city.id }) {
+                current
+            } else {
+                current.toMutableList().apply { add(index.coerceIn(0, current.size), city) }
+            }
+            pending = updated
+            return updated
+        }
+
         override suspend fun addAsLocation(city: City): List<City> {
             val location = city.copy(isLocation = true)
             // Gerçek depo sözleşmesi: konum tektir, kimlik değişse bile eski
@@ -895,6 +906,39 @@ class MainViewModelTest {
      * açılışta konum kartı "hava durumu yok" diye bir an yanıp sönüyor ve
      * (eski kayıt da önbellekte kaldığı için) iki konum kartı beliriyordu.
      */
+    /**
+     * Geri al, şehri listenin sonuna değil **eski yerine** koyar: kart geri
+     * geldiğinde liste aynı sırayı korur, kullanıcı hangi kartın neden
+     * yer değiştirdiğini görmez.
+     */
+    @Test
+    fun `geri alinan sehir eski sirasina doner`() = runTest {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val store = FakeCityRepository()
+        val viewModel = mainViewModel(weather, store)
+        viewModel.loadData()
+        runCurrent()
+
+        val before = store.current()
+        val middle = before[2]
+        assertEquals("Konum yoksa sira denemesi anlamsiz", false, middle.isLocation)
+
+        viewModel.onDeleteCity(middle.id)
+        runCurrent()
+        viewModel.onUndoDelete(middle)
+        runCurrent()
+
+        assertEquals("Geri alinan sehir eski sirasina donmeli", before.map { it.id }, store.current().map { it.id })
+        val content = viewModel.uiState.value.content
+        assertTrue("Icerik Success olmali", content is UiState.Success)
+        content as UiState.Success
+        assertEquals(
+            "Geri alinan sehir ekranda da eski sirasinda gorunmeli",
+            before.map { it.name },
+            content.data.map { it.name }
+        )
+    }
+
     @Test
     fun `konumun kimligi degisse de hava durumu onbellekte kalir`() = runTest {
         val weather = FakeWeatherRepository().apply { autoCompleteGates = true }

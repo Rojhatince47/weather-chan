@@ -50,6 +50,17 @@ class FakeCityRepository(
         return updated
     }
 
+    override suspend fun restore(city: City, index: Int): List<City> {
+        val current = state.value
+        val updated = if (current.any { it.id == city.id }) {
+            current
+        } else {
+            current.toMutableList().apply { add(index.coerceIn(0, current.size), city) }
+        }
+        state.value = updated
+        return updated
+    }
+
     override suspend fun addAsLocation(city: City): List<City> {
         val location = city.copy(isLocation = true)
         // Gerçek depo sözleşmesi: konum tektir ve kimliği değişse bile eski

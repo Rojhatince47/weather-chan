@@ -44,6 +44,12 @@ class DataStoreCityRepositoryTest {
         country = "Türkiye",
         coordinates = Coordinates(latitude = 39.92, longitude = 32.85)
     )
+    private val izmir = City(
+        name = "İzmir",
+        region = "Ege",
+        country = "Türkiye",
+        coordinates = Coordinates(latitude = 38.42, longitude = 27.14)
+    )
 
     @Before
     fun setUp() {
@@ -150,6 +156,39 @@ class DataStoreCityRepositoryTest {
         val matching = repository.cities.first { list -> list.any { it.id == bursa.id } }
             .filter { it.id == bursa.id }
         assertEquals(1, matching.size)
+    }
+
+    /**
+     * Geri al, şehri listenin **sonuna** değil eski yerine koyar. Aksi hâlde
+     * kullanıcı kartı geri geldiğinde listenin tamamı yer değiştirir ve hangi
+     * kartın neden yer değiştirdiği anlaşılmaz.
+     */
+    @Test
+    fun `geri alinan sehir eski sirasina doner`() = runTest {
+        val repository = createRepository(createDataStore())
+        repository.add(bursa)
+        repository.add(ankara)
+        repository.add(izmir)
+
+        repository.remove(ankara.id)
+        repository.restore(ankara, index = 1)
+
+        assertEquals(
+            listOf(bursa.id, ankara.id, izmir.id),
+            repository.cities.first().map { it.id }
+        )
+    }
+
+    /** Sıra dışı indis güvenli: liste kısalmışsa sona eklenir, çökmez. */
+    @Test
+    fun `geri alma indisi gecersizse sehir sona eklenir`() = runTest {
+        val repository = createRepository(createDataStore())
+        repository.add(bursa)
+        repository.remove(bursa.id)
+
+        repository.restore(ankara, index = 99)
+
+        assertEquals(listOf(ankara.id), repository.cities.first().map { it.id })
     }
 
     @Test

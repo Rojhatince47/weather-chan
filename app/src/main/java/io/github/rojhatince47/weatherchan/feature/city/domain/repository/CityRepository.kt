@@ -31,6 +31,19 @@ interface CityRepository {
     suspend fun remove(cityId: Long): List<City>
 
     /**
+     * Silinen şehri **eski sırasına** geri koyar.
+     *
+     * `add` bilinçli olarak sona ekler: yeni bir şehir listenin en sonuna
+     * yerleşir. Geri al da `add` kullansaydı, kart ekranın en altında belirir
+     * ve tüm liste yer değiştirirdi; kullanıcı hangi kartın neden taşındığını
+     * anlamaz. Bu yüzden geri al kendi yolunu ayrı taşır.
+     *
+     * `index` silme anında ölçülmüş olabilir; arada başka şehirler silinmişse
+     * liste kısalmış olur. Depo indisi güvenli şekilde sınırlar.
+     */
+    suspend fun restore(city: City, index: Int): List<City>
+
+    /**
      * Şehri **konum olarak** ekler veya mevcut kaydı konuma yükseltir.
      *
      * `add` bilinçli olarak üzerine yazmaz: kullanıcı aynı şehri iki kez
