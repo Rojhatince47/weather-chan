@@ -1,7 +1,11 @@
 package io.github.rojhatince47.weatherchan.feature.city.data.suggestion
 
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySeed
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionData
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /**
  * Gömülü öneri verisi dosyasının şeması.
@@ -28,3 +32,39 @@ internal data class CityDto(
     @SerialName("lat") val lat: Double,
     @SerialName("lon") val lon: Double
 )
+
+/**
+ * Gömülü veri dosyasının **saf** okuyucusu.
+ *
+ * Android'e bağımlı olmayan tek parça: [AssetCitySuggestionProvider] yalnızca
+ * dosyayı okur ve buraya verir. Böylece bozuk dosya, sürüm uyuşmazlığı ve alan
+ * eşlemesi JUnit testlerinde sınanabilir.
+ *
+ * Ayrıştırma **asla istisna fırlatmaz**: bozuk veri bir hatadır ama kullanıcıya
+ * gösterecek bir hata değil — öneri bölümü çizilmez, arama çalışmaya devam eder.
+ */
+internal object SuggestionFileParser {
+
+    const val SUPPORTED_VERSION = 1
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun parse(raw: String?): SuggestionData? {
+        if (raw.isNullOrBlank()) return null
+        val dto = runCatching { json.decodeFromString<SuggestionFileDto>(raw) }.getOrNull() ?: return null
+        if (dto.version != SUPPORTED_VERSION) return null
+        return SuggestionData(
+            cities = dto.cities
+                .filter { it.name.isNotBlank() && it.code.length == 2 }
+                .map {
+                    CitySeed(
+                        name = it.name,
+                        countryCode = it.code,
+                        countryName = it.country,
+                        coordinates = Coordinates(it.lat, it.lon)
+                    )
+                },
+            worldFallbackOrder = dto.worldFallbackOrder.filter { it.length == 2 }
+        )
+    }
+}

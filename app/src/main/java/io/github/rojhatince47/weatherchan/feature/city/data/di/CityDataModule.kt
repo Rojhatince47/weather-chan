@@ -7,8 +7,12 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.github.rojhatince47.weatherchan.core.di.CityDataStore
 import io.github.rojhatince47.weatherchan.feature.city.data.permission.DataStoreCityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.data.repository.DataStoreCityRepository
+import io.github.rojhatince47.weatherchan.feature.city.data.suggestion.AssetCitySuggestionProvider
+import io.github.rojhatince47.weatherchan.feature.city.data.suggestion.LocaleDeviceCountryProvider
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestionProvider
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.DeviceCountryProvider
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -28,6 +32,12 @@ abstract class CityDataModule {
 
     @Binds
     abstract fun bindCityPermissions(impl: DataStoreCityPermissions): CityPermissions
+
+    @Binds
+    abstract fun bindCitySuggestionProvider(impl: AssetCitySuggestionProvider): CitySuggestionProvider
+
+    @Binds
+    abstract fun bindDeviceCountryProvider(impl: LocaleDeviceCountryProvider): DeviceCountryProvider
 
     companion object {
         @Provides
