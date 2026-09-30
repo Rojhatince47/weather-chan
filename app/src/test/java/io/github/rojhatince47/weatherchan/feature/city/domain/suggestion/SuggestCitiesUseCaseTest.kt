@@ -1,0 +1,119 @@
+package io.github.rojhatince47.weatherchan.feature.city.domain.suggestion
+
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class SuggestCitiesUseCaseTest {
+
+    private val istanbul = CitySeed("İstanbul", "TR", "Türkiye", Coordinates(41.0082, 28.9784))
+    private val kocaeli = CitySeed("Kocaeli", "TR", "Türkiye", Coordinates(40.7654, 29.9408))
+    private val mardin = CitySeed("Mardin", "TR", "Türkiye", Coordinates(37.3122, 40.7351))
+    private val london = CitySeed("Londra", "GB", "Birleşik Krallık", Coordinates(51.5074, -0.1278))
+    private val newYork = CitySeed("New York", "US", "Amerika Birleşik Devletleri", Coordinates(40.7128, -74.006))
+
+    private suspend fun useCase(
+        seeds: List<CitySeed> = listOf(istanbul, kocaeli, mardin, london, newYork),
+        existing: List<City> = emptyList(),
+        coordinates: Coordinates? = null,
+        countryCode: String? = "TR"
+    ): SuggestionGroup? = SuggestCitiesUseCase(
+        suggestionProvider = CitySuggestionProvider { SuggestionData(seeds, listOf("GB", "US")) },
+        locationProvider = LocationProvider { coordinates },
+        deviceCountryProvider = DeviceCountryProvider { countryCode }
+    )(existing)
+
+    @Test
+    fun `konum varsa yakinlik sirasi kullanilir`() = runTest {
+        // Menşe noktası seed'in **tam** koordinatıdır: mesafe 0 olmalıdır.
+        // (Yaklaşık bir nokta seçilirse "0 km" iddiası yanlış olur.)
+        val group = useCase(coordinates = istanbul.coordinates)!!
+        assertEquals(SuggestionKind.Nearby, group.kind)
+        assertEquals("İstanbul", group.suggestions.first().city.name)
+        assertEquals(0, group.suggestions.first().distanceKm)
+        assertTrue(group.suggestions.map { it.distanceKm!! }.zipWithNext().all { (a, b) -> a <= b })
+        assertTrue(group.suggestions.drop(1).first().distanceKm!! < 250)
+    }
+
+    @Test
+    fun `yakinlik sirasi dosya sirasindan bagimsizdir`() = runTest {
+        // Havuz sırası mesafeye TERS verilir: sıralama olmasaydı ilk öneri
+        // Mardin olurdu. (`sortedBy` silinirse bu test kırılır.)
+        val group = useCase(seeds = listOf(mardin, kocaeli, istanbul), coordinates = istanbul.coordinates)!!
+        assertEquals(SuggestionKind.Nearby, group.kind)
+        assertEquals(listOf("İstanbul", "Kocaeli", "Mardin"), group.suggestions.map { it.city.name })
+    }
+
+    @Test
+    fun `bilinen mesafe sabitlenir`() = runTest {
+        // İstanbul–Kocaeli gerçek mesafesi ~85 km'dir. Derece→radyan dönüşümü
+        // silinse hesap tamamen sapar ve bu aralık testi kırar.
+        val group = useCase(coordinates = istanbul.coordinates)!!
+        val kocaeliDistance = group.suggestions.first { it.city.name == "Kocaeli" }.distanceKm!!
+        assertTrue("İstanbul–Kocaeli ~85 km olmalı, geldi: $kocaeliDistance", kocaeliDistance in 80..90)
+    }
+
+    @Test
+    fun `konum varsa listedeki sehir yine de yakinlik sirasiyla gelir`() = runTest {
+        val group = useCase(existing = listOf(istanbul.toCity()), coordinates = istanbul.coordinates)!!
+        assertEquals(SuggestionKind.Nearby, group.kind)
+        assertEquals("Kocaeli", group.suggestions.first().city.name)
+        assertTrue(group.suggestions.none { it.city.name == "İstanbul" })
+    }
+
+    @Test
+    fun `konum yoksa ulke dali dosya sirasini korur`() = runTest {
+        val group = useCase()!!
+        assertEquals(SuggestionKind.Country, group.kind)
+        assertEquals(listOf("İstanbul", "Kocaeli", "Mardin"), group.suggestions.map { it.city.name })
+        assertTrue(group.suggestions.all { it.distanceKm == null })
+    }
+
+    @Test
+    fun `bilinmeyen ulke kodu dunya yedegine duser`() = runTest {
+        val group = useCase(countryCode = "ZZ")!!
+        assertEquals(SuggestionKind.World, group.kind)
+        assertEquals(listOf("Londra", "New York"), group.suggestions.map { it.city.name })
+    }
+
+    @Test
+    fun `liste bos ulke kodu dunya yedegine duser`() = runTest {
+        assertEquals(SuggestionKind.World, useCase(countryCode = "")!!.kind)
+    }
+
+    @Test
+    fun `ulke listesinin tamami elenince grup dondurulmez`() = runTest {
+        // TR dalı tamamen elenir (Country boş kalır), dünya yedeği de elenir;
+        // kullanıcıya hiçbir şey göstermek yerine öneri bölümü hiç çizilmez.
+        val existing = listOf(istanbul, kocaeli, mardin, london, newYork).map { it.toCity() }
+        assertNull(useCase(existing = existing, countryCode = "TR"))
+    }
+
+    @Test
+    fun `veri yoksa grup yoktur`() = runTest {
+        val useCase = SuggestCitiesUseCase(
+            suggestionProvider = CitySuggestionProvider { null },
+            locationProvider = LocationProvider { null },
+            deviceCountryProvider = DeviceCountryProvider { null }
+        )
+        assertNull(useCase())
+    }
+
+    @Test
+    fun `limit uygulanir`() = runTest {
+        val many = (1..12).map { CitySeed("Şehir $it", "TR", "Türkiye", Coordinates(40.0 + it, 29.0)) }
+        val group = useCase(seeds = many, coordinates = Coordinates(41.0, 29.0))!!
+        assertEquals(8, group.suggestions.size)
+    }
+
+    @Test
+    fun `az kayit varsa kirpma yapilmaz`() = runTest {
+        val group = useCase(seeds = listOf(istanbul, kocaeli), coordinates = Coordinates(41.0, 29.0))!!
+        assertEquals(2, group.suggestions.size)
+    }
+}
