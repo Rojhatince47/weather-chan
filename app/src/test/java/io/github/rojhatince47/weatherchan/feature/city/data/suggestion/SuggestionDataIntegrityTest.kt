@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.city.data.suggestion
 
 import java.io.File
+import kotlin.math.roundToLong
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -11,7 +12,8 @@ import org.junit.Test
  *
  * Dosya elle yazıldığı için (ağdan indirilmez) en olası hata bozuk veridir:
  * eksik alan, yanlış koordinat, aynı kodda iki farklı ülke adı. Bu testler
- * öneri motoruna ulaşmadan yakalar.
+ * öneri motoruna ulaşmadan yakalar. Eksik alan, varsayılanı olmayan şema
+ * sayesinde decode hatası olarak yükselir; sessizce varsayılana düşmez.
  */
 class SuggestionDataIntegrityTest {
 
@@ -25,22 +27,38 @@ class SuggestionDataIntegrityTest {
 
     @Test
     fun `dosya parse edilebiliyor ve surum destekleniyor`() {
-        assertEquals(1, parse().version)
+        val data = parse()
+        assertEquals(1, data.version)
+        // Boş sıra, dünya dalını sessizce öldürür: ülkeler testi boş listeyle
+        // kendiliğinden geçerdi. Sıra dolu ve tekrarsız olmalı.
+        assertTrue("worldFallbackOrder boş olamaz", data.worldFallbackOrder.isNotEmpty())
+        assertEquals(
+            "worldFallbackOrder içinde tekrar: ${data.worldFallbackOrder.groupingBy { it }.eachCount().filter { it.value > 1 }.keys}",
+            data.worldFallbackOrder.size,
+            data.worldFallbackOrder.distinct().size
+        )
     }
 
     @Test
     fun `kayitlar ozgun`() {
         val keys = parse().cities.map { "${it.name}|${it.code}|${it.lat}|${it.lon}" }
-        assertEquals("Aynı şehir iki kez yazılmış: ${keys.groupingBy { it }.eachCount().filter { it.value > 1 }.keys}",
-            keys.size, keys.distinct().size)
+        assertEquals(
+            "Aynı şehir iki kez yazılmış: ${keys.groupingBy { it }.eachCount().filter { it.value > 1 }.keys}",
+            keys.size,
+            keys.distinct().size
+        )
     }
 
     @Test
     fun `ayni koordinat farkli isimlerde tekrarlamiyor`() {
-        // `City.id` koordinattan türetilir: aynı koordinata yazılmış iki şehir
-        // tek bir kart olur ve öneride ikisi birden görünmez.
-        val byCoordinates = parse().cities.groupBy({ "${it.lat}|${it.lon}" }, { it.name })
-        val clashes = byCoordinates.filterValues { it.size > 1 }
+        // `City.id` koordinatı 3 basamağa yuvarlar (~110 m): aynı id'li iki şehir
+        // tek kart olur ve öneride ikisi birden görünmez. Gruplama da aynı
+        // yuvarlamayla yapılır — birebir eşleşme, yuvarlama nedeniyle çakışan
+        // kayıtları görmezden gelirdi.
+        fun id(lat: Double, lon: Double): Long = (lat * 1_000).roundToLong() * 10_000_000 + (lon * 1_000).roundToLong()
+
+        val byId = parse().cities.groupBy({ id(it.lat, it.lon) }, { it.name })
+        val clashes = byId.filterValues { it.size > 1 }
         assertTrue("Aynı koordinatta birden fazla şehir: $clashes", clashes.isEmpty())
     }
 
@@ -60,9 +78,14 @@ class SuggestionDataIntegrityTest {
     }
 
     @Test
-    fun `her sehirin adi ve ulke kodu dolu`() {
+    fun `her kayitin adi ulke kodu ve ulke adi dolu`() {
         parse().cities.forEach { city ->
-            assertTrue("Boş alan: $city", city.name.isNotBlank() && city.code.length == 2 && city.country.isNotBlank())
+            assertTrue(
+                "Boş ya da bozuk alan: $city",
+                city.name.isNotBlank() &&
+                    city.code.matches(Regex("[A-Z]{2}")) &&
+                    city.country.isNotBlank()
+            )
         }
     }
 
@@ -77,8 +100,10 @@ class SuggestionDataIntegrityTest {
     @Test
     fun `turkiye ve her dunya yedegi ulkesi en az sekiz sehir iceriyor`() {
         val data = parse()
-        listOf("TR").plus(data.worldFallbackOrder).distinct().forEach { code ->
-            assertTrue("$code ülkesinden en az 8 şehir gerekli", data.cities.count { it.code == code } >= 8)
-        }
+        // İlk eksik ülkede durmak yerine hepsini tek mesajda topla: dünya
+        // verisi genişlerken eksiklerin tamamı bir koşuda görünür.
+        val insufficient = listOf("TR").plus(data.worldFallbackOrder).distinct()
+            .filter { code -> data.cities.count { it.code == code } < 8 }
+        assertTrue("En az 8 şehir gerekli olan ülkelerde eksik var: $insufficient", insufficient.isEmpty())
     }
 }
