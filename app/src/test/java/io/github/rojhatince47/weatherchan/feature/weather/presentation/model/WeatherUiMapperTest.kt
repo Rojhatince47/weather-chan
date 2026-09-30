@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -105,6 +106,22 @@ class WeatherUiMapperTest {
             uiModel.dailyForecast.first().dateText
         )
         assertEquals(0, uiModel.dailyForecast.first().dayOffset)
+    }
+
+    /**
+     * Konum kartı görsel olarak ayrışmalı: kart "Konumunuz" etiketi taşır.
+     * Bu bir görüntüleme kaygısı olduğu için bayrak UI modeline taşınır —
+     * sıralama kaygısı değildir (o, depodaki City üzerinde yapılır).
+     */
+    @Test
+    fun `konum karti ui modelinde isaretlenir`() {
+        val locationWeather = cityWeather().copy(city = istanbul.copy(isLocation = true))
+
+        assertTrue(mapper.toCityWeatherUiModel(locationWeather).isLocation)
+        assertTrue(mapper.toUnavailable(istanbul.copy(isLocation = true)).isLocation)
+
+        assertFalse(mapper.toCityWeatherUiModel(cityWeather()).isLocation)
+        assertFalse(mapper.toUnavailable(istanbul).isLocation)
     }
 
     @Test

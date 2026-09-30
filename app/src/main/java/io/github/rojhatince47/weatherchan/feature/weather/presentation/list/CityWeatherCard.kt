@@ -148,6 +148,17 @@ private fun CityWeatherCardContent(
                     .padding(horizontal = HavaSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(HavaSpacing.xs)
             ) {
+                if (cityWeather.isLocation) {
+                    // Konum kartı normal şehirlerden etiketle ayrışır:
+                    // kullanıcı hangi kartın "bulunduğum yer" olduğunu isim
+                    // okumadan anlamalı. Yedek ad "Konum" ile karışmaması için
+                    // etiket "Konumunuz" der.
+                    Text(
+                        text = "📍 ${stringResource(R.string.location_card_label)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.8f)
+                    )
+                }
                 Text(
                     text = cityWeather.name,
                     style = MaterialTheme.typography.titleMedium,

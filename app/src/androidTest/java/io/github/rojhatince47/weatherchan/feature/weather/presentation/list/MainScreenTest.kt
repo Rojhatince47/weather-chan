@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -868,6 +869,59 @@ class MainScreenTest {
 
         composeRule.onNodeWithTag("city_retry_button").assertDoesNotExist()
         composeRule.onNodeWithTag("city_retry_spinner").assertIsDisplayed()
+    }
+
+    /**
+     * Konum kartı, normal şehir kartlarından etiketle ayrışmalı: kullanıcının
+     * hangi kartın "bulunduğum yer" olduğunu isim okumadan anlaması gerekir.
+     */
+    @Test
+    fun locationCardShowsLocationLabel() {
+        val mapper = WeatherUiMapper()
+        val locationCard = mapper.toCityWeatherUiModel(
+            CityWeather(
+                city = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983), isLocation = true),
+                currentWeather = CurrentWeather(
+                    temperatureCelsius = 21,
+                    condition = WeatherCondition.CLEAR,
+                    windSpeedKmh = 8,
+                    humidityPercent = 50
+                )
+            )
+        )
+        val regularCard = mapper.toCityWeatherUiModel(
+            CityWeather(
+                city = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)),
+                currentWeather = CurrentWeather(
+                    temperatureCelsius = 14,
+                    condition = WeatherCondition.CLOUDY,
+                    windSpeedKmh = 6,
+                    humidityPercent = 45
+                )
+            )
+        )
+
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(listOf(locationCard, regularCard))
+                    ),
+                    onQueryChange = {}, onCityClick = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("📍 Konumunuz").assertIsDisplayed()
+        assertEquals(
+            "Etiket yalnız konum kartında olmalı",
+            1,
+            composeRule.onAllNodesWithText("📍 Konumunuz").fetchSemanticsNodes().size
+        )
     }
 
     private fun syntheticCityWeathers() = listOf(

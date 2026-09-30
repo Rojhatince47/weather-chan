@@ -22,7 +22,8 @@ class WeatherUiMapper @Inject constructor() {
                 condition = cityWeather.currentWeather.condition,
                 conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
                 conditionLabel = labelFor(cityWeather.currentWeather.condition)
-            )
+            ),
+            isLocation = cityWeather.city.isLocation
         )
 
     /**
@@ -35,9 +36,9 @@ class WeatherUiMapper @Inject constructor() {
         name = city.name,
         region = city.region,
         country = city.country,
-        weather = CardWeather.Unavailable
+        weather = CardWeather.Unavailable,
+        isLocation = city.isLocation
     )
-
     fun toForecastDetailUiModel(forecast: Forecast, unit: TemperatureUnit = TemperatureUnit.CELSIUS): ForecastDetailUiModel =
         ForecastDetailUiModel(
             city = CityUiModel(

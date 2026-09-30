@@ -8,7 +8,9 @@ data class CityWeatherUiModel(
     val name: String,
     val region: String?,
     val country: String?,
-    val weather: CardWeather
+    val weather: CardWeather,
+    /** Konum kartı "Konumunuz" etiketi taşır; görüntüleme kaygısıdır. */
+    val isLocation: Boolean = false
 )
 
 /**
