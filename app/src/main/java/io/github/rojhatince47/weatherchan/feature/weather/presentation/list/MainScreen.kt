@@ -205,7 +205,18 @@ fun MainScreen(
                         // eklenebilir. Liste doluyken de görünür olmalı: aksi
                         // halde kullanıcı konumu yalnız listeyi boşaltarak geri
                         // getirebilirdi.
-                        if (uiState.locationState !is LocationState.Resolved) {
+                        //
+                        // Görünürlük `locationState`'in kendisine bakılarak
+                        // karar verilmez: o durum her açılışta `Idle`/`Loading`
+                        // ile başlar ve yalnız o anki yenileme denemesi
+                        // bitince `Resolved` olur. Depoda önceki oturumdan kalma
+                        // konum kartı varken de o süre boyunca buton görünür
+                        // yanlışlıkla (konum okuma + geocoding + yedek ağ turu
+                        // yavaş ağda ~25 s sürüyor). Karar veren veridir:
+                        // konum kartı ekrandaysa satırın gösterileceği bir
+                        // durum yoktur.
+                        val hasLocationCard = content.data.any { it.isLocation }
+                        if (!hasLocationCard && uiState.locationState !is LocationState.Resolved) {
                             item(key = "add_location") {
                                 AddLocationRow(
                                     locationState = uiState.locationState,
@@ -332,7 +343,12 @@ private fun AddLocationRow(locationState: LocationState, onAddLocation: () -> Un
     val retry = locationState is LocationState.Unavailable
     Button(
         onClick = if (retry) onRetryLocation else onAddLocation,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            // Etiketli: "Tekrar dene" metni hem bu satırda hem de
+            // havası alınamayan kartların kendi düğmesinde görünür; testler
+            // satırı metinden değil etiketten ayırt etmeli.
+            .testTag("add_location_row")
     ) {
         Text(
             text = if (retry) {

@@ -774,6 +774,57 @@ class MainScreenTest {
         composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
     }
 
+    /**
+     * Bildirilen hata: konum kartı listedeyken "Konumumu ekle" butonu
+     * görünüyordu. Sebep, satırın görünürlüğünün yalnız `locationState`'e
+     * bağlanmasıydı; o durum her açılışta `Idle`/`Loading` ile başlar ve
+     * yalnız o anki yenileme denemesi bitince `Resolved` olur. Konum okuma
+     * + geocoding + yedek ağ turu yavaş ağda ~25 s sürdüğü için buton o
+     * süre boyunca yanlışlıkla görünüyordu.
+     *
+     * Karar veriyor olan veridir: konum kartı ekrandaysa ekleme satırının
+     * gösterileceği bir durum yoktur.
+     */
+    @Test
+    fun noAddLocationRowWhileLocationIsIdleAndCardIsOnScreen() {
+        assertNoAddLocationRow(LocationState.Idle)
+    }
+
+    @Test
+    fun noAddLocationRowWhileLocationIsLoadingAndCardIsOnScreen() {
+        assertNoAddLocationRow(LocationState.Loading)
+    }
+
+    @Test
+    fun noAddLocationRowWhileLocationIsUnavailableAndCardIsOnScreen() {
+        assertNoAddLocationRow(LocationState.Unavailable)
+    }
+
+    private fun assertNoAddLocationRow(locationState: LocationState) {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(listOf(locationCard(), unavailableCard())),
+                        locationState = locationState
+                    ),
+                    onQueryChange = {}, onCityClick = {}, onAddCity = {}, onOpenCity = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {}, onToggleUnit = {},
+                    onToggleThemeMode = {}, onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
+        composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
+    }
+
+    private fun locationCard() = WeatherUiMapper().toUnavailable(
+        City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983), isLocation = true)
+    )
+
     private fun unavailableCard() = WeatherUiMapper().toUnavailable(
         City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
     )
