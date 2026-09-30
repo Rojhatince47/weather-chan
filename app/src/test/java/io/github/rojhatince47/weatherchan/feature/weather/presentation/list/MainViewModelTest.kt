@@ -813,7 +813,10 @@ class MainViewModelTest {
 
         override suspend fun addAsLocation(city: City): List<City> {
             val location = city.copy(isLocation = true)
-            val updated = listOf(location) + (pending ?: state.value).filterNot { it.id == location.id }
+            // Gerçek depo sözleşmesi: konum tektir, kimlik değişse bile eski
+            // konum kaydı düşer.
+            val updated = listOf(location) +
+                (pending ?: state.value).filterNot { it.isLocation || it.id == location.id }
             pending = updated
             return updated
         }
@@ -823,6 +826,110 @@ class MainViewModelTest {
             pending?.let { state.value = it }
             pending = null
         }
+    }
+
+    /**
+     * Bildirilen hata zincirinin başı: silinen kart ekranda kalıyordu.
+     * Çünkü depo yayınladığında liste, silme sonrası başlatılan **ağ turu**
+     * bitene kadar eski içeriği gösteriyordu. Kullanıcı "silinmedi" sanıp
+     * aynı şehri yeniden silmeye çalışıyor (ikinci deneme sessizce yutuluyor,
+     * çünkü şehir depoda yok) ve ardından yanlış şehrin snackbar'ında geri al
+     * düğmesine basıyor.
+     *
+     * Depo gerçeği ağ turundan bağımsız olduğu için kart anında çıkmalı:
+     * havası bilinmeyen şehir `CardWeather.Unavailable` olarak zaten
+     * çizilebiliyor.
+     */
+    @Test
+    fun `silinen sehir ag turu bitmeden listeden cikar`() = runTest {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(weather, FakeCityRepository())
+        viewModel.loadData()
+        runCurrent()
+
+        // Sonraki tur kıpırdamasın: kart yalnız depodan gelen gerçekle güncellenebilir.
+        weather.autoCompleteGates = false
+        viewModel.onDeleteCity(istanbul.id)
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Icerik Success olmali", content is UiState.Success)
+        content as UiState.Success
+        assertTrue(
+            "Silinen sehir ag turu tamamlanmadan da listeden cikmalı",
+            content.data.none { it.cityId == istanbul.id }
+        )
+    }
+
+    @Test
+    fun `silinen sehir geri alininca ag turu bitmeden geri gelir`() = runTest {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val viewModel = mainViewModel(weather, FakeCityRepository())
+        viewModel.loadData()
+        runCurrent()
+
+        weather.autoCompleteGates = false
+        viewModel.onDeleteCity(istanbul.id)
+        runCurrent()
+        assertTrue(
+            "Once silinen sehir listeden cikmali",
+            (viewModel.uiState.value.content as UiState.Success).data.none { it.cityId == istanbul.id }
+        )
+
+        viewModel.onUndoDelete(istanbul)
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Icerik Success olmali", content is UiState.Success)
+        content as UiState.Success
+        assertEquals(
+            "Geri alinan sehir ag turu tamamlanmadan da listede gorunmeli ve bir kez",
+            1,
+            content.data.count { it.cityId == istanbul.id }
+        )
+    }
+
+    /**
+     * Konumun kimliği her açılışta yeniden çözümlendiği için değişebiliyor.
+     * Önbellek, depodaki güncel konum kaydıyla eşleştirilir; aksi hâlde her
+     * açılışta konum kartı "hava durumu yok" diye bir an yanıp sönüyor ve
+     * (eski kayıt da önbellekte kaldığı için) iki konum kartı beliriyordu.
+     */
+    @Test
+    fun `konumun kimligi degisse de hava durumu onbellekte kalir`() = runTest {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val store = FakeCityRepository(listOf(istanbul.copy(isLocation = true)))
+        // `asked = false`: VM açılışta `refreshLocation()` çağırıp depoya kendi
+        // konumunu yazmasın; bu testte depoyu yalnızca senaryo değiştirir.
+        val viewModel = mainViewModel(weather, store, permissions = FakeCityPermissions(asked = false))
+        viewModel.loadData()
+        runCurrent()
+
+        weather.autoCompleteGates = false
+        // Aynı fiziksel yer, **farklı kimlik**: GPS okuması başka bir ızgara
+        // hücresine düşüyor (id koordinattan türer). `City.equals` id'ye baktığı
+        // için iki kayıt eşit sayılır; asıl ayrım, depoda yeni kaydın geçmesi.
+        store.addAsLocation(istanbul.copy(name = "Konum", coordinates = Coordinates(41.02, 28.99)))
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue("Icerik Success olmali", content is UiState.Success)
+        content as UiState.Success
+        assertEquals(
+            "Konum tektir; eski kimlikle ikinci bir konum karti olusmamali",
+            1,
+            content.data.count { it.isLocation }
+        )
+        val locationCard = content.data.first { it.isLocation }
+        assertEquals(
+            "Konum karti depodaki guncel kaydi gostermeli",
+            "Konum",
+            locationCard.name
+        )
+        assertTrue(
+            "Konumun hava durumu kimlik degisiminde korunmali",
+            locationCard.weather is CardWeather.Loaded
+        )
     }
 
     @Test

@@ -93,6 +93,15 @@ class MainViewModel @Inject constructor(
             cityRepository.cities.collect { stored ->
                 storedCities = stored
                 refreshSearchInListFlags()
+                // Depo gerçeği ağ turundan **bağımsızdır**: silinen şehir
+                // ekranda kalmamalı, eklenen şehir hemen görünmeli. Aksi hâlde
+                // kullanıcı "silinmedi" sanıp aynı şehri yeniden silmeye
+                // çalışıyor (ikinci deneme depoda şehri bulamadığı için sessizce
+                // yutuluyor) ve yanlış şehrin snackbar'ında geri al'a basıyor.
+                // Hava durumu bilinmeyen şehir `CardWeather.Unavailable` olarak
+                // zaten çizilebildiği için beklemek gerekmiyor.
+                reconcileCacheWith(stored)
+                rederiveContent()
                 fetch(stored, keepContent = _uiState.value.content is UiState.Success)
             }
         }
@@ -350,10 +359,36 @@ class MainViewModel @Inject constructor(
 
     /** Ağdan gelen veriyi önbelleğe alır ve listeyi mevcut seçimlerle türetir. */
     private fun applyFetchedData(cityWeathers: List<CityWeather>) {
+        replaceCache(cityWeathers)
+        rederiveContent()
+    }
+
+    /**
+     * Önbelleği depodaki güncel listeyle uzlaştırır: depoda olmayan şehirlerin
+     * havası düşer, depoda olanların şehir bilgisi tazelenir.
+     *
+     * Konum kaydı ayrıca ele alınır: ad çözümlemesi her açılışta koştuğu için
+     * aynı fiziksel yer yeni bir kimlikle yazılabiliyor. Böyle bir değişimde
+     * konumun havası **kaybedilmez**, yalnız yeni kimliğe taşınır; aksi hâlde
+     * her açılışta konum kartı "hava durumu yok" diye bir an yanıp sönüyordu.
+     */
+    private fun reconcileCacheWith(stored: List<City>) {
+        val cached = cachedCityWeathers ?: return
+        val cachedLocation = cached.firstOrNull { it.city.isLocation }
+        replaceCache(
+            stored.mapNotNull { city ->
+                val match = cached.firstOrNull { it.city.id == city.id }
+                    ?: cachedLocation?.takeIf { city.isLocation }
+                match?.copy(city = city)
+            }
+        )
+    }
+
+    /** Önbelleği ve ondan türetilen şehir eşlemesini birlikte günceller. */
+    private fun replaceCache(cityWeathers: List<CityWeather>) {
         cachedCityWeathers = cityWeathers
         loadedCities.clear()
         loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
-        rederiveContent()
     }
 
     /**

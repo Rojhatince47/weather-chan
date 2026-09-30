@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Test amaçlı şehir deposu. Varsayılan listesi eski örnek verenin 5 şehridir;
  * mevcut testlerin liste boyutu varsayımları korunur.
  *
+ * **Sınırlama:** `cities` bir `StateFlow` olduğu için aynı `id`'li bir kaydın
+ * **değiştirilmesi** gözlemlenemez (`City.equals` yalnız `id`'ye bakar, akış da
+ * eşit değeri conflate eder). Gerçek depoda aynı id'li kayıt değiştirilir; bu
+ * yüzden kimlik değişikliğini sınayan testler **farklı** bir koordinat
+ * vermek zorundadır.
+ *
  * `cities` bilinçli olarak `StateFlow` **değil** `Flow` olarak sunulur: gerçek
  * uygulamada depo `Flow` yayar ve dinleyen ilk değeri gerçek veridir. Sahte de
  * aynı sözleşmeyi korur, böylece testler "ilk yayım doğru listeden başlar"
@@ -46,7 +52,9 @@ class FakeCityRepository(
 
     override suspend fun addAsLocation(city: City): List<City> {
         val location = city.copy(isLocation = true)
-        val updated = listOf(location) + state.value.filterNot { it.id == location.id }
+        // Gerçek depo sözleşmesi: konum tektir ve kimliği değişse bile eski
+        // konum kaydı düşer (bayrağa bakılır, kimliğe değil).
+        val updated = listOf(location) + state.value.filterNot { it.isLocation || it.id == location.id }
         state.value = updated
         return updated
     }
