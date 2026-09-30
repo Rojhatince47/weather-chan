@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -31,6 +32,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWe
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -741,6 +743,43 @@ class MainScreenTest {
             .performScrollToNode(hasText("Tekrar dene"))
         composeRule.onNodeWithText("Tekrar dene").performClick()
         assertEquals("Yeniden deneme geri çağrısı tetiklenmeli", true, retried)
+    }
+
+    /**
+     * Arama çubuğu ekranın **en üstünde** olmalı: kullanıcının ekrana giriş
+     * işi şehir bulmak/eklemek. Sıra, başlığın altına gömülünce arama kutusu
+     * ikincil bir öğeye dönüşüyordu.
+     */
+    @Test
+    fun searchFieldSitsAboveTheHeader() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Empty, locationState = LocationState.Idle),
+                    onQueryChange = {},
+                    onCityClick = {},
+                    onAddCity = {},
+                    onOpenCity = {},
+                    onDeleteCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onToggleUnit = {},
+                    onToggleThemeMode = {},
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        val searchTop = composeRule.onNodeWithText("Şehir ara").getBoundsInRoot().top
+        val titleTop = composeRule.onNodeWithText("Weather-chan").getBoundsInRoot().top
+
+        assertTrue(
+            "Arama çubuğu başlıktan yukarıda olmalı (arama=$searchTop, başlık=$titleTop)",
+            searchTop < titleTop
+        )
     }
 
     @Test

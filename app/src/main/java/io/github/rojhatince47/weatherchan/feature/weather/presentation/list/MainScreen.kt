@@ -107,6 +107,14 @@ fun MainScreen(
             modifier = Modifier.testTag("pull_refresh")
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                // Arama çubuğu en üstte: ekrana giren kullanıcının ilk işi
+                // şehir bulmak ya da eklemek. Başlık ve ayar satırı bunu
+                // gölgeliyordu; arama kutusu ikincil bir konumda kalınca
+                // listenin en üstünde değil, ortasında görünüyordu.
+                CitySearchField(
+                    value = uiState.query,
+                    onValueChange = onQueryChange
+                )
                 // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
                 // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
                 val isDarkTheme = themeMode.resolveIsDark()
@@ -149,10 +157,6 @@ fun MainScreen(
                         )
                     }
                 }
-                CitySearchField(
-                    value = uiState.query,
-                    onValueChange = onQueryChange
-                )
                 // Canlı arama göstergeleri ince ve sabittir; sonuç satırları ise
                 // kaydırılabilir listenin başına gömülür — 10 sonuç yerel listeyi
                 // ekran dışına itmesin diye sabit bölüm kullanılmaz.
