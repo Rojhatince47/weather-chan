@@ -89,6 +89,81 @@ class MainRouteTest {
         assertTrue(fakeCities.current().any { it.name == "İstanbul" })
     }
 
+    /**
+     * Üst üste silmede ekranda yalnız **son** silmenin "Geri al" düğmesi olur ve
+     * düğme yalnız o silmeyi geri alır. Kullanıcının seçtiği politika budur:
+     * "Geri al" görünümü her zaman aynı olduğu için hangi silmeye ait olduğunu
+     * ayırt etmek mümkün değildir; bu yüzden eski silme ekrandan kalkar ve
+     * geri alınamaz olur.
+     *
+     * Bu test **politikayı** güvenceye alır (ekranda hangi silme var, hangi şehir
+     * dönüyor). Yanlış şehri geri gelmeye karşı asıl kilit `MainViewModel`'de
+     * ve birim testiyle kanıtlanmıştır
+     * (`ust uste silmede eski geri al aksiyonu hicbir seyi geri almaz`).
+     */
+    @Test
+    fun deletingTwoCitiesInARowOffersOnlyTheLatestUndo() {
+        val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+        val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
+        val izmir = City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
+        val fakeCities = RouteCityRepository(listOf(istanbul, ankara, izmir))
+        val weather = RouteWeatherRepository()
+        val unitRepository = RouteUnitRepository()
+        val viewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(weather),
+            searchCities = SearchCitiesUseCase(weather),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = unitRepository,
+            cityRepository = fakeCities,
+            getLocationCity = GetLocationCityUseCase(NoLocationProvider(), weather),
+            cityPermissions = RouteCityPermissions()
+        )
+        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository())
+
+        composeRule.setContent {
+            HavaTheme {
+                MainRoute(
+                    onCityClick = {},
+                    viewModel = viewModel,
+                    settingsViewModel = settingsViewModel
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("İstanbul").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Sil").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Geri al").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Ankara").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Sil").performClick()
+        // Geçen silmenin snackbar'ı **hemen** kalkmalı. Kuyruk kalsaydı ilk
+        // snackbar kendiliğinden kapanana dek (~4 saniye) ekranda kalır ve o
+        // boyunca yanlış şehri geri getiren bir "Geri al" düğmesi görünür.
+        // Ölçüm: düzeltme olmadan ikinci snackbar 2 saniyede belirmiyor.
+        composeRule.waitUntil(timeoutMillis = 2_000) {
+            composeRule.onAllNodesWithText("İstanbul silindi").fetchSemanticsNodes().isEmpty()
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Ankara silindi").fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(
+            "Ekranda yalnizca son silmenin snackbar'i olmali",
+            composeRule.onAllNodesWithText("İstanbul silindi").fetchSemanticsNodes().isEmpty()
+        )
+
+        composeRule.onNodeWithText("Geri al").performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Ankara").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithText("İstanbul").fetchSemanticsNodes().isEmpty()
+        }
+        assertTrue("Yalnizca son silinen sehir geri alinmali", fakeCities.current().any { it.id == ankara.id })
+        assertTrue("Onceki silinen sehir geri gelmemeli", fakeCities.current().none { it.id == istanbul.id })
+    }
+
     private class RouteUnitRepository : TemperatureUnitRepository {
         private val state = MutableStateFlow(TemperatureUnit.CELSIUS)
         override val unit: StateFlow<TemperatureUnit> = state.asStateFlow()
@@ -125,6 +200,17 @@ class MainRouteTest {
 
         override suspend fun remove(cityId: Long): List<City> {
             val updated = state.value.filterNot { it.id == cityId }
+            state.value = updated
+            return updated
+        }
+
+        override suspend fun restore(city: City, index: Int): List<City> {
+            val current = state.value
+            val updated = if (current.any { it.id == city.id }) {
+                current
+            } else {
+                current.toMutableList().apply { add(index.coerceIn(0, current.size), city) }
+            }
             state.value = updated
             return updated
         }
