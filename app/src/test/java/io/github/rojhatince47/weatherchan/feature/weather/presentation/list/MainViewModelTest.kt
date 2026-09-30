@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -1086,6 +1087,48 @@ class MainViewModelTest {
 
         assertTrue(fakeCities.current().any { it.id == istanbul.id })
         assertTrue(fakeWeather.cityWeathersRequests.size > requestsBefore)
+    }
+
+    /**
+     * Üst üste silmede yalnız **en son** silme geri alınabilir.
+     *
+     * Ekrandaki snackbar her yeni silmede değişir; eskisinin aksiyonu artık
+     * yanlış şehri geri getirmemelidir. Aksi halde kullanıcı bir şehri silip
+     * ekranda gördüğü başka bir "Geri al" düğmesine basıyor ve beklediği şehir
+     * değil, başka bir şehir geri geliyordu.
+     */
+    @Test
+    fun `ust uste silmede eski geri al aksiyonu hicbir seyi geri almaz`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository()
+        val viewModel = mainViewModel(fakeWeather, fakeCities)
+
+        viewModel.onDeleteCity(istanbul.id)
+        val firstAction = (viewModel.events.first() as MainEvent.ShowSnackbar).action
+        viewModel.onDeleteCity(ankara.id)
+        val secondAction = (viewModel.events.first() as MainEvent.ShowSnackbar).action
+        runCurrent()
+
+        firstAction!!.invoke()
+        runCurrent()
+
+        assertTrue(
+            "Ekrani degismis bir geri al aksiyonu hicbir seyi geri almamali",
+            fakeCities.current().none { it.id == istanbul.id }
+        )
+        assertTrue(
+            "Yeni silinen sehir de yerinde kalmali",
+            fakeCities.current().none { it.id == ankara.id }
+        )
+
+        secondAction!!.invoke()
+        runCurrent()
+
+        assertTrue(
+            "Yalnizca en son silinen sehir geri alinmali",
+            fakeCities.current().any { it.id == ankara.id }
+        )
+        assertTrue(fakeCities.current().none { it.id == istanbul.id })
     }
 
     @Test

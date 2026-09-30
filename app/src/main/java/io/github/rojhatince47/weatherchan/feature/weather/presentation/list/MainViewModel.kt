@@ -51,13 +51,20 @@ class MainViewModel @Inject constructor(
     private val retryJobs = mutableMapOf<Long, Job>()
 
     /**
-     * Silinen şehrin geri alındığı sıra.
+     * Geri alınabilecek **tek** silme: şehir ve silme anındaki sırası.
      *
      * `add` yeni şehri listenin **sonuna** koyar; geri al da onu kullansaydı
      * kart ekranın en altında belirir ve tüm liste yer değiştirirdi. Bu yüzden
      * silme anındaki sıra burada saklanır ve `restore` ile o yere konur.
+     *
+     * Tek slot bilinçlidir: üst üste silmede yalnız **en son** silme geri
+     * alınabilir. Ekran da yeni silmede snackbar'ı değiştirdiği için eskisinin
+     * aksiyonu artık görünmez; bu alan o kapının ikinci kilididir — görünmeyen
+     * bir aksiyon tetiklense bile yanlış şehri geri getirmez.
      */
-    private val pendingUndoIndexes = mutableMapOf<Long, Int>()
+    private var pendingUndo: PendingUndo? = null
+
+    private data class PendingUndo(val city: City, val index: Int)
     private var locationJob: Job? = null
     private var searchJob: Job? = null
 
@@ -293,7 +300,7 @@ class MainViewModel @Inject constructor(
         val index = storedCities.indexOfFirst { it.id == cityId }
         if (index < 0) return
         val deleted = storedCities[index]
-        pendingUndoIndexes[cityId] = index
+        pendingUndo = PendingUndo(deleted, index)
         viewModelScope.launch { cityRepository.remove(cityId) }
         if (deleted.isLocation) {
             // Konum kartı silindi. Durum `Resolved` kalırsa "Konumumu ekle"
@@ -315,10 +322,14 @@ class MainViewModel @Inject constructor(
      * geri koyar.
      */
     fun onUndoDelete(city: City) {
-        // İndis yoksa (ör. uygulama yeniden başladıktan sonra gelen olay) şehir
-        // sona eklenir: kaybolmasındansa yer değiştirmesi yeğdir.
-        val index = pendingUndoIndexes.remove(city.id) ?: storedCities.size
-        viewModelScope.launch { cityRepository.restore(city, index) }
+        val pending = pendingUndo ?: return
+        // Hedef ekranda görünen son silme değilse bu aksiyon bayatlamıştır ve
+        // yok sayılır. Aksi halde kullanıcı, ekranda gördüğü snackbar'a bakmadan
+        // önceki silmenin düğmesine basıp beklediği şehri değil başka bir şehri
+        // geri getiriyordu.
+        if (pending.city.id != city.id) return
+        pendingUndo = null
+        viewModelScope.launch { cityRepository.restore(pending.city, pending.index) }
     }
 
     /**

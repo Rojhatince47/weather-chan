@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -74,18 +76,28 @@ fun MainRoute(
     }
 
     LaunchedEffect(viewModel) {
+        // Yalnız **en son** silmenin "Geri al" düğmesi ekranda olur. Snackbar
+        // kuyruğu kullanılırsa eski düğme, kullanıcı ondan ne istediğini
+        // karıştırarak basabilir ("Geri al" görünümü hep aynıdır) ve beklediği
+        // şehri değil başka bir şehri geri getirir. Bu yüzden yeni silme
+        // ekrandakini hemen kaldırır; üst üste silmede önceki silmeler geri
+        // alınamaz olur, ama yanlış şehir hiç dönmez.
+        var currentSnackbar: Job? = null
         viewModel.events.collect { event ->
             when (event) {
                 is MainEvent.ShowSnackbar -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = event.message.resolve(resources),
-                        actionLabel = event.actionLabel?.resolve(resources),
-                        duration = SnackbarDuration.Short
-                    )
-                    // Aksiyon, snackbar action etiketine tıklanınca tetiklenir
-                    // (geri al gibi anlık işlemler); otomatik kapanmada çalışmaz.
-                    if (result == SnackbarResult.ActionPerformed) {
-                        event.action?.invoke()
+                    currentSnackbar?.cancel()
+                    currentSnackbar = launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = event.message.resolve(resources),
+                            actionLabel = event.actionLabel?.resolve(resources),
+                            duration = SnackbarDuration.Short
+                        )
+                        // Aksiyon, snackbar action etiketine tıklanınca tetiklenir
+                        // (geri al gibi anlık işlemler); otomatik kapanmada çalışmaz.
+                        if (result == SnackbarResult.ActionPerformed) {
+                            event.action?.invoke()
+                        }
                     }
                 }
             }
