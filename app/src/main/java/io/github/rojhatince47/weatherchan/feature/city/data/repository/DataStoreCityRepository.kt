@@ -34,9 +34,15 @@ class DataStoreCityRepository @Inject constructor(
 
     override suspend fun addAsLocation(city: City): List<City> = mutate { current ->
         val location = city.copy(isLocation = true)
-        val withoutSame = current.filterNot { it.id == location.id }
+        // Konum tekildir. Ad çözümlemesi her açılışta yeniden koşar ve ağın
+        // durumuna göre aynı yere farklı kimlik döndürebilir: başarılı çözüm
+        // geocoding koordinatını, başarısız çözüm GPS koordinatını verir.
+        // Eski konum kaydı yalnız aynı kimlikte çıkarılsaydı kimlik farkı
+        // aynı yeri iki konum kartı yapardı — cihazda tam olarak böyle oldu.
+        // Bu yüzden kimliğe değil konum bayrağına bakılır.
+        val withoutLocation = current.filterNot { it.isLocation || it.id == location.id }
         // Konum başa; geri kalanlar eski sıralarını korur.
-        listOf(location) + withoutSame
+        listOf(location) + withoutLocation
     }
 
     /**

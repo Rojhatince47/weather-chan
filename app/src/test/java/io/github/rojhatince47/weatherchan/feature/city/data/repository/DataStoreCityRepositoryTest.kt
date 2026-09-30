@@ -251,6 +251,52 @@ class DataStoreCityRepositoryTest {
         job.cancel()
     }
 
+    /**
+     * Regresyon (cihazda gözlendi): ad çözümlemesi her açılışta yeniden koşar
+     * ve ağın durumuna göre aynı yere **farklı kimlik** döndürür — başarılı
+     * çözüm wttr.in'in geocoding koordinatını, başarısız çözüm GPS
+     * koordinatını verir (örn. 41.0/28.983 ile 41.009998/28.98). Eski konum
+     * kaydı yalnız aynı kimlikte çıkarılsaydı kimlik farkı aynı yeri iki
+     * konum kartı yapardı.
+     *
+     * Konum tekildir: yeni konum, eski kaydın kimliği ne olursa olsun yerini
+     * alır. Bu sınama "ağ düzeldi, çözümleme başarılı oldu" yoludur.
+     */
+    @Test
+    fun `cozumleme gelisince eski konum kaydi kimlik farki olsa bile kaldirilir`() = runTest {
+        val repository = createRepository(createDataStore())
+        val fallback = City("Konum", null, null, Coordinates(41.009998333333336, 28.98))
+        val resolved = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983))
+
+        repository.addAsLocation(fallback)
+        repository.addAsLocation(resolved)
+
+        val stored = repository.cities.first()
+        assertEquals("Aynı yer iki kart olmamalı", 1, stored.size)
+        assertEquals("Yeni çözümlemenin adı kalmalı", "Kucukpazar", stored.single().name)
+        assertTrue(stored.single().isLocation)
+    }
+
+    /**
+     * Aynı tekillik diğer yönde de geçerli: ağ bozulunca çözümleme
+     * başarısız olur ve yedek "Konum" kaydı (GPS koordinatlı) gelir. Bu,
+     * kullanıcının cihazda gözlediği ikilenmeyi üreten asıl yoldu.
+     */
+    @Test
+    fun `cozumleme bozulunca eski konum kaydi kimlik farki olsa bile kaldirilir`() = runTest {
+        val repository = createRepository(createDataStore())
+        val resolved = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983))
+        val fallback = City("Konum", null, null, Coordinates(41.009998333333336, 28.98))
+
+        repository.addAsLocation(resolved)
+        repository.addAsLocation(fallback)
+
+        val stored = repository.cities.first()
+        assertEquals("Aynı yer iki kart olmamalı", 1, stored.size)
+        assertEquals("Yedek ad kalmalı", "Konum", stored.single().name)
+        assertTrue(stored.single().isLocation)
+    }
+
     @Test
     fun `konum isareti diskte kalici olur`() = runTest {
         val dataStore = createDataStore()
