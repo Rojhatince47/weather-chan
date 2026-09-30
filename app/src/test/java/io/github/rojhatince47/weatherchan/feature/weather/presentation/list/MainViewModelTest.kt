@@ -20,6 +20,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
@@ -907,6 +908,7 @@ class MainViewModelTest {
      * açılışta konum kartı "hava durumu yok" diye bir an yanıp sönüyor ve
      * (eski kayıt da önbellekte kaldığı için) iki konum kartı beliriyordu.
      */
+
     /**
      * Geri al, şehri listenin sonuna değil **eski yerine** koyar: kart geri
      * geldiğinde liste aynı sırayı korur, kullanıcı hangi kartın neden

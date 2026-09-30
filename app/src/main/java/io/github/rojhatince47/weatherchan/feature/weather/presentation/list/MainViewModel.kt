@@ -17,6 +17,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeath
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchResultUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel

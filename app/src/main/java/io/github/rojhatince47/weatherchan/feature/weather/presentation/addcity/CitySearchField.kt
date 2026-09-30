@@ -1,4 +1,4 @@
-package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
+package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,9 +21,9 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.PillShape
 /**
  * Şehir arama alanı.
  *
- * Sorgu etkinken alanın içinde temizleme düğmesi bulunur: arama hem yeni
- * şehir aramayı hem kayıtlı listeyi süzmeyi yaptığı için (bkz.
- * [MainScreen]) kullanıcının listeye dönebilmesi için bir yol gerekir.
+ * Sorgu etkinken alanın içinde temizleme düğmesi bulunur: arama yeni şehir
+ * eklemek için yapılır (bkz. [AddCityScreen]) ve kullanıcı sorguyu temizleyerek
+ * önerilere dönebilmelidir.
  * Düğme yalnız metin varken görünür; alan boşken gereksiz gürültü olurdu.
  */
 @Composable

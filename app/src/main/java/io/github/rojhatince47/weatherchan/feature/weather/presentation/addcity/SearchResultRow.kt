@@ -1,4 +1,4 @@
-package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
+package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column

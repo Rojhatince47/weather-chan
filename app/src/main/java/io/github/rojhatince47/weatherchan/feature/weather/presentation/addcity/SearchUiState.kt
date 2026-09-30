@@ -1,4 +1,4 @@
-package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
+package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
