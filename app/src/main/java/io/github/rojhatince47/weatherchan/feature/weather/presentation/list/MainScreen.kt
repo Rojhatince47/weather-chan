@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -84,6 +85,14 @@ fun MainScreen(
     // Uzun basma ile onaya kalkışılan şehir (id + görünen ad). Sheet açıkken
     // dolu tutulur; onay/iptal ya da alan dışına dokunma ile sıfırlanır.
     var pendingDelete: Pair<Long, String>? by remember { mutableStateOf(null) }
+
+    // Arama etkinken sistem geri tuşu uygulamayı kapatmak yerine aramayı
+    // kapatır: kutu hem arama hem liste süzgeci olduğu için (aşağıdaki
+    // yorum) geri tuşu "listeye dön" anlamına gelir. Klavye açıkken geri
+    // tuşu platformda önce klavyeyi kapatır, bu yüzden ikinci basışta devreye
+    // girer — istenen davranış. Sorgu yoksa bu satır hiç devreye girmez ve
+    // geri tuşu ekranı kapatmaya devam eder.
+    BackHandler(enabled = uiState.query.isNotBlank()) { onQueryChange("") }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

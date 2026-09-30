@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
+import androidx.test.espresso.Espresso
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -819,6 +820,84 @@ class MainScreenTest {
 
         composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
         composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
+    }
+
+    /**
+     * Bildirilen eksiklik: bir şey aradıktan sonra arama görünümünden geri
+     * dönmenin bir yolu yoktu — alanda temizleme düğmesi yoktu, sistem geri
+     * tuşu uygulamayı kapatıyordu. Listeye dönmek için metin elle silinmeliydi.
+     */
+    @Test
+    fun clearSearchActionClearsActiveQuery() {
+        var changedTo: String? = null
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(emptyList()),
+                        query = "iz"
+                    ),
+                    onQueryChange = { changedTo = it },
+                    onCityClick = {}, onAddCity = {}, onOpenCity = {}, onDeleteCity = {},
+                    onRetry = {}, onRefresh = {}, onToggleUnit = {}, onToggleThemeMode = {},
+                    onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Aramayı temizle").performClick()
+        assertEquals("Temizleme düğmesi sorguyu boşaltmalı", "", changedTo)
+    }
+
+    @Test
+    fun noClearSearchActionWhenQueryIsBlank() {
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(content = UiState.Success(emptyList())),
+                    onQueryChange = {},
+                    onCityClick = {}, onAddCity = {}, onOpenCity = {}, onDeleteCity = {},
+                    onRetry = {}, onRefresh = {}, onToggleUnit = {}, onToggleThemeMode = {},
+                    onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Aramayı temizle").assertDoesNotExist()
+    }
+
+    /**
+     * Sistem geri tuşu, klavye kapalıyken ve arama etkinken uygulamayı
+     * kapatmak yerine aramayı kapatmalı: kullanıcının alışkanlığı olan hareket
+     * bir kare geri gitmeyi ifade eder. Klavye açıkken geri tuşu önce onu
+     * kapatır (platform davranışı, korunur).
+     */
+    @Test
+    fun systemBackClearsActiveSearchInsteadOfLeavingApp() {
+        var changedTo: String? = null
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(emptyList()),
+                        query = "iz"
+                    ),
+                    onQueryChange = { changedTo = it },
+                    onCityClick = {}, onAddCity = {}, onOpenCity = {}, onDeleteCity = {},
+                    onRetry = {}, onRefresh = {}, onToggleUnit = {}, onToggleThemeMode = {},
+                    onAddLocation = {}, onRetryLocation = {},
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        Espresso.pressBack()
+        assertEquals("Geri tuşu sorguyu boşaltmalı", "", changedTo)
     }
 
     private fun locationCard() = WeatherUiMapper().toUnavailable(
