@@ -25,9 +25,18 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 /**
  * Canlı arama sonuç satırı. Satırın kendisi listeye ekler (listede ise
  * eklemez, yalnızca onay işareti gösterir); ayrı büyüteç düğmesi detayı açar.
+ *
+ * Öneri satırlarında büyüteç gizlenir (`onOpenClick = null`) ve mesafe
+ * gösterilir (`distanceKm`) — öneri keşif, arama ise doğrulama akışıdır.
  */
 @Composable
-fun SearchResultRow(result: SearchResultUiModel, onAddClick: () -> Unit, onOpenClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SearchResultRow(
+    result: SearchResultUiModel,
+    onAddClick: () -> Unit,
+    onOpenClick: (() -> Unit)?,
+    distanceKm: Int? = null,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -49,7 +58,9 @@ fun SearchResultRow(result: SearchResultUiModel, onAddClick: () -> Unit, onOpenC
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = listOfNotNull(result.city.region, result.city.country).joinToString(", "),
+                    text = listOfNotNull(distanceKm?.let { stringResource(R.string.suggestion_distance_km, it) })
+                        .plus(listOfNotNull(result.city.region, result.city.country))
+                        .joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -68,11 +79,13 @@ fun SearchResultRow(result: SearchResultUiModel, onAddClick: () -> Unit, onOpenC
                     )
                 }
             }
-            IconButton(onClick = onOpenClick) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = stringResource(R.string.action_open_detail)
-                )
+            if (onOpenClick != null) {
+                IconButton(onClick = onOpenClick) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = stringResource(R.string.action_open_detail)
+                    )
+                }
             }
         }
     }

@@ -13,6 +13,18 @@
     <string name="search_result_in_list">Listede</string>
 
     <string name="detail_title">Hava Durumu</string>
+
+    <string name="add_city_title">Şehir ekle</string>
+    <string name="settings_title">Ayarlar</string>
+    <string name="action_open_add_city">Şehir ekle</string>
+    <string name="action_open_settings">Ayarlar</string>
+    <string name="settings_unit_section">Birim</string>
+    <string name="settings_theme_section">Tema</string>
+
+    <string name="suggestion_nearby">Yakınında</string>
+    <string name="suggestion_country">Ülkende</string>
+    <string name="suggestion_world">Dünyada</string>
+    <string name="suggestion_distance_km">%1$d km</string>
     <string name="section_hourly">Saatlik Tahmin</string>
     <string name="section_daily">Günlük Tahmin</string>
     <string name="section_current">Şu an</string>
