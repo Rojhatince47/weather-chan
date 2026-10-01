@@ -5,7 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsRoute
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.AddCityRoute
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailRoute
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.MainRoute
 
@@ -18,18 +21,7 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
     ) {
         composable<ListDestination> {
             MainRoute(
-                onCityClick = { city ->
-                    navController.navigate(
-                        ForecastDestination(
-                            cityId = city.id,
-                            name = city.name,
-                            region = city.region,
-                            country = city.country,
-                            latitude = city.coordinates.latitude,
-                            longitude = city.coordinates.longitude
-                        )
-                    )
-                },
+                onCityClick = { city -> navController.navigate(city.toForecastDestination()) },
                 settingsViewModel = settingsViewModel
             )
         }
@@ -39,5 +31,30 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
                 settingsViewModel = settingsViewModel
             )
         }
+        composable<AddCityDestination> {
+            AddCityRoute(
+                onCityClick = { city -> navController.navigate(city.toForecastDestination()) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable<SettingsDestination> {
+            // Paylaşılan örnek: NavHost üstünde alınan SettingsViewModel
+            // (MainRoute/DetailRoute ile aynı); giriş başına ayrı örnek
+            // oluşmaz ve tema değişikliği anında tüm ekranlara yayılır.
+            SettingsRoute(
+                onBack = { navController.popBackStack() },
+                settingsViewModel = settingsViewModel
+            )
+        }
     }
 }
+
+/** Detay ekranının destination bağımsız değişkenlerini tek yerde kurar. */
+private fun City.toForecastDestination(): ForecastDestination = ForecastDestination(
+    cityId = id,
+    name = name,
+    region = region,
+    country = country,
+    latitude = coordinates.latitude,
+    longitude = coordinates.longitude
+)
