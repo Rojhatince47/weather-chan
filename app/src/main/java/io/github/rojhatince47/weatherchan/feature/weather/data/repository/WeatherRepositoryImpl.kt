@@ -1,24 +1,45 @@
 package io.github.rojhatince47.weatherchan.feature.weather.data.repository
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.toCachedDto
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDomain
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherDataSource
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
+import java.time.Clock
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class WeatherRepositoryImpl @Inject constructor(
     private val primary: OpenMeteoWeatherDataSource,
-    private val backup: WttrInWeatherDataSource
+    private val backup: WttrInWeatherDataSource,
+    private val cache: WeatherCachePreferences,
+    private val clock: Clock
 ) : WeatherRepository {
 
-    override suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> =
-        when (val primaryResult = primary.cityWeathers(cities)) {
+    // `toDomain()` bilinmeyen enum adında fırlatır (`valueOf`); blob-düzeyi
+    // `runCatching` burada kurulur. Bozuk kayıt → `null` → önbellek-yok davranışı.
+    override fun cachedWeathers(): Flow<CachedWeathers?> = cache.cached().map { runCatching { it?.toDomain() }.getOrNull() }
+
+    override suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> {
+        val result = when (val primaryResult = primary.cityWeathers(cities)) {
             is AppResult.Success -> primaryResult
             is AppResult.Failure -> backup.cityWeathers(cities)
         }
+        // Yalnız tam kapsama yazılır: kısmi turda eksik şehir düşerdi.
+        if (result is AppResult.Success &&
+            result.data.map { it.city.id }.containsAll(cities.map { it.id })
+        ) {
+            cache.write(result.data.toCachedDto(clock.instant().toEpochMilli()))
+        }
+        return result
+    }
 
     override suspend fun forecast(city: City): AppResult<Forecast> = when (val primaryResult = primary.forecast(city)) {
         is AppResult.Success -> primaryResult

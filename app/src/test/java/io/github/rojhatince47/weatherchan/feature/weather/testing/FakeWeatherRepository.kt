@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.testing
 
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
@@ -12,6 +13,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCo
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Test amaçlı hava durumu deposu. Sentetik veriyi kendisi üretir; örnek veri
@@ -78,6 +81,10 @@ class FakeWeatherRepository : WeatherRepository {
     var searchResult: AppResult<List<City>> = AppResult.Success(emptyList())
     val searchRequests = mutableListOf<String>()
     val cityWeathersRequests = mutableListOf<List<City>>()
+
+    var cachedWeathers: CachedWeathers? = null
+
+    override fun cachedWeathers(): Flow<CachedWeathers?> = flowOf(cachedWeathers)
 
     override suspend fun search(query: String): AppResult<List<City>> {
         searchRequests.add(query)

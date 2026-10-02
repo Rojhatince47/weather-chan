@@ -1,7 +1,11 @@
 package io.github.rojhatince47.weatherchan.feature.weather.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoGeocodingApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
@@ -12,6 +16,14 @@ import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.Wtt
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
+import java.io.File
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -20,9 +32,12 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
@@ -31,6 +46,12 @@ class WeatherRepositoryTest {
     private val primaryServer = MockWebServer()
     private val backupServer = MockWebServer()
     private lateinit var repository: WeatherRepository
+
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
+
+    private lateinit var cacheFile: File
+    private val fixedNow = Instant.parse("2026-10-02T10:00:00Z")
 
     /** Eski sabit 5 şehirlik listede OLMAYAN bir şehir (Bursa). */
     private fun dynamicCity() = City(
@@ -53,6 +74,7 @@ class WeatherRepositoryTest {
     fun setUp() {
         primaryServer.start()
         backupServer.start()
+        cacheFile = File(temporaryFolder.root, "weather_cache_test.preferences_pb")
         val json = Json { ignoreUnknownKeys = true }
         val primaryRetrofit = retrofit(primaryServer)
         val backupRetrofit = retrofit(backupServer)
@@ -68,9 +90,15 @@ class WeatherRepositoryTest {
                 api = backupRetrofit.create(WttrInApi::class.java),
                 mapper = WttrInWeatherMapper(),
                 errorMapper = errorMapper
-            )
+            ),
+            cache = WeatherCachePreferences(createCacheDataStore()),
+            clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
         )
     }
+
+    private fun createCacheDataStore(): DataStore<Preferences> = PreferenceDataStoreFactory.create(
+        scope = CoroutineScope(UnconfinedTestDispatcher() + Job())
+    ) { cacheFile }
 
     @After
     fun tearDown() {
@@ -215,6 +243,50 @@ class WeatherRepositoryTest {
 
         assertTrue(result is AppResult.Success)
         assertEquals(1, (result as AppResult.Success).data.hourlyForecast.size)
+    }
+
+    @Test
+    fun `basarili tur onbellege yazar`() = runTest {
+        val cities = testCities(2)
+        repeat(2) {
+            primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
+        }
+
+        val result = repository.cityWeathers(cities)
+
+        assertTrue(result is AppResult.Success)
+        val cached = repository.cachedWeathers().first()
+        assertEquals(
+            cities.map { it.id }.toSet(),
+            cached!!.weathers.map { it.city.id }.toSet()
+        )
+        assertEquals(fixedNow, cached.fetchedAt)
+    }
+
+    @Test
+    fun `basarisiz tur yazmaz`() = runTest {
+        repeat(2) {
+            primaryServer.enqueue(MockResponse().setResponseCode(500))
+            backupServer.enqueue(MockResponse().setResponseCode(500))
+        }
+
+        assertTrue(repository.cityWeathers(testCities(2)) is AppResult.Failure)
+        assertNull(repository.cachedWeathers().first())
+    }
+
+    @Test
+    fun `kismi tur yazmaz`() = runTest {
+        // İki paralel istekten biri 500 alır: `batchAll` kalanı `Success(eksik
+        // liste)` döner. Hangi şehrin düştüğü belirsizdir (paralel yarış) ama
+        // sonuç her durumda eksiktir → yazma atlanır.
+        primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
+        primaryServer.enqueue(MockResponse().setResponseCode(500))
+
+        val result = repository.cityWeathers(testCities(2))
+
+        assertTrue(result is AppResult.Success)
+        assertEquals(1, (result as AppResult.Success).data.size)
+        assertNull(repository.cachedWeathers().first())
     }
 
     private fun retrofit(server: MockWebServer): Retrofit {
