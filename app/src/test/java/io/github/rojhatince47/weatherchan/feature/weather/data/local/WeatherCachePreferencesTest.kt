@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -59,5 +61,21 @@ class WeatherCachePreferencesTest {
         val dataStore = createDataStore()
         dataStore.edit { it[stringPreferencesKey("cached_weathers")] = "{ bozuk" }
         assertNull(createPreferences(dataStore).cached().first())
+    }
+
+    @Test
+    fun `konum adi yazilir okunur`() = runTest {
+        val preferences = createPreferences(createDataStore())
+        val city = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983))
+        preferences.writeLocationCity(city.toDto())
+
+        assertEquals(city, preferences.locationCity().first()?.toCity())
+    }
+
+    @Test
+    fun `bozuk konum kaydi null doner`() = runTest {
+        val dataStore = createDataStore()
+        dataStore.edit { it[stringPreferencesKey("location_city")] = "{ bozuk" }
+        assertNull(createPreferences(dataStore).locationCity().first())
     }
 }

@@ -29,18 +29,30 @@ class WeatherCachePreferences constructor(
     private val json = Json { ignoreUnknownKeys = true }
 
     private val cacheKey = stringPreferencesKey("cached_weathers")
+    private val locationKey = stringPreferencesKey("location_city")
 
     // `internal`: DTO'lar `internal` olduğu için public imzada dışa açılamazlar;
     // aynı modül içinden erişim serbesttir.
     internal fun cached(): Flow<CachedWeathersDto?> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { preferences -> preferences[cacheKey]?.let { decode(it) } }
-
     internal suspend fun write(cached: CachedWeathersDto) {
         dataStore.edit { preferences ->
             preferences[cacheKey] = json.encodeToString(CachedWeathersDto.serializer(), cached)
         }
     }
 
+    internal fun locationCity(): Flow<CityDto?> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { preferences -> preferences[locationKey]?.let { decodeLocation(it) } }
+
+    internal suspend fun writeLocationCity(city: CityDto) {
+        dataStore.edit { preferences ->
+            preferences[locationKey] = json.encodeToString(CityDto.serializer(), city)
+        }
+    }
+
     private fun decode(raw: String): CachedWeathersDto? = runCatching { json.decodeFromString<CachedWeathersDto>(raw) }.getOrNull()
+
+    private fun decodeLocation(raw: String): CityDto? = runCatching { json.decodeFromString<CityDto>(raw) }.getOrNull()
 }

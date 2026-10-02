@@ -56,7 +56,7 @@ internal fun CachedWeathersDto.toDomain(): CachedWeathers = CachedWeathers(
     weathers = weathers.map { it.toDomain() }
 )
 
-private fun City.toDto(): CityDto = CityDto(
+internal fun City.toDto(): CityDto = CityDto(
     name = name,
     region = region,
     country = country,
@@ -65,7 +65,7 @@ private fun City.toDto(): CityDto = CityDto(
     isLocation = isLocation
 )
 
-private fun CityDto.toCity(): City = City(
+internal fun CityDto.toCity(): City = City(
     name = name,
     region = region,
     country = country,
