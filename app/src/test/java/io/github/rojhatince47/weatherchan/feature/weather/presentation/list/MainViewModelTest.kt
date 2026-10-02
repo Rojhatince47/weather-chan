@@ -12,13 +12,21 @@ import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepositor
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,14 +62,31 @@ class MainViewModelTest {
         fakeWeather: FakeWeatherRepository,
         fakeCities: CityRepository = FakeCityRepository(),
         locationProvider: LocationProvider = FakeLocationProvider(coordinates = null),
-        permissions: CityPermissions = FakeCityPermissions(asked = true)
+        permissions: CityPermissions = FakeCityPermissions(asked = true),
+        clock: Clock = Clock.systemDefaultZone()
     ) = MainViewModel(
         getCityWeathers = GetCityWeathersUseCase(fakeWeather),
+        getCachedWeathers = GetCachedWeathersUseCase(fakeWeather),
         uiMapper = WeatherUiMapper(),
         unitRepository = FakeTemperatureUnitRepository(),
         cityRepository = fakeCities,
         getLocationCity = GetLocationCityUseCase(locationProvider, fakeWeather),
-        cityPermissions = permissions
+        cityPermissions = permissions,
+        clock = clock
+    )
+
+    private val fixedNow = Instant.parse("2026-10-02T10:00:00Z")
+
+    private fun fixedClockAt(base: Instant = fixedNow) = Clock.fixed(base, ZoneOffset.UTC)
+
+    private fun cachedWeather(city: City) = CityWeather(
+        city = city,
+        currentWeather = CurrentWeather(
+            temperatureCelsius = 21,
+            condition = WeatherCondition.CLEAR,
+            windSpeedKmh = 8,
+            humidityPercent = 50
+        )
     )
 
     @Before
@@ -78,6 +103,7 @@ class MainViewModelTest {
     fun `initial state is success with cities`() = runTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            getCachedWeathers = GetCachedWeathersUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -267,6 +293,110 @@ class MainViewModelTest {
         assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
     }
 
+    @Test
+    fun `taze onbellekle acilista aga gidilmez`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            cachedWeathers = CachedWeathers(fixedNow, listOf(cachedWeather(istanbul)))
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul)),
+            clock = fixedClockAt(fixedNow.plusSeconds(10 * 60))
+        )
+
+        runCurrent()
+        // Ağ turu YOK ama kart anında yüklü.
+        assertEquals(0, fakeWeather.cityWeathersRequests.size)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.single().weather is CardWeather.Loaded)
+        assertEquals("21°C", (items.single().weather as CardWeather.Loaded).temperatureText)
+    }
+
+    @Test
+    fun `bayat onbellekte arka planda tazelenir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            cachedWeathers = CachedWeathers(fixedNow, listOf(cachedWeather(istanbul)))
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul)),
+            clock = fixedClockAt(fixedNow.plusSeconds(31 * 60))
+        )
+
+        runCurrent()
+        // Önce eski veri görünür, tur sessizce başlar.
+        assertEquals(1, fakeWeather.cityWeathersRequests.size)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.single().weather is CardWeather.Loaded)
+    }
+
+    @Test
+    fun `yeni sehir her zaman cekilir`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            cachedWeathers = CachedWeathers(fixedNow, listOf(cachedWeather(istanbul)))
+        }
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = fakeCities,
+            clock = fixedClockAt(fixedNow.plusSeconds(10 * 60))
+        )
+
+        runCurrent()
+        assertEquals(0, fakeWeather.cityWeathersRequests.size)
+        fakeCities.add(ankara)
+        runCurrent()
+        assertEquals(1, fakeWeather.cityWeathersRequests.size)
+    }
+
+    @Test
+    fun `cek-yenile tazelige bakmaz`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            cachedWeathers = CachedWeathers(fixedNow, listOf(cachedWeather(istanbul)))
+        }
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(istanbul)),
+            clock = fixedClockAt(fixedNow.plusSeconds(10 * 60))
+        )
+
+        runCurrent()
+        assertEquals(0, fakeWeather.cityWeathersRequests.size)
+        viewModel.onRefresh()
+        runCurrent()
+        assertEquals(1, fakeWeather.cityWeathersRequests.size)
+    }
+
+    @Test
+    fun `tohumda olmayan sehir spinner gosterir`() = runTest {
+        // Önbellekten gelen kartlar `Loaded`, eksik şehir spinner: `loadingCityIds`
+        // mekanizması tohumla da çalışır (Task 9'da kilitli davranış, burada doğrulanır).
+        val fakeWeather = FakeWeatherRepository().apply {
+            cachedWeathers = CachedWeathers(fixedNow, listOf(cachedWeather(istanbul)))
+        }
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        val viewModel = mainViewModel(
+            fakeWeather = fakeWeather,
+            fakeCities = fakeCities,
+            clock = fixedClockAt(fixedNow.plusSeconds(10 * 60))
+        )
+        runCurrent()
+        assertEquals(0, fakeWeather.cityWeathersRequests.size)
+        fakeCities.add(ankara)
+        runCurrent()
+        // Yeni tur kapıda: Ankara kümede, kartı Unavailable (gösterge yolu).
+        assertEquals(setOf(ankara.id), viewModel.uiState.value.loadingCityIds)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Unavailable)
+        fakeWeather.completeAllCityWeathersGates()
+        runCurrent()
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+    }
+
     /**
      * Yüklenemeyen şehrin kartı da tıklanabilir olmalı (spec: hata kartı
      * detayı açar). `findCity` yalnız başarıyla yüklenenlere baksaydı,
@@ -370,6 +500,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -395,6 +526,7 @@ class MainViewModelTest {
         val unitRepository = FakeTemperatureUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
+            getCachedWeathers = GetCachedWeathersUseCase(FakeWeatherRepository()),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = FakeCityRepository(),
@@ -425,6 +557,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -453,6 +586,7 @@ class MainViewModelTest {
         }
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -474,6 +608,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -500,6 +635,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -535,6 +671,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -571,6 +708,7 @@ class MainViewModelTest {
         val fakeRepository = FakeWeatherRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
+            getCachedWeathers = GetCachedWeathersUseCase(fakeRepository),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(),
@@ -855,7 +993,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `deleting a city removes it and triggers a refresh without it`() = runTest {
+    fun `deleting a city removes it without refetching fresh data`() = runTest {
         val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
         val fakeCities = FakeCityRepository()
         val viewModel = mainViewModel(fakeWeather, fakeCities)
@@ -864,13 +1002,14 @@ class MainViewModelTest {
         viewModel.onDeleteCity(istanbul.id)
 
         assertTrue(fakeCities.current().none { it.id == istanbul.id })
+        // Kalanların verisi taze olduğu için tur atılmaz (istek tasarrufu);
+        // liste yine de hemen güncellenir.
+        assertEquals(requestsBefore, fakeWeather.cityWeathersRequests.size)
+        val content = viewModel.uiState.value.content
+        assertTrue(content is UiState.Success)
         assertTrue(
-            "Silme sonrasi hava durumu istegi atilmali",
-            fakeWeather.cityWeathersRequests.size > requestsBefore
-        )
-        assertTrue(
-            "Yenileme artik silinen sehri icermemeli",
-            fakeWeather.cityWeathersRequests.last().none { it.id == istanbul.id }
+            "Silinen şehir listeden çıkmalı",
+            (content as UiState.Success).data.none { it.cityId == istanbul.id }
         )
     }
 
@@ -983,6 +1122,7 @@ class MainViewModelTest {
         val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
+            getCachedWeathers = GetCachedWeathersUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(initial = listOf(istanbul, ankara, izmir)),
@@ -1055,6 +1195,7 @@ class MainViewModelTest {
         weather: FakeWeatherRepository = FakeWeatherRepository().apply { autoCompleteGates = true }
     ) = MainViewModel(
         getCityWeathers = GetCityWeathersUseCase(weather),
+        getCachedWeathers = GetCachedWeathersUseCase(weather),
         uiMapper = WeatherUiMapper(),
         unitRepository = FakeTemperatureUnitRepository(),
         cityRepository = cities,

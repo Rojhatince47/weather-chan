@@ -12,13 +12,17 @@ import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
@@ -34,11 +38,13 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
+    private val getCachedWeathers: GetCachedWeathersUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
     private val cityRepository: CityRepository,
     private val getLocationCity: GetLocationCityUseCase,
-    private val cityPermissions: CityPermissions
+    private val cityPermissions: CityPermissions,
+    private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
     private val loadedCities = mutableMapOf<Long, City>()
@@ -74,6 +80,9 @@ class MainViewModel @Inject constructor(
     /** Son başarılı [GetCityWeathersUseCase] cevabı. Liste [deriveContent] ile buradan, [storedCities] sırası ve birimden türetilir; ağa gidilmez. */
     private var cachedCityWeathers: List<CityWeather>? = null
 
+    /** Diskten gelen son başarılı turun damgası; `null` = tohum yok. */
+    private var lastFetchedAt: Instant? = null
+
     /**
      * Depodan **yayılan** son liste.
      *
@@ -105,6 +114,12 @@ class MainViewModel @Inject constructor(
         // gelene kadar listenin ne olduğu bilinmez. Akışın ilk yayımı zaten
         // gerçek veridir, dolayısıyla ilk yükleme de doğru listeden başlar.
         viewModelScope.launch {
+            // Tohum, toplayıcı başlamadan önce okunur (sıralama şarttır).
+            getCachedWeathers()?.let { seed ->
+                cachedCityWeathers = seed.weathers
+                lastFetchedAt = seed.fetchedAt
+                rederiveContent()
+            }
             cityRepository.cities.collect { stored ->
                 storedCities = stored
                 // Depo gerçeği ağ turundan **bağımsızdır**: silinen şehir
@@ -116,9 +131,27 @@ class MainViewModel @Inject constructor(
                 // zaten çizilebildiği için beklemek gerekmiyor.
                 reconcileCacheWith(stored)
                 rederiveContent()
-                fetch(stored, keepContent = _uiState.value.content is UiState.Success)
+                if (needsFetch(stored)) {
+                    fetch(stored, keepContent = _uiState.value.content is UiState.Success)
+                }
             }
         }
+    }
+
+    /**
+     * Bu yayımda ağ turu gerekli mi?
+     *
+     * - Önbellek yoksa / tohum okunamadıysa: evet.
+     * - Listede önbellekte olmayan şehir varsa: evet (yeni şehir her zaman veri ister).
+     * - Kayıt bayatsa: evet (sessiz arka plan turu, `keepContent=true`).
+     * - Yoksa hayır: tam tur atlanarak istek tasarrufu yapılır.
+     * Açık eylemler (çek-yenile, yeniden denemeler) bu karara bakmaz.
+     */
+    private fun needsFetch(stored: List<City>): Boolean {
+        val cached = cachedCityWeathers ?: return true
+        if (stored.any { city -> cached.none { it.city.id == city.id } }) return true
+        val fetchedAt = lastFetchedAt ?: return true
+        return CachedWeathers(fetchedAt, cached).isStale(clock.instant())
     }
 
     /**
@@ -251,6 +284,7 @@ class MainViewModel @Inject constructor(
                 when (val result = getCityWeathers(stored)) {
                     is AppResult.Success -> {
                         applyFetchedData(result.data)
+                        lastFetchedAt = clock.instant()
                         _uiState.update { it.copy(isRefreshing = false) }
                     }
                     is AppResult.Failure -> if (keepContent) {

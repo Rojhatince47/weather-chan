@@ -24,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWe
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
@@ -54,6 +55,7 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
+            getCachedWeathers = GetCachedWeathersUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities,
@@ -113,6 +115,7 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
+            getCachedWeathers = GetCachedWeathersUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities,
