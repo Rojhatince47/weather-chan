@@ -228,6 +228,10 @@ class MainViewModel @Inject constructor(
         // eşzamanlı yinelenen istek oluşmaz.
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            // Henüz verisi çekilmemiş şehirler yükleniyor gösterilir; hata
+            // metni değil. Atama (birleşim değil): iptal edilen önceki turun
+            // bayat kimlikleri taşınmaz.
+            _uiState.update { it.copy(loadingCityIds = pendingIds(stored)) }
             if (keepContent) {
                 _uiState.update { it.copy(isRefreshing = true) }
             } else {
@@ -253,8 +257,23 @@ class MainViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e
+            } finally {
+                // Yeniden hesapla (çıkarma değil): iptal eden yeni turun
+                // başlangıç atamasıyla yarışsa bile iki yazıcı da güncel
+                // durumdan aynı değeri üretir; bayat kimlik takılı kalmaz.
+                _uiState.update { it.copy(loadingCityIds = pendingIds(storedCities)) }
             }
         }
+    }
+
+    /**
+     * Verisi henüz çekilmemiş şehirlerin kimlikleri: depoda var, önbellekte
+     * yok. Bu kümedeki kart gösterge çizer; tur bitince kümeden düşer —
+     * gelen veri varsa yüklenir, gelmediyse gerçekten hata metnine döner.
+     */
+    private fun pendingIds(stored: List<City>): Set<Long> {
+        val cached = cachedCityWeathers?.mapTo(mutableSetOf()) { it.city.id }.orEmpty()
+        return stored.mapTo(mutableSetOf()) { it.id }.minus(cached)
     }
 
     /**

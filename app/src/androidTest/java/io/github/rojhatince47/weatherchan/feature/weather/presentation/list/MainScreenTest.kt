@@ -700,6 +700,29 @@ class MainScreenTest {
         composeRule.onNodeWithTag("city_retry_spinner").assertIsDisplayed()
     }
 
+    @Test
+    fun yeniEklenenSehirVerisiGeleneKadarGostergeCizer() {
+        // Tur bitmeden hata metni değil gösterge: "alınamadı", bitmemiş
+        // bir işi değil başarısızlığı anlatmalıdır.
+        composeRule.setContent {
+            HavaTheme {
+                MainScreen(
+                    uiState = MainUiState(
+                        content = UiState.Success(listOf(unavailableCard())),
+                        loadingCityIds = setOf(izmir().id)
+                    ),
+                    onCityClick = {}, onAddCityClick = {}, onSettingsClick = {},
+                    onDeleteCity = {}, onRetry = {}, onRefresh = {},
+                    onAddLocation = {}, onRetryLocation = {},
+                    themeMode = ThemeMode.SYSTEM
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("city_retry_button").assertDoesNotExist()
+        composeRule.onNodeWithTag("city_retry_spinner").assertIsDisplayed()
+    }
+
     /**
      * Konum kartı, normal şehir kartlarından etiketle ayrışmalı: kullanıcının
      * hangi kartın "bulunduğum yer" olduğunu isim okumadan anlaması gerekir.

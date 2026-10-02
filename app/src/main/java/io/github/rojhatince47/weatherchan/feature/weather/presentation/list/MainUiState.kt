@@ -9,7 +9,9 @@ data class MainUiState(
     val permissionState: LocationPermissionState = LocationPermissionState.Restoring,
     val locationState: LocationState = LocationState.Idle,
     /** Şu an yeniden deneniyor: kart düğmesi kilitli, gösterge döner. */
-    val retryingCityIds: Set<Long> = emptySet()
+    val retryingCityIds: Set<Long> = emptySet(),
+    /** İlk verisi henüz çekilmemiş şehirler; kart hata metni değil gösterge çizer. */
+    val loadingCityIds: Set<Long> = emptySet()
 )
 
 /**

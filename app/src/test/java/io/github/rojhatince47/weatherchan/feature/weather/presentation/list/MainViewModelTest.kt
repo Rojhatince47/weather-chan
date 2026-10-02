@@ -165,6 +165,39 @@ class MainViewModelTest {
     }
 
     /**
+     * Yeni eklenen şehir, verisi gelene kadar "alınamadı" değil "yükleniyor"
+     * göstermelidir: ağ turu (~sn mertebesi) bitmeden hata metni, yanlış bir
+     * başarısızlık sinyalidir. Kapı deseni: `autoCompleteGates = false` iken
+     * `cityWeathers` kapıda bekler, tur bitmeden ara durum gözlenir.
+     */
+    @Test
+    fun `yeni eklenen sehir verisi gelene kadar yukleniyor gosterir`() = runTest {
+        val fakeWeather = FakeWeatherRepository()
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        val viewModel = mainViewModel(fakeWeather = fakeWeather, fakeCities = fakeCities)
+
+        runCurrent()
+        // İlk tur kapıda: İstanbul'un verisi henüz yok → yükleniyor kümesinde.
+        assertEquals(setOf(istanbul.id), viewModel.uiState.value.loadingCityIds)
+
+        fakeWeather.completeAllCityWeathersGates()
+        runCurrent()
+        // İlk tur bitti: küme boşaldı, kart yüklendi.
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+
+        // Yeni şehir eklendi; ikinci tur kapıda → yalnız yenisi kümede.
+        fakeCities.add(ankara)
+        runCurrent()
+        assertEquals(setOf(ankara.id), viewModel.uiState.value.loadingCityIds)
+
+        fakeWeather.completeAllCityWeathersGates()
+        runCurrent()
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Loaded)
+    }
+
+    /**
      * Yüklenemeyen şehrin kartı da tıklanabilir olmalı (spec: hata kartı
      * detayı açar). `findCity` yalnız başarıyla yüklenenlere baksaydı,
      * yüksüz kartın tıklaması sessizce yutulurdu — kart görünür ama ölü

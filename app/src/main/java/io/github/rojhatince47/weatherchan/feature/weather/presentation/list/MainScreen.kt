@@ -136,7 +136,10 @@ fun MainScreen(
                                     pendingDelete = cityWeather.cityId to cityWeather.name
                                 },
                                 onRetryCity = { onRetryCity(cityWeather.cityId) },
-                                isRetrying = cityWeather.cityId in uiState.retryingCityIds
+                                // İlk verisi çekilmekte olan kart da gösterge
+                                // çizer: hata metni, bitmemiş bir işi anlatmaz.
+                                isRetrying = cityWeather.cityId in uiState.retryingCityIds ||
+                                    cityWeather.cityId in uiState.loadingCityIds
                             )
                         }
                         // Konum kaydı silinmişse ya da hiç okunamamışsa geri
