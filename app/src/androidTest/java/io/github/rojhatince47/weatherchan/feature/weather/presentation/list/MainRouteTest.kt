@@ -25,7 +25,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCo
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +52,6 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
-            searchCities = SearchCitiesUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities,
@@ -113,7 +111,6 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
-            searchCities = SearchCitiesUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities,

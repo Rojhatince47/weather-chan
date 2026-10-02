@@ -1,14 +1,11 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 data class MainUiState(
-    val query: String = "",
     val content: UiState<List<CityWeatherUiModel>> = UiState.Loading,
     val isRefreshing: Boolean = false,
-    val searchState: SearchUiState = SearchUiState.Idle,
     val permissionState: LocationPermissionState = LocationPermissionState.Restoring,
     val locationState: LocationState = LocationState.Idle,
     /** Şu an yeniden deneniyor: kart düğmesi kilitli, gösterge döner. */

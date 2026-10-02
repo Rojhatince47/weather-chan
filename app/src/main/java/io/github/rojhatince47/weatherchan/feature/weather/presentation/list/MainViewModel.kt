@@ -16,9 +16,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchResultUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +23,6 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +34,6 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
-    private val searchCities: SearchCitiesUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
     private val cityRepository: CityRepository,
@@ -68,13 +63,8 @@ class MainViewModel @Inject constructor(
 
     private data class PendingUndo(val city: City, val index: Int)
     private var locationJob: Job? = null
-    private var searchJob: Job? = null
 
-    /**
-     * Son başarılı ağ cevabı. Sorgu bu önbellekten türetilir; her tuş vuruşunda
-     * ağa gitmek, kontrollü bir metin alanında yazılan karakteri ağ turu bitene
-     * kadar görünmez kılıyordu.
-     */
+    /** Son başarılı [GetCityWeathersUseCase] cevabı. Liste [deriveContent] ile buradan, [storedCities] sırası ve birimden türetilir; ağa gidilmez. */
     private var cachedCityWeathers: List<CityWeather>? = null
 
     /**
@@ -110,7 +100,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             cityRepository.cities.collect { stored ->
                 storedCities = stored
-                refreshSearchInListFlags()
                 // Depo gerçeği ağ turundan **bağımsızdır**: silinen şehir
                 // ekranda kalmamalı, eklenen şehir hemen görünmeli. Aksi hâlde
                 // kullanıcı "silinmedi" sanıp aynı şehri yeniden silmeye
@@ -125,13 +114,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    companion object {
-        const val MIN_SEARCH_QUERY_LENGTH = 3
-        const val SEARCH_DEBOUNCE_MS = 300L
-    }
-
     /**
-     * Şehir araması **depoya** düşer; yalnız başarıyla yüklenenlere değil.
+     * Detay gezinmesi için şehir bulma: **depoya** düşer; yalnız başarıyla yüklenenlere değil.
      *
      * Yüklenemeyen şehrin kartı da çizilir ve tıklanabilir olmalı (detay
      * ekranı kendi hata durumunu gösterir). `loadedCities` yalnız başarılı
@@ -219,15 +203,6 @@ class MainViewModel @Inject constructor(
         refreshLocation()
     }
 
-    fun onQueryChange(query: String) {
-        // Sorgu bir kullanıcı girdisidir, bir veri getirme işlemi değil: seçim ve
-        // türetilmiş liste TEK state yazımında güncellenir. Ayrı yazılırsa
-        // "seçim yeni, liste eski" diye bir ara kare oluşur ve metin alanı
-        // karakteri ağ turu bekliyormuş gibi görünür.
-        applySelection(query = query)
-        searchLive(query)
-    }
-
     fun onRetry() {
         loadData()
     }
@@ -280,18 +255,6 @@ class MainViewModel @Inject constructor(
                 throw e
             }
         }
-    }
-
-    /**
-     * Canlı sonuçtan şehri listeye ekler.
-     *
-     * Yenileme **bilerek burada yapılmaz**: yazma, depoyu yayımlar ve
-     * `init`'deki toplayıcı yeni listeden veri çekmeyi tek yerde başlatır.
-     * Ekleme hem elle tetikleseydi her değişiklikte iki tur ağ isteği atılır
-     * ve hız sınırına çarpma riski ikiye katlanırdı.
-     */
-    fun onAddCity(city: City) {
-        viewModelScope.launch { cityRepository.add(city) }
     }
 
     /**
@@ -429,84 +392,14 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Sorguyu ve ondan türeyen listeyi tek yazımda günceller. Ağ çağrısı yapmaz;
-     * bu yüzden yazmak anında yansır. Veri henüz yoksa yalnızca sorgu yazılır,
-     * liste yükleme tamamlanınca türetilir.
-     */
-    private fun applySelection(query: String = _uiState.value.query) {
-        val source = cachedCityWeathers
-        if (source == null) {
-            _uiState.update { it.copy(query = query) }
-            return
-        }
-        val content = deriveContent(source, query)
-        _uiState.update { it.copy(query = query, content = content) }
-        _loadState.update { _uiState.value.content.toLoadState() }
-    }
-
-    /**
      * Listeyi önbellekten türetir. Ağ çağrısı yapmaz; birim ve şehir listesi
      * değişiklikleri bu yolu tetikler. Veri henüz yoksa mevcut içeriğe dokunmaz.
      */
     private fun rederiveContent() {
         val source = cachedCityWeathers ?: return
-        val content = deriveContent(source, _uiState.value.query)
+        val content = deriveContent(source)
         _uiState.update { it.copy(content = content) }
         _loadState.update { _uiState.value.content.toLoadState() }
-    }
-
-    /**
-     * Sorgu değişiminde debounce'lu canlı arama tetiklenir. 3 karakterin
-     * altındaki sorgular ağa gitmez, bekleyen istek iptal edilir.
-     */
-    private fun searchLive(query: String) {
-        searchJob?.cancel()
-        val trimmed = query.trim()
-        if (trimmed.length < MIN_SEARCH_QUERY_LENGTH) {
-            _uiState.update { it.copy(searchState = SearchUiState.Idle) }
-            return
-        }
-        searchJob = viewModelScope.launch {
-            delay(SEARCH_DEBOUNCE_MS)
-            _uiState.update { it.copy(searchState = SearchUiState.Loading) }
-            when (val result = searchCities(trimmed)) {
-                is AppResult.Success -> {
-                    val cityIds = storedCities.mapTo(mutableSetOf()) { it.id }
-                    _uiState.update {
-                        it.copy(
-                            searchState = SearchUiState.Success(
-                                result.data.map { city ->
-                                    SearchResultUiModel(city, city.id in cityIds)
-                                }
-                            )
-                        )
-                    }
-                }
-                is AppResult.Failure -> _uiState.update {
-                    it.copy(searchState = SearchUiState.Failure(result.error))
-                }
-            }
-        }
-    }
-
-    /**
-     * Liste değişince (ekleme/çıkarma) canlı sonuçlardaki
-     * "listede mi" bayrakları tazelenir; istek tekrarlanmaz.
-     */
-    private fun refreshSearchInListFlags() {
-        val state = _uiState.value.searchState
-        if (state is SearchUiState.Success) {
-            val cityIds = storedCities.mapTo(mutableSetOf()) { it.id }
-            _uiState.update {
-                it.copy(
-                    searchState = state.copy(
-                        results = state.results.map { result ->
-                            result.copy(isInList = result.city.id in cityIds)
-                        }
-                    )
-                )
-            }
-        }
     }
 
     /**
@@ -520,13 +413,10 @@ class MainViewModel @Inject constructor(
      * olarak çizilir. Silinen şehir ise depoda olmadığı için doğal olarak
      * görünmez.
      */
-    private fun deriveContent(source: List<CityWeather>, query: String): UiState<List<CityWeatherUiModel>> {
+    private fun deriveContent(source: List<CityWeather>): UiState<List<CityWeatherUiModel>> {
         val weathersByCityId = source.associateBy { it.city.id }
         val unit = unitRepository.unit.value
         val visible = storedCities
-            .filter { city ->
-                query.isBlank() || city.name.contains(query, ignoreCase = true)
-            }
             // Konum her zaman başta. Kaynağın sırasına güvenilmez: ağ cevabı
             // koordinat sırasına göre karışık gelebilir. Sıralama, listenin
             // gerçek sahibi olan depodaki kayıt sırasından okunur.
