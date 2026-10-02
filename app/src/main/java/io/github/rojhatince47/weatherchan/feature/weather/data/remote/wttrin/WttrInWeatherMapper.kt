@@ -21,7 +21,9 @@ class WttrInWeatherMapper @Inject constructor() {
                 temperatureCelsius = current.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
                 condition = toCondition(current.weatherCode.toIntOrNull()),
                 windSpeedKmh = current.windSpeedKmph.toDoubleOrNull()?.roundToInt() ?: 0,
-                humidityPercent = current.humidity.toIntOrNull() ?: 0
+                humidityPercent = current.humidity.toIntOrNull() ?: 0,
+                // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
+                isDay = true
             )
         )
     }
@@ -35,7 +37,9 @@ class WttrInWeatherMapper @Inject constructor() {
                 temperatureCelsius = current.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
                 condition = toCondition(current.weatherCode.toIntOrNull()),
                 windSpeedKmh = current.windSpeedKmph.toDoubleOrNull()?.roundToInt() ?: 0,
-                humidityPercent = current.humidity.toIntOrNull() ?: 0
+                humidityPercent = current.humidity.toIntOrNull() ?: 0,
+                // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
+                isDay = true
             ),
             hourlyForecast = days.firstOrNull()?.hourly?.take(8)?.map { hourly ->
                 HourlyForecast(

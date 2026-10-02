@@ -53,7 +53,8 @@ class OpenMeteoWeatherMapper @Inject constructor() {
         temperatureCelsius = dto.temperature.roundToInt(),
         condition = toCondition(dto.weatherCode),
         windSpeedKmh = dto.windSpeed.roundToInt(),
-        humidityPercent = dto.humidity
+        humidityPercent = dto.humidity,
+        isDay = dto.isDay?.let { it == 1 } ?: true
     )
 
     private fun hourOf(isoTime: String?): Int = isoTime?.substringAfter('T', "")?.substringBefore(':')?.toIntOrNull() ?: 0
