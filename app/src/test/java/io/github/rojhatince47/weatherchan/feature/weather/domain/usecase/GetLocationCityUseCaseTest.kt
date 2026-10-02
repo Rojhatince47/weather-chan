@@ -84,6 +84,121 @@ class GetLocationCityUseCaseTest {
 
         assertEquals("Konum", city.name)
     }
+
+    @Test
+    fun `yakin konumda aga cikilmaz`() = runTest {
+        val near = Coordinates(latitude = 41.0181, longitude = 28.98)
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
+        val weather = FakeWeatherRepository().apply { cachedLocationCity = cached }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(near),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Kucukpazar", city.name)
+        assertTrue(city.isLocation)
+        // Taze koordinat taşınır (kart kimliği güncel kalır).
+        assertEquals(near, city.coordinates)
+        // Ağ SIFIR, yazma SIFIR.
+        assertTrue(weather.searchRequests.isEmpty())
+        assertTrue(weather.savedLocationCities.isEmpty())
+    }
+
+    @Test
+    fun `uzak konumda cozulur ve yazilir`() = runTest {
+        val far = Coordinates(latitude = 41.0199, longitude = 28.98)
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
+        val resolved = City("Uskudar", "Istanbul", "Turkey", far)
+        val weather = FakeWeatherRepository().apply {
+            cachedLocationCity = cached
+            searchResult = AppResult.Success(listOf(resolved))
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(far),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Uskudar", city.name)
+        assertTrue(city.isLocation)
+        assertEquals(1, weather.searchRequests.size)
+        assertEquals(listOf(city), weather.savedLocationCities)
+        assertEquals("Uskudar", weather.savedLocationCities.single().name)
+    }
+
+    @Test
+    fun `yedek ad yazilmaz`() = runTest {
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
+        val weather = FakeWeatherRepository().apply {
+            cachedLocationCity = cached
+            searchResult = AppResult.Failure(AppError.Network)
+        }
+        val useCase = GetLocationCityUseCase(
+            // Kayıttan uzak koordinat → ıska → ağ yolu → hata → "Konum" yedeği.
+            locationProvider = FakeLocationProvider(Coordinates(41.0199, 28.98)),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Konum", city.name)
+        assertTrue(weather.savedLocationCities.isEmpty())
+    }
+
+    @Test
+    fun `sinir-deger vurur`() = runTest {
+        // Sınır-dahil (`<=`) davranışın deterministik kilidi: 0.95 km güvenli
+        // payla içeride (kayan-nokta marjı nm mertebesi). Tam 1.0000 km
+        // test edilmez — marjı yoktur.
+        val almost = Coordinates(latitude = 41.0185, longitude = 28.98) // ~0.95 km
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
+        val weather = FakeWeatherRepository().apply { cachedLocationCity = cached }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(almost),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Kucukpazar", city.name)
+        assertTrue(weather.searchRequests.isEmpty())
+    }
+
+    @Test
+    fun `konum yoksa dolu onbellege bakilmaz`() = runTest {
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
+        val weather = FakeWeatherRepository().apply { cachedLocationCity = cached }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(null),
+            weatherRepository = weather
+        )
+
+        assertNull(useCase())
+        assertTrue(weather.searchRequests.isEmpty())
+    }
+
+    @Test
+    fun `kayit yoksa aga gidilir ve yazilir`() = runTest {
+        // Bozuk kayıt prefs katmanında `null`'a düşer; use case'e `null` gelir —
+        // bu test o yolu kilitler (önbellek-yok = ilk kurulum davranışı).
+        val weather = FakeWeatherRepository().apply {
+            searchResult = AppResult.Success(
+                listOf(City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)))
+            )
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("İstanbul", city.name)
+        assertEquals(1, weather.savedLocationCities.size)
+    }
 }
 
 /** Testte kullanılan sabit konum. */
