@@ -50,8 +50,8 @@ class AddCityScreenTest {
         setScreen(state())
         composeRule.onNodeWithText("Yakınında").assertIsDisplayed()
         composeRule.onNodeWithText("Kocaeli").assertIsDisplayed()
-        // "Yakınında" dalında mesafe satırda görünür.
-        composeRule.onNodeWithText("42 km").assertIsDisplayed()
+        // "Yakınında" dalında mesafe satırda görünür (ülke adıyla birlikte).
+        composeRule.onNodeWithText("42 km", substring = true).assertIsDisplayed()
     }
 
     @Test
