@@ -223,7 +223,11 @@ class MainViewModel @Inject constructor(
      * demek olurdu.
      */
     fun refreshLocation() {
-        locationJob?.cancel()
+        // Okuma sürerken yeni dokunuş yoksayılır: yavaş okumayı (GPS ~10 sn)
+        // her dokunuşta baştan başlatmak, dokunuş sıklığı okuma süresini
+        // aşarsa turun hiç bitmemesine (açlık) yol açardı. Gösterge zaten
+        // çalışmayı anlatır; biten turun ardından dokunuş yine işler.
+        if (locationJob?.isActive == true) return
         locationJob = viewModelScope.launch {
             _uiState.update { it.copy(locationState = LocationState.Loading) }
             val city = getLocationCity()

@@ -1149,13 +1149,16 @@ class MainViewModelTest {
     private val locationCoordinates = Coordinates(41.01, 28.98)
 
     /** Sabit konum döndüren sahte; `null` verirsen konum okunamaz. */
-    private class FakeLocationProvider(private val coordinates: Coordinates?) : LocationProvider {
+    private class FakeLocationProvider(
+        private val coordinates: Coordinates?,
+        private val gate: CompletableDeferred<Coordinates?>? = null
+    ) : LocationProvider {
         var callCount: Int = 0
             private set
 
         override suspend fun currentCoordinates(): Coordinates? {
             callCount++
-            return coordinates
+            return gate?.await() ?: coordinates
         }
     }
 
@@ -1364,6 +1367,36 @@ class MainViewModelTest {
             LocationState.Idle,
             viewModel.uiState.value.locationState
         )
+    }
+
+    /**
+     * Yavaş okuma (GPS ~10 sn) sürerken hızlı dokunuşlar turu öldürmemelidir:
+     * her dokunuşta iptal-et-baştan-başlat yapılırsa, dokunuş sıklığı okuma
+     * süresini aşınca tur hiç bitmez (açlık) ve kullanıcı boşuna bekler.
+     */
+    @Test
+    fun `okuma surerken yeni dokunus onceki turu oldurmez`() = runTest {
+        val gate = CompletableDeferred<Coordinates?>()
+        val provider = FakeLocationProvider(coordinates = null, gate = gate)
+        val cities = FakeCityRepository(initial = emptyList())
+        val viewModel = viewModelWithLocation(
+            cities = cities,
+            provider = provider,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onAddLocation()
+        runCurrent()
+        // Hızlı ikinci dokunuş: sürmekte olan tur öldürülmemeli.
+        viewModel.onAddLocation()
+        runCurrent()
+        assertEquals(1, provider.callCount)
+
+        gate.complete(istanbul.coordinates)
+        runCurrent()
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+        assertTrue(cities.current().any { it.isLocation })
     }
 
     @Test
