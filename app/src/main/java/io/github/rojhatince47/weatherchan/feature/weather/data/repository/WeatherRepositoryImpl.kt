@@ -3,7 +3,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.data.repository
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toCachedDto
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.toCity
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDomain
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
@@ -26,6 +28,12 @@ class WeatherRepositoryImpl @Inject constructor(
     // `toDomain()` bilinmeyen enum adında fırlatır (`valueOf`); blob-düzeyi
     // `runCatching` burada kurulur. Bozuk kayıt → `null` → önbellek-yok davranışı.
     override fun cachedWeathers(): Flow<CachedWeathers?> = cache.cached().map { runCatching { it?.toDomain() }.getOrNull() }
+
+    override fun cachedLocationCity(): Flow<City?> = cache.locationCity().map { it?.toCity() }
+
+    override suspend fun saveLocationCity(city: City) {
+        cache.writeLocationCity(city.toDto())
+    }
 
     override suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> {
         val result = when (val primaryResult = primary.cityWeathers(cities)) {

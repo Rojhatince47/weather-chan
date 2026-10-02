@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoGeocodingApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
@@ -52,6 +53,7 @@ class WeatherRepositoryTest {
 
     private lateinit var cacheFile: File
     private val fixedNow = Instant.parse("2026-10-02T10:00:00Z")
+    private lateinit var cachePreferences: WeatherCachePreferences
 
     /** Eski sabit 5 şehirlik listede OLMAYAN bir şehir (Bursa). */
     private fun dynamicCity() = City(
@@ -79,6 +81,7 @@ class WeatherRepositoryTest {
         val primaryRetrofit = retrofit(primaryServer)
         val backupRetrofit = retrofit(backupServer)
         val errorMapper = NetworkErrorMapper()
+        cachePreferences = WeatherCachePreferences(createCacheDataStore())
         repository = WeatherRepositoryImpl(
             primary = OpenMeteoWeatherDataSource(
                 api = primaryRetrofit.create(OpenMeteoApi::class.java),
@@ -91,7 +94,7 @@ class WeatherRepositoryTest {
                 mapper = WttrInWeatherMapper(),
                 errorMapper = errorMapper
             ),
-            cache = WeatherCachePreferences(createCacheDataStore()),
+            cache = cachePreferences,
             clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
         )
     }
@@ -287,6 +290,27 @@ class WeatherRepositoryTest {
         assertTrue(result is AppResult.Success)
         assertEquals(1, (result as AppResult.Success).data.size)
         assertNull(repository.cachedWeathers().first())
+    }
+
+    @Test
+    fun `kayitli konum adi okunur`() = runTest {
+        cachePreferences.writeLocationCity(
+            City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983)).toDto()
+        )
+
+        val city = repository.cachedLocationCity().first()
+
+        assertEquals("Kucukpazar", city?.name)
+        assertEquals(Coordinates(41.0, 28.983), city?.coordinates)
+    }
+
+    @Test
+    fun `kaydedilen konum adi geri okunur`() = runTest {
+        val city = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983))
+
+        repository.saveLocationCity(city)
+
+        assertEquals(city, repository.cachedLocationCity().first())
     }
 
     private fun retrofit(server: MockWebServer): Retrofit {

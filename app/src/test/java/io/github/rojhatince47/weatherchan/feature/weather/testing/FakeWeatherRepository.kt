@@ -86,6 +86,15 @@ class FakeWeatherRepository : WeatherRepository {
 
     override fun cachedWeathers(): Flow<CachedWeathers?> = flowOf(cachedWeathers)
 
+    var cachedLocationCity: City? = null
+    val savedLocationCities = mutableListOf<City>()
+
+    override fun cachedLocationCity(): Flow<City?> = flowOf(cachedLocationCity)
+
+    override suspend fun saveLocationCity(city: City) {
+        savedLocationCities.add(city)
+    }
+
     override suspend fun search(query: String): AppResult<List<City>> {
         searchRequests.add(query)
         return searchResult

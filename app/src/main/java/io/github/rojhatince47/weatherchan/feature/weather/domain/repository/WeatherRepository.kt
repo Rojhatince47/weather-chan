@@ -17,6 +17,17 @@ interface WeatherRepository {
     /** Diskteki son başarılı tur; yoksa/bozuksa `null` akar. */
     fun cachedWeathers(): Flow<CachedWeathers?>
 
+    /** Diskteki son çözülmüş konum adı; yoksa/bozuksa `null` akar. */
+    fun cachedLocationCity(): Flow<City?>
+
+    /**
+     * Çözülmüş konum adını saklar.
+     *
+     * NEYİN saklanacağına çağıran karar verir ([GetLocationCityUseCase] yalnız
+     * gerçek adı yazar); bu metot verileni aynen yazar.
+     */
+    suspend fun saveLocationCity(city: City)
+
     suspend fun forecast(city: City): AppResult<Forecast>
 
     /** Canlı şehir araması (Open-Meteo geocoding, yedekli). */

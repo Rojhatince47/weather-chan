@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -231,6 +232,10 @@ class MainRouteTest {
 
     private class RouteWeatherRepository : WeatherRepository {
         override fun cachedWeathers(): Flow<CachedWeathers?> = emptyFlow()
+
+        override fun cachedLocationCity(): Flow<City?> = flowOf(null)
+
+        override suspend fun saveLocationCity(city: City) {}
 
         override suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = AppResult.Success(
             cities.map { city ->
