@@ -198,6 +198,76 @@ class MainViewModelTest {
     }
 
     /**
+     * Tur başarısız biterse yükleme kümesi boşalır: spinner durur, kart
+     * gerçekten hata metnine döner ve "Tekrar dene" geri gelir. Küme
+     * boşalmazsa gösterge sonsuza dek döner, düğme hiç dönmez.
+     */
+    @Test
+    fun `ekleme sonrasi tur basarisiz olunca spinner durur ve hata metni doner`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        val viewModel = mainViewModel(fakeWeather = fakeWeather, fakeCities = fakeCities)
+        runCurrent()
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+
+        // Ağ bozuldu, yeni şehir eklendi → ikinci tur başarısız bitecek.
+        fakeWeather.failCityWeathers = true
+        fakeCities.add(ankara)
+        runCurrent()
+
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.first { it.cityId == istanbul.id }.weather is CardWeather.Loaded)
+        assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Unavailable)
+    }
+
+    /**
+     * Kısmi başarıda gelmeyen şehir de kümeden düşer: İstanbul yüklenir,
+     * Ankara hata metnine döner; ikisi de takılı kalmaz.
+     */
+    @Test
+    fun `kismi basarida gelmeyen sehir yukleme kumesinden duser`() = runTest {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(ankara.id)
+        }
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        val viewModel = mainViewModel(fakeWeather = fakeWeather, fakeCities = fakeCities)
+        runCurrent()
+
+        fakeCities.add(ankara)
+        runCurrent()
+
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+        val items = (viewModel.uiState.value.content as UiState.Success).data
+        assertTrue(items.first { it.cityId == istanbul.id }.weather is CardWeather.Loaded)
+        assertTrue(items.first { it.cityId == ankara.id }.weather is CardWeather.Unavailable)
+    }
+
+    /**
+     * İptal edilen tur, kendinden sonra başlayan turun kümesini silmez:
+     * birinci tur kapıda beklerken ekleme olursa ikinci tur başlar ve
+     * birinciyi iptal eder; birinci turun `finally`'si ikinci turun
+     * kimliklerine dokunmamalıdır (nesil koruması).
+     */
+    @Test
+    fun `iptal edilen tur yeni turun kumesini silmez`() = runTest {
+        val fakeWeather = FakeWeatherRepository()
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul))
+        val viewModel = mainViewModel(fakeWeather = fakeWeather, fakeCities = fakeCities)
+        runCurrent()
+        assertEquals(setOf(istanbul.id), viewModel.uiState.value.loadingCityIds)
+
+        fakeCities.add(ankara)
+        runCurrent()
+        assertEquals(setOf(istanbul.id, ankara.id), viewModel.uiState.value.loadingCityIds)
+
+        fakeWeather.completeAllCityWeathersGates()
+        runCurrent()
+        assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
+    }
+
+    /**
      * Yüklenemeyen şehrin kartı da tıklanabilir olmalı (spec: hata kartı
      * detayı açar). `findCity` yalnız başarıyla yüklenenlere baksaydı,
      * yüksüz kartın tıklaması sessizce yutulurdu — kart görünür ama ölü

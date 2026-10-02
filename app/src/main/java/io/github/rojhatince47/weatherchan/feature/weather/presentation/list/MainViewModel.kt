@@ -44,6 +44,13 @@ class MainViewModel @Inject constructor(
     private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
 
+    /**
+     * Başlayan her turun sıra numarası. İptal edilen turun `finally` bloğu,
+     * kendinden sonra başlayan turun kümesine dokunmamalıdır; numara
+     * eşleşmezse eski tur yalnız çıkar, yazmaz.
+     */
+    private var fetchGen = 0
+
     /** Şehir başına yeniden deneme işleri; tüm liste yüklemesinden bağımsızdır. */
     private val retryJobs = mutableMapOf<Long, Job>()
 
@@ -228,10 +235,12 @@ class MainViewModel @Inject constructor(
         // eşzamanlı yinelenen istek oluşmaz.
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            val gen = ++fetchGen
             // Henüz verisi çekilmemiş şehirler yükleniyor gösterilir; hata
             // metni değil. Atama (birleşim değil): iptal edilen önceki turun
             // bayat kimlikleri taşınmaz.
-            _uiState.update { it.copy(loadingCityIds = pendingIds(stored)) }
+            val pending = pendingIds(stored)
+            _uiState.update { it.copy(loadingCityIds = pending) }
             if (keepContent) {
                 _uiState.update { it.copy(isRefreshing = true) }
             } else {
@@ -258,10 +267,14 @@ class MainViewModel @Inject constructor(
                 // İptal bir hata değildir; hata durumu olarak sunulmaz.
                 throw e
             } finally {
-                // Yeniden hesapla (çıkarma değil): iptal eden yeni turun
-                // başlangıç atamasıyla yarışsa bile iki yazıcı da güncel
-                // durumdan aynı değeri üretir; bayat kimlik takılı kalmaz.
-                _uiState.update { it.copy(loadingCityIds = pendingIds(storedCities)) }
+                // Tur nasıl biterse bitsin (başarı, kısmi başarı, hata) bu
+                // turun kimlikleri düşer: gösterge durur, gelen veri varsa
+                // kart yüklenir, gelmediyse gerçekten hata metnine döner ve
+                // "Tekrar dene" geri gelir. Numara koruması: iptal edilmiş
+                // eski tur, kendinden sonra başlayan turun kümesini silmez.
+                if (gen == fetchGen) {
+                    _uiState.update { it.copy(loadingCityIds = it.loadingCityIds - pending) }
+                }
             }
         }
     }
