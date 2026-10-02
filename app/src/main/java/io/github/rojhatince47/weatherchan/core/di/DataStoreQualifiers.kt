@@ -14,3 +14,14 @@ annotation class CityDataStore
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class SettingsDataStore
+
+/**
+ * Hava durumu önbelleğinin DataStore'u.
+ *
+ * Şehir dosyasından **ayrı dosya** kullanır: aynı dosya paylaşılsaydı her
+ * önbellek yazma `cities()` akışını yeniden yayımlatır ve tur-yaz-tur
+ * sonsuz döngüsü oluşurdu.
+ */
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class WeatherCacheDataStore

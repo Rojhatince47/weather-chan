@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import io.github.rojhatince47.weatherchan.core.di.CityDataStore
+import io.github.rojhatince47.weatherchan.core.di.WeatherCacheDataStore
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -15,15 +15,16 @@ import kotlinx.serialization.json.Json
 /**
  * Hava durumu önbelleğinin disk katmanı: tek blob + tek anahtar.
  *
- * Şehir listesiyle **aynı DataStore dosyası** paylaşılır (`@CityDataStore`,
- * `cached_weathers` anahtarı) — ayrı dosya/qualifier gerektirmez; anahtarlar
- * çakışmaz. Bozuk içerik `null`'a düşer (önbellek-yok gibi davranılır).
+ * Şehir listesinden **ayrı dosyadadır** (`@WeatherCacheDataStore`,
+ * `hava_weather_cache`): aynı dosya paylaşılsaydı her önbellek yazma
+ * `cities()` akışını yeniden yayımlatır ve tur-yaz-tur sonsuz döngüsü
+ * oluşurdu. Bozuk içerik `null`'a düşer (önbellek-yok gibi davranılır).
  */
 // NOT: `@Inject` YOKTUR — aynı tip için `WeatherDataModule`'de `@Provides`
 // vardır; ikisi birden Dagger çift-bağlama hatası üretir.
 @Singleton
 class WeatherCachePreferences constructor(
-    @CityDataStore private val dataStore: DataStore<Preferences>
+    @WeatherCacheDataStore private val dataStore: DataStore<Preferences>
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
