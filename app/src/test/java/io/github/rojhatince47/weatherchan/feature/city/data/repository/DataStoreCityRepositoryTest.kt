@@ -127,6 +127,34 @@ class DataStoreCityRepositoryTest {
     }
 
     @Test
+    fun `hatali paylasilan onbellek anahtari bir kez temizlenir`() = runTest {
+        val dataStore = createDataStore()
+        // Hatalı kablolama döneminde `cached_weathers` şehir dosyasına
+        // yazılmıştı; şehir listesi korunarak yalnız o anahtar düşer.
+        dataStore.edit {
+            it[stringPreferencesKey("cities_json")] = """
+                [{"name":"Istanbul","region":"Marmara","country":"Turkiye","latitude":41.01,"longitude":28.98}]
+            """.trimIndent()
+            it[stringPreferencesKey("cached_weathers")] = """{"fetchedAtEpochMillis":1,"weathers":[]}"""
+        }
+        // Eski-tohum göçü listeyi silmesin diye bayrak kurulur.
+        dataStore.markMigrated()
+
+        val repository = createRepository(dataStore)
+        repository.cities.first()
+
+        val keys = dataStore.data.first().asMap().keys.map { key -> key.name }
+        assertTrue(
+            "Ölü önbellek anahtarı temizlenmeli",
+            keys.none { it == "cached_weathers" }
+        )
+        assertTrue(
+            "Şehir listesi göçten etkilenmemeli",
+            repository.cities.first().any { it.name == "Istanbul" }
+        )
+    }
+
+    @Test
     fun `goc sonrasi eklenen sehirler kalici olur`() = runTest {
         val dataStore = createDataStore()
         createRepository(dataStore).cities.first() // göçü tetikler

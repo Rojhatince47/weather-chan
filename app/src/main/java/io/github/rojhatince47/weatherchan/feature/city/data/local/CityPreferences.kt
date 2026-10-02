@@ -27,6 +27,7 @@ import kotlinx.serialization.json.Json
  * - `cities_json`: şehir listesi, JSON dizisi, ekleme sırası korunur.
  * - `location_permission_asked`: konum izni bir kez soruldu mu.
  * - `cities_migrated_v2`: gömülü tohum listesi bir kez temizlendi mi.
+ * - `stale_cache_removed`: hatalı paylaşılan önbellek anahtarı bir kez temizlendi mi.
  */
 @Singleton
 class CityPreferences @Inject constructor(
@@ -37,6 +38,8 @@ class CityPreferences @Inject constructor(
     private val citiesKey = stringPreferencesKey("cities_json")
     private val permissionAskedKey = booleanPreferencesKey("location_permission_asked")
     private val seedRemovedKey = booleanPreferencesKey("cities_migrated_v2")
+    private val staleCacheKey = stringPreferencesKey("cached_weathers")
+    private val staleCacheRemovedKey = booleanPreferencesKey("stale_cache_removed")
 
     /**
      * Gömülü 32 şehirlik tohum listesi **bir kez** temizlenir.
@@ -57,6 +60,20 @@ class CityPreferences @Inject constructor(
     }
 
     /**
+     * Hatalı kablolama döneminde (`@CityDataStore` paylaşımı) önbellek blob'u
+     * bu dosyaya yazılmıştı. Tek seferlik temizlik; bayrak aynı `edit`
+     * içinde yazılır.
+     */
+    private suspend fun removeStaleCacheKeyOnce() {
+        dataStore.edit { preferences ->
+            if (preferences[staleCacheRemovedKey] != true) {
+                preferences.remove(staleCacheKey)
+                preferences[staleCacheRemovedKey] = true
+            }
+        }
+    }
+
+    /**
      * Depodaki şehir listesi.
      *
      * Göç, akışa **geçilmeden önce** çalışır: dinleyen ilk değer zaten temizlenmiş
@@ -64,6 +81,7 @@ class CityPreferences @Inject constructor(
      */
     fun cities(): Flow<List<City>> = flow {
         removeLegacySeedOnce()
+        removeStaleCacheKeyOnce()
         emitAll(
             dataStore.data
                 .catch { emit(emptyPreferences()) }
