@@ -108,7 +108,7 @@ class GetLocationCityUseCaseTest {
 
     @Test
     fun `uzak konumda cozulur ve yazilir`() = runTest {
-        val far = Coordinates(latitude = 41.0199, longitude = 28.98)
+        val far = Coordinates(latitude = 41.0325, longitude = 28.98)
         val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.01, 28.98), isLocation = true)
         val resolved = City("Uskudar", "Istanbul", "Turkey", far)
         val weather = FakeWeatherRepository().apply {
@@ -137,14 +137,35 @@ class GetLocationCityUseCaseTest {
             searchResult = AppResult.Failure(AppError.Network)
         }
         val useCase = GetLocationCityUseCase(
-            // Kayıttan uzak koordinat → ıska → ağ yolu → hata → "Konum" yedeği.
-            locationProvider = FakeLocationProvider(Coordinates(41.0199, 28.98)),
+            // Kayıttan uzak koordinat (~2.5 km) → ıska → ağ yolu → hata → "Konum" yedeği.
+            locationProvider = FakeLocationProvider(Coordinates(41.0325, 28.98)),
             weatherRepository = weather
         )
 
         val city = requireNotNull(useCase())
 
         assertEquals("Konum", city.name)
+        assertTrue(weather.savedLocationCities.isEmpty())
+    }
+
+    @Test
+    fun `cihazda olculen segirtme vurur`() = runTest {
+        // Regresyon: emülatörde aynı noktada ölçülen iki GPS okuması
+        // (41.0,28.983) → (41.01,28.98) arası 1.14 km'dir. 1.0 km eşikle
+        // ıskalayıp her açılışta 10 sn'lik zinciri tetikliyordu.
+        val cached = City("Kucukpazar", "Istanbul", "Turkey", Coordinates(41.0, 28.983), isLocation = true)
+        val fresh = Coordinates(latitude = 41.01, longitude = 28.98)
+        val weather = FakeWeatherRepository().apply { cachedLocationCity = cached }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(fresh),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Kucukpazar", city.name)
+        assertEquals(fresh, city.coordinates)
+        assertTrue(weather.searchRequests.isEmpty())
         assertTrue(weather.savedLocationCities.isEmpty())
     }
 

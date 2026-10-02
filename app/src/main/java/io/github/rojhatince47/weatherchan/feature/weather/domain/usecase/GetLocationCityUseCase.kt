@@ -75,8 +75,14 @@ class GetLocationCityUseCase @Inject constructor(
  * Önbellek hücresi yarıçapı (km). Mevcut `SuggestCitiesUseCase` formülünün
  * `Double` varyantıdır (`roundToInt` YOK — `Int` yuvarlama 0.9 ile 1.1'i
  * ayırt edemez).
+ *
+ * 2 km bilinçli tercihtir: durağan-hal GPS/ağ-sağlayıcı seğirtmesi (cihazda
+ * ölçülen ~1.1 km atlamalar) eşiğin altında kalır; gerçekten yer değiştiren
+ * kullanıcı (yürüyüşle 25+ dk, her sürüş) yeniden çözülür. Şehir-adı
+ * doğruluğu için 2 km güvenlidir — yanlış ad penceresi yalnız 2 km+
+ * harekettedir.
  */
-private const val NEARBY_KM = 1.0
+private const val NEARBY_KM = 2.0
 
 private fun distanceKm(from: Coordinates, to: Coordinates): Double {
     val earthRadiusKm = 6371.0
