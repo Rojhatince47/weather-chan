@@ -41,6 +41,7 @@
     <string name="state_empty_search">Aramanızla eşleşen şehir bulunamadı</string>
     <string name="state_empty_detail">Veri bulunamadı</string>
     <string name="card_weather_unavailable">Hava durumu alınamadı</string>
+    <string name="card_weather_loading">Hava durumu yükleniyor…</string>
     <string name="city_retrying">Yeniden deneniyor</string>
 
     <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni

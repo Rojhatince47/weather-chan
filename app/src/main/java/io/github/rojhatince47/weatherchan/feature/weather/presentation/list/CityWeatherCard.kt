@@ -70,7 +70,13 @@ fun CityWeatherCard(
         CardWeather.Unavailable -> CityWeatherCardContent(
             cityWeather = cityWeather,
             emoji = "🌐",
-            detailText = stringResource(R.string.card_weather_unavailable),
+            // Tur sürerken hata metni yanıltıcı olur: işlem bitmedi,
+            // başarısız olmadı. Göstergeyle birlikte nötr metin çıkar.
+            detailText = if (isRetrying) {
+                stringResource(R.string.card_weather_loading)
+            } else {
+                stringResource(R.string.card_weather_unavailable)
+            },
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             onClick = onClick,
