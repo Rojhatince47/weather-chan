@@ -22,6 +22,8 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
         composable<ListDestination> {
             MainRoute(
                 onCityClick = { city -> navController.navigate(city.toForecastDestination()) },
+                onAddCityClick = { navController.navigate(AddCityDestination) },
+                onSettingsClick = { navController.navigate(SettingsDestination) },
                 settingsViewModel = settingsViewModel
             )
         }

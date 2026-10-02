@@ -67,6 +67,8 @@ class MainRouteTest {
             HavaTheme {
                 MainRoute(
                     onCityClick = {},
+                    onAddCityClick = {},
+                    onSettingsClick = {},
                     viewModel = viewModel,
                     settingsViewModel = settingsViewModel
                 )
@@ -124,6 +126,8 @@ class MainRouteTest {
             HavaTheme {
                 MainRoute(
                     onCityClick = {},
+                    onAddCityClick = {},
+                    onSettingsClick = {},
                     viewModel = viewModel,
                     settingsViewModel = settingsViewModel
                 )

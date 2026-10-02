@@ -18,8 +18,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,26 +26,24 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
-import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainRoute(
     onCityClick: (City) -> Unit,
+    onAddCityClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel(),
     // NavHost üstünde alınan ortak örnek; giriş başına ayrı örnek oluşmaz.
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
-    val unit = (settingsState as? UiState.Success)?.data
-        ?: TemperatureUnit.CELSIUS.toUiModel()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -118,18 +114,14 @@ fun MainRoute(
 
     MainScreen(
         uiState = uiState,
-        unit = unit,
         themeMode = themeMode,
-        onQueryChange = viewModel::onQueryChange,
         onCityClick = { cityId -> viewModel.findCity(cityId)?.let(onCityClick) },
-        onAddCity = viewModel::onAddCity,
-        onOpenCity = onCityClick,
+        onAddCityClick = onAddCityClick,
+        onSettingsClick = onSettingsClick,
         onDeleteCity = viewModel::onDeleteCity,
         onRetryCity = viewModel::onRetryCity,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
-        onToggleUnit = settingsViewModel::onToggleUnit,
-        onToggleThemeMode = settingsViewModel::onCycleThemeMode,
         onAddLocation = onLocationAction,
         onRetryLocation = onLocationAction,
         modifier = modifier,

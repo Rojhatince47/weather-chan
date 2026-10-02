@@ -1,10 +1,8 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,17 +11,20 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,28 +36,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
-import io.github.rojhatince47.weatherchan.core.ui.component.HomeHeader
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
-import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
-import io.github.rojhatince47.weatherchan.core.ui.theme.ThemeModeIcon
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
-import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.CitySearchField
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchResultRow
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchResultUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.SearchUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
@@ -64,20 +52,16 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Cit
 @Composable
 fun MainScreen(
     uiState: MainUiState,
-    unit: TemperatureUnitUiModel,
     themeMode: ThemeMode,
-    onQueryChange: (String) -> Unit,
     onCityClick: (Long) -> Unit,
-    onAddCity: (City) -> Unit,
-    onOpenCity: (City) -> Unit,
+    onAddCityClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onDeleteCity: (Long) -> Unit,
     onRetryCity: (Long) -> Unit = {},
     onAddLocation: () -> Unit,
     onRetryLocation: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
-    onToggleUnit: () -> Unit,
-    onToggleThemeMode: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
@@ -90,17 +74,40 @@ fun MainScreen(
     // dolu tutulur; onay/iptal ya da alan dışına dokunma ile sıfırlanır.
     var pendingDelete: Pair<Long, String>? by remember { mutableStateOf(null) }
 
-    // Arama etkinken sistem geri tuşu uygulamayı kapatmak yerine aramayı
-    // kapatır: kutu hem arama hem liste süzgeci olduğu için (aşağıdaki
-    // yorum) geri tuşu "listeye dön" anlamına gelir. Klavye açıkken geri
-    // tuşu platformda önce klavyeyi kapatır, bu yüzden ikinci basışta devreye
-    // girer — istenen davranış. Sorgu yoksa bu satır hiç devreye girmez ve
-    // geri tuşu ekranı kapatmaya devam eder.
-    BackHandler(enabled = uiState.query.isNotBlank()) { onQueryChange("") }
+    // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
+    // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
+    val isDarkTheme = themeMode.resolveIsDark()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            // Ana ekran yalnız hava listesidir: arama ve ayarlar kendi
+            // ekranlarına taşındı, üst çubukta yalnız iki giriş kalır.
+            TopAppBar(
+                title = { Text(stringResource(R.string.home_title)) },
+                actions = {
+                    IconButton(
+                        onClick = onAddCityClick,
+                        modifier = Modifier.testTag("action_add_city")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.action_open_add_city)
+                        )
+                    }
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier.testTag("action_settings")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.action_open_settings)
+                        )
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         // Gösterge M3'ün kendi IndicatorBox'ıdır: sürükleme mesafesine göre
         // aşağı iner, yenilenirken döner. State'i Box yönetir; bu yüzden
@@ -111,82 +118,6 @@ fun MainScreen(
             modifier = Modifier.testTag("pull_refresh")
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                // Arama çubuğu en üstte: ekrana giren kullanıcının ilk işi
-                // şehir bulmak ya da eklemek. Başlık ve ayar satırı bunu
-                // gölgeliyordu; arama kutusu ikincil bir konumda kalınca
-                // listenin en üstünde değil, ortasında görünüyordu.
-                CitySearchField(
-                    value = uiState.query,
-                    onValueChange = onQueryChange
-                )
-                // Kartların koşul paleti seçimi de aynı tema kararına bağlı olmalı;
-                // sistem temasını doğrudan okumak kullanıcının seçimini yok sayardı.
-                val isDarkTheme = themeMode.resolveIsDark()
-                val themeModeName = stringResource(
-                    when (themeMode) {
-                        ThemeMode.SYSTEM -> R.string.theme_mode_system
-                        ThemeMode.LIGHT -> R.string.theme_mode_light
-                        ThemeMode.DARK -> R.string.theme_mode_dark
-                    }
-                )
-                val themeLabel = stringResource(R.string.theme_toggle, themeModeName)
-
-                HomeHeader(
-                    title = stringResource(R.string.home_title),
-                    description = stringResource(R.string.home_description)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = HavaSpacing.lg),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onToggleThemeMode,
-                        modifier = Modifier
-                            .testTag("theme_toggle")
-                            // ThemeModeIcon bir Canvas olduğu için erişilebilirlik
-                            // etiketi düğmenin kendisine verilir. semantics bloğu
-                            // composable olmadığından metin burada önceden çözülür.
-                            .semantics { contentDescription = themeLabel }
-                    ) {
-                        ThemeModeIcon(themeMode = themeMode)
-                    }
-                    TextButton(onClick = onToggleUnit) {
-                        Text(
-                            text = if (unit.unit == TemperatureUnit.CELSIUS) {
-                                stringResource(R.string.unit_celsius)
-                            } else {
-                                stringResource(R.string.unit_fahrenheit)
-                            }
-                        )
-                    }
-                }
-                // Canlı arama göstergeleri ince ve sabittir; sonuç satırları ise
-                // kaydırılabilir listenin başına gömülür — 10 sonuç yerel listeyi
-                // ekran dışına itmesin diye sabit bölüm kullanılmaz.
-                when (val search = uiState.searchState) {
-                    SearchUiState.Idle -> Unit
-                    SearchUiState.Loading -> LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth().testTag("search_indicator")
-                    )
-                    is SearchUiState.Failure -> Text(
-                        text = search.error.toUiText().asString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(
-                            horizontal = HavaSpacing.lg,
-                            vertical = HavaSpacing.sm
-                        )
-                    )
-                    is SearchUiState.Success ->
-                        if (uiState.content !is UiState.Success && search.results.isNotEmpty()) {
-                            LiveSearchResults(
-                                results = search.results,
-                                onAddCity = onAddCity,
-                                onOpenCity = onOpenCity
-                            )
-                        }
-                }
                 // Yenileme sırasında mevcut içerik korunur; göstergeyi
                 // PullToRefreshBox üretir. Tam ekran Loading sadece ilk
                 // yüklemede (içerik yokken) gösterilir.
@@ -196,16 +127,6 @@ fun MainScreen(
                         contentPadding = PaddingValues(HavaSpacing.lg),
                         verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
                     ) {
-                        val search = uiState.searchState
-                        if (search is SearchUiState.Success && search.results.isNotEmpty()) {
-                            item(key = "live_search_results") {
-                                LiveSearchResults(
-                                    results = search.results,
-                                    onAddCity = onAddCity,
-                                    onOpenCity = onOpenCity
-                                )
-                            }
-                        }
                         items(content.data, key = { it.cityId }) { cityWeather ->
                             CityWeatherCard(
                                 cityWeather = cityWeather,
@@ -256,32 +177,23 @@ fun MainScreen(
                             is UiState.Loading -> CircularProgressIndicator(
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
-                            // Arama kutusu iki iş yapar: yeni şehir arar ve
-                            // kayıtlı listeyi de filtreler. Sorgu varken liste
-                            // boşluğu "sonuç bulunamadı" demek değildir —
-                            // kullanıcı yeni şehir arıyordur ve ekranın sahibi
-                            // canlı arama bölümüdür. Liste mesajı yalnız gerçekten
-                            // boş listede (sorgu yokken) gösterilir; aramanın kendi
-                            // boşluğu ayrı metinle anlatılır.
-                            is UiState.Empty -> {
-                                val search = uiState.searchState
-                                when {
-                                    uiState.query.isBlank() -> LocationEmptyState(
-                                        locationState = uiState.locationState,
-                                        onAddLocation = onAddLocation,
-                                        onRetryLocation = onRetryLocation
-                                    )
-                                    search is SearchUiState.Success && search.results.isEmpty() -> Text(
-                                        text = stringResource(R.string.state_empty_search),
-                                        modifier = Modifier.padding(HavaSpacing.xl)
-                                    )
-                                    else -> Unit
+                            is UiState.Empty -> LocationEmptyState(
+                                locationState = uiState.locationState,
+                                onAddLocation = onAddLocation,
+                                onRetryLocation = onRetryLocation
+                            )
+                            is UiState.Error -> {
+                                Text(
+                                    text = content.message.asString(),
+                                    modifier = Modifier.padding(HavaSpacing.xl)
+                                )
+                                // Hata yalnız metinle bitmemeli: çek-yenile her
+                                // durumda çalışır ama açık bir eylem, ekranın
+                                // toparlanabilir olduğunu söyler.
+                                Button(onClick = onRetry) {
+                                    Text(text = stringResource(R.string.action_retry))
                                 }
                             }
-                            is UiState.Error -> Text(
-                                text = content.message.asString(),
-                                modifier = Modifier.padding(HavaSpacing.xl)
-                            )
                             is UiState.Success -> Unit
                         }
                     }
@@ -307,8 +219,8 @@ fun MainScreen(
  *
  * Konum okunamadıysa mesaj **nedenini** anlatır ve eylem "Tekrar dene" olur;
  * aksi halde "Konumumu ekle" gösterilir. Konum okunuyorsa kısa bir bekleme
- * metni çıkar. Hiçbir dalda arama kutusu kaldırılmaz: konum eklenemezse
- * kullanıcı şehir aramayla ilerleyebilmelidir.
+ * metni çıkar. Konum eklenemezse kullanıcı şehri üst çubuktaki + ile
+ * arayarak ekleyebilir.
  */
 @Composable
 private fun LocationEmptyState(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit) {
@@ -383,17 +295,14 @@ private fun MainScreenCompactPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
-            unit = TemperatureUnit.CELSIUS.toUiModel(),
             themeMode = ThemeMode.SYSTEM,
-            onQueryChange = {},
             onCityClick = {},
-            onAddCity = {},
-            onOpenCity = {},
+            onAddCityClick = {},
+            onSettingsClick = {},
             onDeleteCity = {},
+            onRetryCity = {},
             onRetry = {},
             onRefresh = {},
-            onToggleUnit = {},
-            onToggleThemeMode = {},
             onAddLocation = {},
             onRetryLocation = {}
         )
@@ -406,17 +315,14 @@ private fun MainScreenMediumPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
-            unit = TemperatureUnit.CELSIUS.toUiModel(),
             themeMode = ThemeMode.SYSTEM,
-            onQueryChange = {},
             onCityClick = {},
-            onAddCity = {},
-            onOpenCity = {},
+            onAddCityClick = {},
+            onSettingsClick = {},
             onDeleteCity = {},
+            onRetryCity = {},
             onRetry = {},
             onRefresh = {},
-            onToggleUnit = {},
-            onToggleThemeMode = {},
             onAddLocation = {},
             onRetryLocation = {}
         )
@@ -429,37 +335,17 @@ private fun MainScreenExpandedPreview() {
     HavaTheme {
         MainScreen(
             uiState = sampleMainUiState(),
-            unit = TemperatureUnit.CELSIUS.toUiModel(),
             themeMode = ThemeMode.SYSTEM,
-            onQueryChange = {},
             onCityClick = {},
-            onAddCity = {},
-            onOpenCity = {},
+            onAddCityClick = {},
+            onSettingsClick = {},
             onDeleteCity = {},
+            onRetryCity = {},
             onRetry = {},
             onRefresh = {},
-            onToggleUnit = {},
-            onToggleThemeMode = {},
             onAddLocation = {},
             onRetryLocation = {}
         )
-    }
-}
-
-/** Canlı arama satırları. Hem sabit bölümde hem kaydırılabilir liste içinde kullanılır. */
-@Composable
-private fun LiveSearchResults(results: List<SearchResultUiModel>, onAddCity: (City) -> Unit, onOpenCity: (City) -> Unit) {
-    Column(
-        modifier = Modifier.padding(horizontal = HavaSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
-    ) {
-        results.forEach { result ->
-            SearchResultRow(
-                result = result,
-                onAddClick = { onAddCity(result.city) },
-                onOpenClick = { onOpenCity(result.city) }
-            )
-        }
     }
 }
 
