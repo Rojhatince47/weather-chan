@@ -106,7 +106,7 @@ fun AddCityScreen(
                 }
             } else if (search is SearchUiState.Success && search.results.isEmpty()) {
                 // Sonuç yoksa hiçbir şey göstermemek, arama çalışmıyor izlenimi
-                // verir. Metin MainScreen'de de var; oradan Task 9'da silinir.
+                // verir. Aynı metin ana ekrandan kaldırıldı; burada yaşıyor.
                 Text(
                     text = stringResource(R.string.state_empty_search),
                     style = MaterialTheme.typography.bodyMedium,
