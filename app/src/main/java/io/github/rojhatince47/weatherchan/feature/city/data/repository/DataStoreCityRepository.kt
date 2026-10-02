@@ -36,8 +36,7 @@ class DataStoreCityRepository @Inject constructor(
         if (current.any { it.id == city.id }) current else current.insertAt(index.coerceIn(0, current.size), city)
     }
 
-    private fun <T> List<T>.insertAt(position: Int, element: T): List<T> =
-        toMutableList().apply { add(position, element) }
+    private fun <T> List<T>.insertAt(position: Int, element: T): List<T> = toMutableList().apply { add(position, element) }
 
     override suspend fun addAsLocation(city: City): List<City> = mutate { current ->
         val location = city.copy(isLocation = true)
