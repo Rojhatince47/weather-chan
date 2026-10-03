@@ -52,7 +52,7 @@ fun CityWeatherCard(
 ) {
     when (val weather = cityWeather.weather) {
         is CardWeather.Loaded -> {
-            val palette = ConditionPalette.of(weather.condition, isDark = isDarkTheme)
+            val palette = ConditionPalette.of(weather.condition, isDark = isDarkTheme, isDay = weather.isDay)
             CityWeatherCardContent(
                 cityWeather = cityWeather,
                 emoji = weather.conditionEmoji,

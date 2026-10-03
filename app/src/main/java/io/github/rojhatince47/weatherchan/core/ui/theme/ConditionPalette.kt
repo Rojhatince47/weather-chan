@@ -82,8 +82,86 @@ object ConditionPalette {
         )
     )
 
-    fun of(condition: WeatherCondition, isDark: Boolean): ConditionColors =
-        colorsFor(isDark)[condition] ?: error("Koşul paleti tanımsız: $condition")
+    fun of(condition: WeatherCondition, isDark: Boolean, isDay: Boolean = true): ConditionColors {
+        val palette = when {
+            isDark && isDay -> dark
+            isDark -> darkNight
+            isDay -> light
+            else -> lightNight
+        }
+        return palette[condition] ?: error("Koşul paleti tanımsız: $condition")
+    }
 
     fun colorsFor(isDark: Boolean): Map<WeatherCondition, ConditionColors> = if (isDark) dark else light
+
+    /**
+     * Gece varyantları: gündüz karşılığıyla aynı renk ailesi, belirgin koyu.
+     * Kesin değerler görsel tercihtir; sözleşme testle kilitlidir (gece
+     * container gündüzden koyu + metin kontrastı korunur).
+     */
+    private val lightNight: Map<WeatherCondition, ConditionColors> = mapOf(
+        WeatherCondition.CLEAR to ConditionColors(
+            container = Color(0xFF3A3413),
+            onContainer = Color(0xFFFFF2C4),
+            accent = Color(0xFFD9A419)
+        ),
+        WeatherCondition.PARTLY_CLOUDY to ConditionColors(
+            container = Color(0xFF1C3244),
+            onContainer = Color(0xFFDDF0FD),
+            accent = Color(0xFF4FA3D9)
+        ),
+        WeatherCondition.CLOUDY to ConditionColors(
+            container = Color(0xFF31383E),
+            onContainer = Color(0xFFE3E8EC),
+            accent = Color(0xFF7A8791)
+        ),
+        WeatherCondition.RAIN to ConditionColors(
+            container = Color(0xFF162E49),
+            onContainer = Color(0xFFD8E9F9),
+            accent = Color(0xFF2F6FB5)
+        ),
+        WeatherCondition.SNOW to ConditionColors(
+            container = Color(0xFF223D4C),
+            onContainer = Color(0xFFE2EFF5),
+            accent = Color(0xFF6FA8C7)
+        ),
+        WeatherCondition.THUNDERSTORM to ConditionColors(
+            container = Color(0xFF2C2454),
+            onContainer = Color(0xFFE6DFFA),
+            accent = Color(0xFF7A5BD6)
+        )
+    )
+
+    private val darkNight: Map<WeatherCondition, ConditionColors> = mapOf(
+        WeatherCondition.CLEAR to ConditionColors(
+            container = Color(0xFF2A2304),
+            onContainer = Color(0xFFFFF0BF),
+            accent = Color(0xFFFFC64D)
+        ),
+        WeatherCondition.PARTLY_CLOUDY to ConditionColors(
+            container = Color(0xFF0E1E29),
+            onContainer = Color(0xFFD6EAF8),
+            accent = Color(0xFF7FC1E8)
+        ),
+        WeatherCondition.CLOUDY to ConditionColors(
+            container = Color(0xFF1F2429),
+            onContainer = Color(0xFFDFE4E8),
+            accent = Color(0xFFA7B2BA)
+        ),
+        WeatherCondition.RAIN to ConditionColors(
+            container = Color(0xFF0B1E30),
+            onContainer = Color(0xFFD2E6F7),
+            accent = Color(0xFF6FAEE8)
+        ),
+        WeatherCondition.SNOW to ConditionColors(
+            container = Color(0xFF12242E),
+            onContainer = Color(0xFFDCEBF3),
+            accent = Color(0xFFA2CDE4)
+        ),
+        WeatherCondition.THUNDERSTORM to ConditionColors(
+            container = Color(0xFF1A1435),
+            onContainer = Color(0xFFE4DCF8),
+            accent = Color(0xFFA78BE8)
+        )
+    )
 }

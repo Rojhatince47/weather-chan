@@ -136,4 +136,51 @@ class WeatherUiMapperTest {
 
         assertEquals("$expected°F", weather.temperatureText)
     }
+
+    @Test
+    fun `gece acik ay simgesiyle gosterilir`() {
+        val uiModel = mapper.toCityWeatherUiModel(
+            cityWeather = cityWeather().copy(
+                currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.CLEAR, isDay = false)
+            )
+        )
+        val weather = uiModel.weather as CardWeather.Loaded
+        assertEquals("\uD83C\uDF19", weather.conditionEmoji)
+    }
+
+    @Test
+    fun `gece parcasi bulutlu ay-bulut simgesiyle gosterilir`() {
+        val uiModel = mapper.toCityWeatherUiModel(
+            cityWeather = cityWeather().copy(
+                currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.PARTLY_CLOUDY, isDay = false)
+            )
+        )
+        val weather = uiModel.weather as CardWeather.Loaded
+        assertEquals("\uD83C\uDF19\u2601\uFE0F", weather.conditionEmoji)
+    }
+
+    @Test
+    fun `gece diger kosullar degismez`() {
+        listOf(
+            WeatherCondition.CLOUDY,
+            WeatherCondition.RAIN,
+            WeatherCondition.SNOW,
+            WeatherCondition.THUNDERSTORM
+        ).forEach { condition ->
+            val night = mapper.toCityWeatherUiModel(
+                cityWeather = cityWeather().copy(
+                    currentWeather = cityWeather().currentWeather.copy(condition = condition, isDay = false)
+                )
+            )
+            val day = mapper.toCityWeatherUiModel(
+                cityWeather = cityWeather().copy(
+                    currentWeather = cityWeather().currentWeather.copy(condition = condition, isDay = true)
+                )
+            )
+            assertEquals(
+                (day.weather as CardWeather.Loaded).conditionEmoji,
+                (night.weather as CardWeather.Loaded).conditionEmoji
+            )
+        }
+    }
 }

@@ -28,7 +28,9 @@ sealed interface CardWeather {
         val temperatureText: String,
         val condition: WeatherCondition,
         val conditionEmoji: String,
-        val conditionLabel: UiText
+        val conditionLabel: UiText,
+        /** Kartın gün bilgisi; palet seçiminde kullanılır. Default = mevcut çağrılar değişmez. */
+        val isDay: Boolean = true
     ) : CardWeather
 
     /** Hava durumu alınamadı; kart nedeni ve eylemi gösterir. */

@@ -69,6 +69,38 @@ class ConditionPaletteTest {
     }
 
     @Test
+    fun `gece container gunduzden koyudur`() {
+        WeatherCondition.entries.forEach { condition ->
+            listOf(false, true).forEach { isDark ->
+                val day = ConditionPalette.of(condition, isDark = isDark, isDay = true)
+                val night = ConditionPalette.of(condition, isDark = isDark, isDay = false)
+                assertTrue(
+                    "$condition gece container gündüzden koyu olmalı",
+                    night.container.luminance() < day.container.luminance()
+                )
+                assertTrue(
+                    "$condition gece/gündüz container farklı olmalı",
+                    night.container != day.container
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `gece paleti metin kontrastini korur`() {
+        WeatherCondition.entries.forEach { condition ->
+            listOf(false, true).forEach { isDark ->
+                val night = ConditionPalette.of(condition, isDark = isDark, isDay = false)
+                val ratio = contrastRatio(night.onContainer, night.container)
+                assertTrue(
+                    "$condition gece kontrastı yetersiz: $ratio",
+                    ratio >= 4.5
+                )
+            }
+        }
+    }
+
+    @Test
     fun `weather condition has a palette entry`() {
         assertEquals(6, ConditionPalette.colorsFor(isDark = false).size)
     }

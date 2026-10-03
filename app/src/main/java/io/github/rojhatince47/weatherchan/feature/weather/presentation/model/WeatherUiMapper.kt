@@ -20,8 +20,9 @@ class WeatherUiMapper @Inject constructor() {
             weather = CardWeather.Loaded(
                 temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
                 condition = cityWeather.currentWeather.condition,
-                conditionEmoji = emojiFor(cityWeather.currentWeather.condition),
-                conditionLabel = labelFor(cityWeather.currentWeather.condition)
+                conditionEmoji = emojiFor(cityWeather.currentWeather.condition, cityWeather.currentWeather.isDay),
+                conditionLabel = labelFor(cityWeather.currentWeather.condition),
+                isDay = cityWeather.currentWeather.isDay
             ),
             isLocation = cityWeather.city.isLocation
         )
@@ -86,9 +87,13 @@ class WeatherUiMapper @Inject constructor() {
 
     private fun formatHour(hour: Int): String = "%02d:00".format(hour)
 
-    private fun emojiFor(condition: WeatherCondition): String = when (condition) {
-        WeatherCondition.CLEAR -> "☀️"
-        WeatherCondition.PARTLY_CLOUDY -> "🌤️"
+    /**
+     * Koşul + gün bilgisine göre simge. `isDay` default'u kapsam-dışı (detay:
+     * tahmin/saatlik/günlük) çağrılar içindir; liste yolu gerçek değeri açıkça geçirir.
+     */
+    private fun emojiFor(condition: WeatherCondition, isDay: Boolean = true): String = when (condition) {
+        WeatherCondition.CLEAR -> if (isDay) "☀️" else "🌙"
+        WeatherCondition.PARTLY_CLOUDY -> if (isDay) "🌤️" else "🌙☁️"
         WeatherCondition.CLOUDY -> "☁️"
         WeatherCondition.RAIN -> "🌧️"
         WeatherCondition.SNOW -> "❄️"
