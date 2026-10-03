@@ -20,3 +20,6 @@ data class ForecastDestination(
     val latitude: Double,
     val longitude: Double
 )
+
+@Serializable
+data object EvSayfasiDestination
