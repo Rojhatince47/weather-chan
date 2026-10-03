@@ -5,6 +5,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeath
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -38,11 +39,35 @@ class CachedWeathersDtoTest {
         // geçersiz kılar; `WeatherCachePreferences` bunu yakalayıp
         // önbellek-yok gibi davranır (bozuk → yok felsefesi).
         val raw = """{"fetchedAtEpochMillis":1,"weathers":[""" +
-            """{"city":{"name":"A","latitude":1.0,"longitude":2.0},"current":{"temperatureCelsius":1,"condition":"FIRTINA","windSpeedKmh":1,"humidityPercent":1}}]}"""
+            """{"city":{"name":"A","latitude":1.0,"longitude":2.0},"current":{"temperatureCelsius":1,"condition":"FIRTINA","windSpeedKmh":1,"humidityPercent":1,"isDay":true}}]}"""
         var threw = false
         try {
             json.decodeFromString<CachedWeathersDto>(raw).toDomain()
         } catch (e: IllegalArgumentException) {
+            threw = true
+        }
+        assertEquals(true, threw)
+    }
+
+    @Test
+    fun `gece bayragi gidis donuste korunur`() {
+        val dto = listOf(weather.copy(currentWeather = weather.currentWeather.copy(isDay = false)))
+            .toCachedDto(fetchedAtEpochMillis = 1L)
+        val raw = json.encodeToString(CachedWeathersDto.serializer(), dto)
+        val back = json.decodeFromString<CachedWeathersDto>(raw).toDomain()
+        assertEquals(false, back.weathers.single().currentWeather.isDay)
+    }
+
+    @Test
+    fun `isDay alani olmayan eski blob reddedilir`() {
+        // Alan defaultsuzdur: eski sürüm kaydı decode'da elenir → önbellek-yok
+        // sayılır → tek seferlik yeniden çekme ile kendini iyileştirir.
+        val raw = """{"fetchedAtEpochMillis":1,"weathers":[""" +
+            """{"city":{"name":"A","latitude":1.0,"longitude":2.0},"current":{"temperatureCelsius":1,"condition":"CLEAR","windSpeedKmh":1,"humidityPercent":1}}]}"""
+        var threw = false
+        try {
+            json.decodeFromString<CachedWeathersDto>(raw)
+        } catch (e: SerializationException) {
             threw = true
         }
         assertEquals(true, threw)

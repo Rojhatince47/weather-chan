@@ -38,7 +38,8 @@ internal data class CurrentWeatherDto(
     @SerialName("temperatureCelsius") val temperatureCelsius: Int,
     @SerialName("condition") val condition: String,
     @SerialName("windSpeedKmh") val windSpeedKmh: Int,
-    @SerialName("humidityPercent") val humidityPercent: Int
+    @SerialName("humidityPercent") val humidityPercent: Int,
+    @SerialName("isDay") val isDay: Boolean
 )
 
 internal fun List<CityWeather>.toCachedDto(fetchedAtEpochMillis: Long): CachedWeathersDto = CachedWeathersDto(
@@ -77,7 +78,8 @@ private fun CurrentWeather.toDto(): CurrentWeatherDto = CurrentWeatherDto(
     temperatureCelsius = temperatureCelsius,
     condition = condition.name,
     windSpeedKmh = windSpeedKmh,
-    humidityPercent = humidityPercent
+    humidityPercent = humidityPercent,
+    isDay = isDay
 )
 
 private fun CityWeatherDto.toDomain(): CityWeather = CityWeather(
@@ -88,6 +90,7 @@ private fun CityWeatherDto.toDomain(): CityWeather = CityWeather(
         // `runCatching` yakalar, tüm önbellek yok sayılır.
         condition = WeatherCondition.valueOf(current.condition),
         windSpeedKmh = current.windSpeedKmh,
-        humidityPercent = current.humidityPercent
+        humidityPercent = current.humidityPercent,
+        isDay = current.isDay
     )
 )
