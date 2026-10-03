@@ -94,6 +94,7 @@ class WeatherUiMapper @Inject constructor() {
     private fun emojiFor(condition: WeatherCondition, isDay: Boolean = true): String = when (condition) {
         WeatherCondition.CLEAR -> if (isDay) "☀️" else "🌙"
         WeatherCondition.PARTLY_CLOUDY -> if (isDay) "🌤️" else "🌙☁️"
+        WeatherCondition.LIGHT_SHOWERS -> if (isDay) "🌦️" else "🌙🌧️"
         WeatherCondition.CLOUDY -> "☁️"
         WeatherCondition.RAIN -> "🌧️"
         WeatherCondition.SNOW -> "❄️"
@@ -103,6 +104,7 @@ class WeatherUiMapper @Inject constructor() {
     private fun labelFor(condition: WeatherCondition): UiText = when (condition) {
         WeatherCondition.CLEAR -> UiText.Resource(R.string.condition_clear)
         WeatherCondition.PARTLY_CLOUDY -> UiText.Resource(R.string.condition_partly_cloudy)
+        WeatherCondition.LIGHT_SHOWERS -> UiText.Resource(R.string.condition_light_showers)
         WeatherCondition.CLOUDY -> UiText.Resource(R.string.condition_cloudy)
         WeatherCondition.RAIN -> UiText.Resource(R.string.condition_rain)
         WeatherCondition.SNOW -> UiText.Resource(R.string.condition_snow)

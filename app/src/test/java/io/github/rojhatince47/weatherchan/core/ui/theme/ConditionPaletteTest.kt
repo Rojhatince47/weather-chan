@@ -104,4 +104,18 @@ class ConditionPaletteTest {
     fun `weather condition has a palette entry`() {
         assertEquals(6, ConditionPalette.colorsFor(isDark = false).size)
     }
+
+    @Test
+    fun `hafif saganak yagmur paletini paylasir`() {
+        // Ayrı renk yok (bilinçli): yumuşaklık simge + etikettedir; kart
+        // yağmur ailesinde kalır. Normalleştirme kırılırsa bu test düşer.
+        listOf(false, true).forEach { isDark ->
+            listOf(true, false).forEach { isDay ->
+                assertEquals(
+                    ConditionPalette.of(WeatherCondition.RAIN, isDark = isDark, isDay = isDay),
+                    ConditionPalette.of(WeatherCondition.LIGHT_SHOWERS, isDark = isDark, isDay = isDay)
+                )
+            }
+        }
+    }
 }

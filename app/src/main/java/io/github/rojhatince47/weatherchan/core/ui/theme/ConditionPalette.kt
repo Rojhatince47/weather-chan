@@ -83,13 +83,16 @@ object ConditionPalette {
     )
 
     fun of(condition: WeatherCondition, isDark: Boolean, isDay: Boolean = true): ConditionColors {
+        // Hafif sağanak ayrı renge sahip değildir (bilinçli): yumuşaklık
+        // simge + etikettedir; kart yağmur ailesinde kalır.
+        val key = if (condition == WeatherCondition.LIGHT_SHOWERS) WeatherCondition.RAIN else condition
         val palette = when {
             isDark && isDay -> dark
             isDark -> darkNight
             isDay -> light
             else -> lightNight
         }
-        return palette[condition] ?: error("Koşul paleti tanımsız: $condition")
+        return palette[key] ?: error("Koşul paleti tanımsız: $condition")
     }
 
     fun colorsFor(isDark: Boolean): Map<WeatherCondition, ConditionColors> = if (isDark) dark else light

@@ -80,7 +80,9 @@ class WttrInWeatherMapper @Inject constructor() {
         113 -> WeatherCondition.CLEAR
         116 -> WeatherCondition.PARTLY_CLOUDY
         119, 122, 143, 248, 260 -> WeatherCondition.CLOUDY
-        176, 263, 266, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 317, 320, 353, 356, 359, 362, 365 -> WeatherCondition.RAIN
+        // 266 hafif çisenti: WMO 51'in karşılığı, yumuşak kategoriye düşer.
+        266 -> WeatherCondition.LIGHT_SHOWERS
+        176, 263, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 317, 320, 353, 356, 359, 362, 365 -> WeatherCondition.RAIN
         179, 182, 227, 230, 323, 326, 329, 332, 335, 338, 350, 368, 371, 374, 377 -> WeatherCondition.SNOW
         200, 386, 389, 392, 395 -> WeatherCondition.THUNDERSTORM
         else -> WeatherCondition.CLOUDY

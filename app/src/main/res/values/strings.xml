@@ -69,6 +69,7 @@
     <string name="condition_partly_cloudy">Parçalı bulutlu</string>
     <string name="condition_cloudy">Bulutlu</string>
     <string name="condition_rain">Yağmurlu</string>
+    <string name="condition_light_showers">Hafif sağanak</string>
     <string name="condition_snow">Kar yağışlı</string>
     <string name="condition_thunderstorm">Gök gürültülü</string>
 

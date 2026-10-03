@@ -183,4 +183,27 @@ class WeatherUiMapperTest {
             )
         }
     }
+
+    @Test
+    fun `hafif saganak gunduz yumusak simge ve etiketle gosterilir`() {
+        val uiModel = mapper.toCityWeatherUiModel(
+            cityWeather = cityWeather().copy(
+                currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.LIGHT_SHOWERS, isDay = true)
+            )
+        )
+        val weather = uiModel.weather as CardWeather.Loaded
+        assertEquals("🌦️", weather.conditionEmoji)
+        assertEquals(UiText.Resource(R.string.condition_light_showers), weather.conditionLabel)
+    }
+
+    @Test
+    fun `hafif saganak gece ay-yagmur simgesiyle gosterilir`() {
+        val uiModel = mapper.toCityWeatherUiModel(
+            cityWeather = cityWeather().copy(
+                currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.LIGHT_SHOWERS, isDay = false)
+            )
+        )
+        val weather = uiModel.weather as CardWeather.Loaded
+        assertEquals("🌙🌧️", weather.conditionEmoji)
+    }
 }

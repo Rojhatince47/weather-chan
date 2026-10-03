@@ -63,7 +63,10 @@ class OpenMeteoWeatherMapper @Inject constructor() {
         0 -> WeatherCondition.CLEAR
         1, 2 -> WeatherCondition.PARTLY_CLOUDY
         3, 45, 48 -> WeatherCondition.CLOUDY
-        in 51..57, in 61..67, in 80..82 -> WeatherCondition.RAIN
+        // 51 (hafif çisenti) ve 80 (hafif sağanak): eser miktarı tam yağmur
+        // gibi göstermek kullanıcı gözünde yanlıştır.
+        51, 80 -> WeatherCondition.LIGHT_SHOWERS
+        in 52..57, in 61..67, in 81..82 -> WeatherCondition.RAIN
         in 71..77, 85, 86 -> WeatherCondition.SNOW
         95, 96, 99 -> WeatherCondition.THUNDERSTORM
         else -> WeatherCondition.CLOUDY
