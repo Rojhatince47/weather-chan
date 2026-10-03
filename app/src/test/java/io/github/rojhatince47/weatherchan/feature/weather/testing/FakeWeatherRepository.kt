@@ -101,6 +101,7 @@ class FakeWeatherRepository : WeatherRepository {
     }
 
     override suspend fun forecast(city: City): AppResult<Forecast> {
+        forecastRequests.add(city)
         if (!autoCompleteGates) {
             forecastGate.await()
         }
@@ -109,6 +110,9 @@ class FakeWeatherRepository : WeatherRepository {
         }
         return AppResult.Success(city.toForecast())
     }
+
+    /** `forecast` çağrılarının kaydı; pager'ın pencere davranışını sınar. */
+    val forecastRequests = mutableListOf<City>()
 
     private fun City.toCityWeather(): CityWeather = CityWeather(
         city = this,
