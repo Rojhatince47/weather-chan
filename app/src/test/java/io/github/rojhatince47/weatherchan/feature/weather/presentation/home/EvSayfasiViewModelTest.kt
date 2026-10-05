@@ -2,12 +2,17 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +59,21 @@ class EvSayfasiViewModelTest {
         cityRepository = fakeCities,
         getForecast = GetForecastUseCase(fakeWeather),
         unitRepository = unitRepository,
+        uiMapper = WeatherUiMapper()
+    )
+
+    private fun evViewModelWithLocation(
+        fakeWeather: FakeWeatherRepository = FakeWeatherRepository().apply { autoCompleteGates = true },
+        fakeCities: FakeCityRepository = FakeCityRepository(),
+        locationProvider: LocationProvider = FakeLocationProvider(null),
+        permissions: CityPermissions = FakeCityPermissions(asked = true),
+        unitRepository: FakeTemperatureUnitRepository = FakeTemperatureUnitRepository()
+    ) = EvSayfasiViewModel(
+        cityRepository = fakeCities,
+        getForecast = GetForecastUseCase(fakeWeather),
+        unitRepository = unitRepository,
+        getLocationCity = GetLocationCityUseCase(locationProvider, fakeWeather),
+        cityPermissions = permissions,
         uiMapper = WeatherUiMapper()
     )
 
@@ -167,5 +187,62 @@ class EvSayfasiViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(fakeCities.current().size, state.pages.size)
         assertTrue(state.forecasts.isNotEmpty())
+    }
+
+    @Test
+    fun `konumun kimligi degisse de hava durumu onbellekte kalir`() = runTest(dispatcher) {
+        val fakeWeather = FakeWeatherRepository()
+        val locationA = City("Konum", "İl", "Ülke", Coordinates(40.0, 29.0), isLocation = true)
+        val locationB = City("Konum", "İl", "Ülke", Coordinates(40.0, 29.0), isLocation = true)
+        val city = City("Diğer", "İl", "Ülke", Coordinates(41.0, 30.0))
+        val fakeCities = FakeCityRepository(initial = listOf(locationA, city))
+        val viewModel = evViewModel(
+            fakeCities = fakeCities,
+            fakeWeather = fakeWeather
+        )
+        runCurrent()
+        fakeWeather.forecastRequests.clear()
+        fakeCities.restore(locationB, 0)
+        runCurrent()
+        assertEquals(0, fakeWeather.forecastRequests.size)
+    }
+
+    @Test
+    fun `ilk acilista izin sorulmadi durumundadir`() = runTest(dispatcher) {
+        val viewModel = evViewModelWithLocation(permissions = FakeCityPermissions(asked = false))
+        runCurrent()
+        assertEquals(LocationPermissionState.NotAsked, viewModel.uiState.value.permissionState)
+        assertEquals(LocationState.Idle, viewModel.uiState.value.locationState)
+    }
+
+    // --- konum testleri için sahteler ---
+
+    private val locationCoordinates = io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates(41.01, 28.98)
+
+    private class FakeLocationProvider(
+        private val coordinates: io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates?,
+        private val gate: kotlinx.coroutines.CompletableDeferred<io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates?>? = null
+    ) : io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider {
+        var callCount: Int = 0
+            private set
+
+        override suspend fun currentCoordinates(): io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates? {
+            callCount++
+            return gate?.await() ?: coordinates
+        }
+    }
+
+    private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
+        override suspend fun wasAsked(): Boolean = asked
+
+        override suspend fun markAsked() {
+            asked = true
+        }
+    }
+
+    private class GatedCityPermissions(private val gate: kotlinx.coroutines.CompletableDeferred<Boolean>) : CityPermissions {
+        override suspend fun wasAsked(): Boolean = gate.await()
+
+        override suspend fun markAsked() {}
     }
 }
