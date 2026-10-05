@@ -1,6 +1,5 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
-import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
@@ -194,6 +193,10 @@ class EvSayfasiViewModelTest {
         assertTrue(state.forecasts.isNotEmpty())
     }
 
+    /**
+     * Konum sayfası GPS seğirtmesiyle başka bir ızgara hücresine (kimliğe)
+     * düşse de tahmin önbellekte kalır: aynı yer için yeni ağ turu açılmaz.
+     */
     @Test
     fun `konumun kimligi degisse de hava durumu onbellekte kalir`() = runTest(dispatcher) {
         val fakeWeather = FakeWeatherRepository()
@@ -440,8 +443,6 @@ class EvSayfasiViewModelTest {
 
     /** Kalıcı "diyalog gösterildi" bayrağının sahtesi. */
     private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
-        val askedFlag: Boolean get() = asked
-
         override suspend fun wasAsked(): Boolean = asked
 
         override suspend fun markAsked() {

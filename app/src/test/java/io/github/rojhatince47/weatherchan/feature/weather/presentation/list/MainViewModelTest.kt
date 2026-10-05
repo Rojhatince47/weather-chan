@@ -2,7 +2,6 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.R
-import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.LoadState
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
@@ -32,7 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -1111,22 +1109,13 @@ class MainViewModelTest {
 
     /** Sabit konum döndüren sahte; `null` verirsen konum okunamaz. */
     private class FakeLocationProvider(
-        private val coordinates: Coordinates?,
-        private val gate: CompletableDeferred<Coordinates?>? = null
+        private val coordinates: Coordinates?
     ) : LocationProvider {
-        var callCount: Int = 0
-            private set
-
-        override suspend fun currentCoordinates(): Coordinates? {
-            callCount++
-            return gate?.await() ?: coordinates
-        }
+        override suspend fun currentCoordinates(): Coordinates? = coordinates
     }
 
     /** Kalıcı "diyalog gösterildi" bayrağının sahtesi. */
     private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
-        val askedFlag: Boolean get() = asked
-
         override suspend fun wasAsked(): Boolean = asked
 
         override suspend fun markAsked() {

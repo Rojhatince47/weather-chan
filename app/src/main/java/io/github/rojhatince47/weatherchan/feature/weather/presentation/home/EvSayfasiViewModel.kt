@@ -229,9 +229,9 @@ class EvSayfasiViewModel @Inject constructor(
 
     fun refreshLocation() {
         if (locationJob?.isActive == true) return
+        val locationCity = getLocationCity ?: return
         locationJob = viewModelScope.launch {
             _uiState.update { it.copy(locationState = LocationState.Loading) }
-            val locationCity = getLocationCity ?: return@launch
             val city = locationCity()
             if (city == null) {
                 _uiState.update { it.copy(locationState = LocationState.Unavailable) }

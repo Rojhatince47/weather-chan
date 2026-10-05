@@ -162,38 +162,6 @@ class MainViewModel @Inject constructor(
      */
     fun findCity(cityId: Long): City? = loadedCities[cityId] ?: storedCities.firstOrNull { it.id == cityId }
 
-    // --- konum ---------------------------------------------------------------
-
-    /**
-     * Bayrak **yalnız "diyalog bir kez gösterildi"** bilgisini taşır, izin
-     * cevabını değil. Bu yüzden cevap bayrağa bakılarak tahmin edilmez:
-     *
-     * - Daha önce sorulmamışsa → [LocationPermissionState.NotAsked]; UI bir kez
-     *   sistem diyaloğunu başlatır.
-     * - Daha önce sorulmuşsa → diyalog **yeniden açılmaz**, konum doğrudan
-     *   okunmaya çalışılır. Gerçek izin [GetLocationCityUseCase] içinde sistemde
-     *   sınanır; izin yoksa akış `null` döner ve [LocationState.Unavailable]
-     *   gösterilir.
-     *
-     * Böylece "diyalogu bir kez gördüm" ile "izni veriyorum" karıştırılmaz.
-     */
-
-    /**
-     * Sistem diyaloğunun cevabı. Diyaloğun gösterildiği an [markAsked] ile
-     * kalıcılaştırılır; cevabın ne olduğu bayrağa yazılmaz.
-     */
-
-    /**
-     * Konumu okur ve listeye **konum olarak** ekler.
-     *
-     * Yazma kasıtlı olarak ayrı bir tur başlatmaz: `addAsLocation` depoyu
-     * yayımlar ve `init`'deki toplayıcı yeni listeden veri çekmeyi tek yerde
-     * başlatır. Burada ayrıca `fetch` çağırmak her eklemede iki ağ turu
-     * demek olurdu.
-     */
-
-    /** Konum kartı silindikten sonra "Konumumu ekle" ile geri getirilir. */
-
     fun onRetry() {
         loadData()
     }
