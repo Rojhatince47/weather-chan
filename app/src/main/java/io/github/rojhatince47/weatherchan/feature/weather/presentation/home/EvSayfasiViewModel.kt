@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
-import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
