@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
@@ -261,34 +262,6 @@ private fun LocationEmptyState(locationState: LocationState, onAddLocation: () -
                 }
             }
         }
-    }
-}
-
-/**
- * Liste doluyken gösterilen konum geri ekleme satırı.
- *
- * Liste boşken eklenen eylem burada da görünür olmalıdır: aksi halde kullanıcı
- * konumu yalnız listeyi boşaltarak geri getirebilirdi.
- */
-@Composable
-private fun AddLocationRow(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit) {
-    val retry = locationState is LocationState.Unavailable
-    Button(
-        onClick = if (retry) onRetryLocation else onAddLocation,
-        modifier = Modifier
-            .fillMaxWidth()
-            // Etiketli: "Tekrar dene" metni hem bu satırda hem de
-            // havası alınamayan kartların kendi düğmesinde görünür; testler
-            // satırı metinden değil etiketten ayırt etmeli.
-            .testTag("add_location_row")
-    ) {
-        Text(
-            text = if (retry) {
-                stringResource(R.string.location_retry)
-            } else {
-                stringResource(R.string.location_add_action)
-            }
-        )
     }
 }
 

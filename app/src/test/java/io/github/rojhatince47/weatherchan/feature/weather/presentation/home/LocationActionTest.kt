@@ -1,4 +1,4 @@
-package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
+package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

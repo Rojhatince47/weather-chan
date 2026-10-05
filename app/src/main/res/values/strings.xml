@@ -2,6 +2,8 @@
     <string name="app_name">Hava</string>
 
     <string name="home_title">Weather-chan</string>
+    <string name="home_open_list">Şehir listesini aç</string>
+    <string name="home_empty_state">Henüz şehir yok</string>
 
     <string name="action_retry">Tekrar dene</string>
     <string name="action_back">Geri</string>
