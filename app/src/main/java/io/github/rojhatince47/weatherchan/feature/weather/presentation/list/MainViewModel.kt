@@ -75,7 +75,6 @@ class MainViewModel @Inject constructor(
     private var pendingUndo: PendingUndo? = null
 
     private data class PendingUndo(val city: City, val index: Int)
-    private var locationJob: Job? = null
 
     /** Son başarılı [GetCityWeathersUseCase] cevabı. Liste [deriveContent] ile buradan, [storedCities] sırası ve birimden türetilir; ağa gidilmez. */
     private var cachedCityWeathers: List<CityWeather>? = null
@@ -108,7 +107,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             unitRepository.unit.collect { rederiveContent() }
         }
-        viewModelScope.launch { restoreLocationPermissionState() }
         // Depo **yayımladığı anda** veri çekilir. `loadData()` burada ayrıca
         // çağrılmaz: depodan bir değer okumak yarış yaratırdı, çünkü yayım
         // gelene kadar listenin ne olduğu bilinmez. Akışın ilk yayımı zaten
@@ -179,40 +177,11 @@ class MainViewModel @Inject constructor(
      *
      * Böylece "diyalogu bir kez gördüm" ile "izni veriyorum" karıştırılmaz.
      */
-    private suspend fun restoreLocationPermissionState() {
-        if (cityPermissions.wasAsked()) {
-            _uiState.update { it.copy(permissionState = LocationPermissionState.Asked) }
-            refreshLocation()
-        } else {
-            // Okuma bitti ve diyaloğun hiç gösterilmediği kesinleşti: ancak
-            // şimdi `NotAsked`'a geçilir, UI de diyaloğu bir kez başlatır.
-            _uiState.update { it.copy(permissionState = LocationPermissionState.NotAsked) }
-        }
-    }
 
     /**
      * Sistem diyaloğunun cevabı. Diyaloğun gösterildiği an [markAsked] ile
      * kalıcılaştırılır; cevabın ne olduğu bayrağa yazılmaz.
      */
-    fun onPermissionResult(granted: Boolean) {
-        viewModelScope.launch {
-            cityPermissions.markAsked()
-            _uiState.update {
-                it.copy(
-                    permissionState = if (granted) {
-                        LocationPermissionState.Granted
-                    } else {
-                        LocationPermissionState.Denied
-                    }
-                )
-            }
-            if (granted) {
-                refreshLocation()
-            } else {
-                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
-            }
-        }
-    }
 
     /**
      * Konumu okur ve listeye **konum olarak** ekler.
@@ -222,30 +191,8 @@ class MainViewModel @Inject constructor(
      * başlatır. Burada ayrıca `fetch` çağırmak her eklemede iki ağ turu
      * demek olurdu.
      */
-    fun refreshLocation() {
-        // Okuma sürerken yeni dokunuş yoksayılır: yavaş okumayı (GPS ~10 sn)
-        // her dokunuşta baştan başlatmak, dokunuş sıklığı okuma süresini
-        // aşarsa turun hiç bitmemesine (açlık) yol açardı. Gösterge zaten
-        // çalışmayı anlatır; biten turun ardından dokunuş yine işler.
-        if (locationJob?.isActive == true) return
-        locationJob = viewModelScope.launch {
-            _uiState.update { it.copy(locationState = LocationState.Loading) }
-            val city = getLocationCity()
-            if (city == null) {
-                // Konum okunamadı: izin yok, GPS kapalı ya da sinyal yok.
-                // Akış durmaz, kullanıcı boş durumla karşılaşır.
-                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
-                return@launch
-            }
-            cityRepository.addAsLocation(city)
-            _uiState.update { it.copy(locationState = LocationState.Resolved) }
-        }
-    }
 
     /** Konum kartı silindikten sonra "Konumumu ekle" ile geri getirilir. */
-    fun onAddLocation() {
-        refreshLocation()
-    }
 
     fun onRetry() {
         loadData()

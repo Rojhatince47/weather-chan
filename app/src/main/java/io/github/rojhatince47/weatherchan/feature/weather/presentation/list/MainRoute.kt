@@ -48,16 +48,12 @@ fun MainRoute(
     val resources = LocalResources.current
     val context = LocalContext.current
 
-    // Sistem izin diyaloğu. Cevap ViewModel'e bırakılır; kalıcı bayrak orada
-    // yazılır ve bu launcher bir daha tetiklenmez.
+    // Sistem izin diyaloğu. Konum mantığı EvSayfasiViewModel'e taşındı; bu
+    // blok Task 5'te EvSayfasiRoute'a taşınana kadar listede cevapsız kalır.
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        // Kaba konum izni tek başına da yeterlidir; kullanıcı "yaklaşık"
-        // seçtiyse akış yine çalışır.
-        val granted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        viewModel.onPermissionResult(granted = granted)
+    ) {
+        // Konum yanıtı artık pager view modeline aittir.
     }
 
     // Diyaloğu yalnız **ilk** açılışta göster. `askedKey` bu composable'ın
@@ -103,10 +99,11 @@ fun MainRoute(
     // "Konumumu ekle" ve "Tekrar dene" aynı kök eylemi paylaşır: kullanıcının
     // konumunu istemek. Eylem, **o anki** gerçek izin durumundan seçilir —
     // izin yokken konum okumak tanımı gereği başarısız olur; yeniden okumak
-    // değil izni geri kazanmak gerekir.
+    // değil izni geri kazanmak gerekir. Konum okuma artık pager view
+    // modelindedir; bu akış Task 5'te EvSayfasiRoute'a taşınır.
     val onLocationAction = {
         when (locationActionFor(context.hasLocationPermission(), context.canShowLocationRationale())) {
-            LocationAction.ReadLocation -> viewModel.refreshLocation()
+            LocationAction.ReadLocation -> Unit
             LocationAction.RequestPermission -> permissionLauncher.launch(LOCATION_PERMISSIONS)
             LocationAction.OpenAppSettings -> context.openAppSettings()
         }

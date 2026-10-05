@@ -9,6 +9,6 @@ data class EvSayfasiUiState(
     val pages: List<City> = emptyList(),
     val currentPage: Int = 0,
     val forecasts: Map<Long, DetailUiState> = emptyMap(),
-    val permissionState: LocationPermissionState = LocationPermissionState.Asked,
+    val permissionState: LocationPermissionState = LocationPermissionState.Restoring,
     val locationState: LocationState = LocationState.Idle
 )

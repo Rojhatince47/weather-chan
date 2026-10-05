@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
 import app.cash.turbine.test
+import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
@@ -15,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.Loca
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -43,6 +45,9 @@ class EvSayfasiViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+    private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))
+
     private fun city(name: String, lat: Double, isLocation: Boolean = false) = City(
         name = name,
         region = "",
@@ -65,7 +70,7 @@ class EvSayfasiViewModelTest {
     private fun evViewModelWithLocation(
         fakeWeather: FakeWeatherRepository = FakeWeatherRepository().apply { autoCompleteGates = true },
         fakeCities: FakeCityRepository = FakeCityRepository(),
-        locationProvider: LocationProvider = FakeLocationProvider(null),
+        locationProvider: LocationProvider = FakeLocationProvider(locationCoordinates),
         permissions: CityPermissions = FakeCityPermissions(asked = true),
         unitRepository: FakeTemperatureUnitRepository = FakeTemperatureUnitRepository()
     ) = EvSayfasiViewModel(
@@ -215,24 +220,228 @@ class EvSayfasiViewModelTest {
         assertEquals(LocationState.Idle, viewModel.uiState.value.locationState)
     }
 
-    // --- konum testleri için sahteler ---
+    /**
+     * Kalıcı bayrak okunana kadar izin durumu **karar verilemez** olmalıdır.
+     *
+     * Yoksa ilk karede durum `NotAsked` görünür ve UI diyaloğu ateşler.
+     * Gerçek cihazda böyle oldu: kullanıcı izni reddettikten sonra uygulamayı
+     * her açtığında sistem diyaloğu tekrar karşısına çıktı. Bayrağın DataStore
+     * okuması ilk kareden önce tamamlanırsa sorun görünmez; tamamlanmazsa
+     * olur. Yani hata **zamanlamaya bağlı** olduğu için gözle güvenilmez,
+     * durumun kendisiyle engellenmelidir.
+     */
+    @Test
+    fun `bayrak okunmadan once izin durumu karar verilemez`() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Boolean>()
+        val viewModel = evViewModelWithLocation(permissions = GatedCityPermissions(gate))
 
-    private val locationCoordinates = io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates(41.01, 28.98)
+        assertEquals(
+            "Okuma sürerken UI karar verememeli; aksi halde diyalog yanlışlıkla açılır",
+            LocationPermissionState.Restoring,
+            viewModel.uiState.value.permissionState
+        )
 
+        gate.complete(true)
+        runCurrent()
+
+        assertEquals(
+            "Bayrak okununca diyaloğa karar verilebilmeli",
+            LocationPermissionState.Asked,
+            viewModel.uiState.value.permissionState
+        )
+    }
+
+    @Test
+    fun `bayrak varsa diyalog yeniden acilmaz konum dogrudan okunur`() = runTest(dispatcher) {
+        val provider = FakeLocationProvider(locationCoordinates)
+        val viewModel = evViewModelWithLocation(
+            locationProvider = provider,
+            permissions = FakeCityPermissions(asked = true)
+        )
+        runCurrent()
+
+        // Cevap bayrağa yazılmaz; konum okunarak gerçek durum belirlenir.
+        assertEquals(LocationPermissionState.Asked, viewModel.uiState.value.permissionState)
+        assertEquals("Bayrak varsa konum yine de okunmalı", 1, provider.callCount)
+    }
+
+    @Test
+    fun `izin verildiginde konum listeye eklenir`() = runTest(dispatcher) {
+        val fakeCities = FakeCityRepository(initial = emptyList())
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onPermissionResult(granted = true)
+        runCurrent()
+
+        val stored = fakeCities.current()
+        assertEquals("Konum listeye eklenmeli", 1, stored.size)
+        assertTrue("Konum olarak işaretlenmeli", stored.single().isLocation)
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+    }
+
+    @Test
+    fun `izin reddedilince konum okunmaz bos durum gosterilir`() = runTest(dispatcher) {
+        val provider = FakeLocationProvider(locationCoordinates)
+        val fakeCities = FakeCityRepository(initial = emptyList())
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            locationProvider = provider,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onPermissionResult(granted = false)
+        runCurrent()
+
+        assertEquals(LocationPermissionState.Denied, viewModel.uiState.value.permissionState)
+        assertEquals(0, provider.callCount)
+        assertTrue("Reddedilince listeye eklenmemeli", fakeCities.current().isEmpty())
+        assertEquals(LocationState.Unavailable, viewModel.uiState.value.locationState)
+    }
+
+    @Test
+    fun `konum okunamazsa akis durmaz bos durum gosterilir`() = runTest(dispatcher) {
+        val fakeCities = FakeCityRepository(initial = emptyList())
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            locationProvider = FakeLocationProvider(coordinates = null)
+        )
+        runCurrent()
+
+        assertEquals(
+            "Konum alınamadıysa akış hata vermemeli",
+            LocationState.Unavailable,
+            viewModel.uiState.value.locationState
+        )
+        assertTrue(fakeCities.current().isEmpty())
+    }
+
+    @Test
+    fun `konum listenin basinda gorunur`() = runTest(dispatcher) {
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul, ankara))
+        // Ad çözülemezse kullanıcı "Konum" görür; sıralama testi için
+        // gerçek adın geldiği durum kurulur.
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(ankara.copy(isLocation = true)))
+        }
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            fakeWeather = fakeWeather,
+            locationProvider = FakeLocationProvider(ankara.coordinates)
+        )
+        runCurrent()
+
+        val names = viewModel.uiState.value.pages.map { it.name }
+        assertEquals(
+            "Konum başa alınmalı, kalan sıra korunmalı",
+            listOf("Ankara", "İstanbul"),
+            names
+        )
+    }
+
+    @Test
+    fun `konum silinince geri ekleme gorunur olur`() = runTest(dispatcher) {
+        val konum = ankara.copy(isLocation = true)
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul, konum))
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            locationProvider = FakeLocationProvider(konum.coordinates)
+        )
+        runCurrent()
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+
+        // Silme artık ince listede yapılır; pager durumu depo yayınından
+        // türetir.
+        fakeCities.remove(konum.id)
+        runCurrent()
+
+        assertEquals(
+            // Konumu kullanıcı silmiştir, okuma **başarısız olmamıştır**. Bu
+            // yüzden "Tekrar dene" değil "Konumumu ekle" görünmeli: "Tekrar
+            // dene" yalnız gerçekten okunamayan konumda anlamlıdır.
+            "Konum silinince geri eklenebilmeli, 'Tekrar dene' dememeli",
+            LocationState.Idle,
+            viewModel.uiState.value.locationState
+        )
+    }
+
+    /**
+     * Yavaş okuma (GPS ~10 sn) sürerken hızlı dokunuşlar turu öldürmemelidir:
+     * her dokunuşta iptal-et-baştan-başlat yapılırsa, dokunuş sıklığı okuma
+     * süresini aşınca tur hiç bitmez (açlık) ve kullanıcı boşuna bekler.
+     */
+    @Test
+    fun `okuma surerken yeni dokunus onceki turu oldurmez`() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Coordinates?>()
+        val provider = FakeLocationProvider(coordinates = null, gate = gate)
+        val fakeCities = FakeCityRepository(initial = emptyList())
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            locationProvider = provider,
+            permissions = FakeCityPermissions(asked = false)
+        )
+        runCurrent()
+
+        viewModel.onAddLocation()
+        runCurrent()
+        // Hızlı ikinci dokunuş: sürmekte olan tur öldürülmemeli.
+        viewModel.onAddLocation()
+        runCurrent()
+        assertEquals(1, provider.callCount)
+
+        gate.complete(istanbul.coordinates)
+        runCurrent()
+        assertEquals(LocationState.Resolved, viewModel.uiState.value.locationState)
+        assertTrue(fakeCities.current().any { it.isLocation })
+    }
+
+    @Test
+    fun `konum haricindeki sehir silinince konum durumu degismez`() = runTest(dispatcher) {
+        val konum = ankara.copy(isLocation = true)
+        val fakeCities = FakeCityRepository(initial = listOf(istanbul, konum))
+        val viewModel = evViewModelWithLocation(
+            fakeCities = fakeCities,
+            locationProvider = FakeLocationProvider(konum.coordinates)
+        )
+        runCurrent()
+
+        fakeCities.remove(istanbul.id)
+        runCurrent()
+
+        assertEquals(
+            "Konum hâlâ listede, durum değişmemeli",
+            LocationState.Resolved,
+            viewModel.uiState.value.locationState
+        )
+    }
+
+    // --- konum testleri için sahteler -----------------------------------------
+
+    private val locationCoordinates = Coordinates(41.01, 28.98)
+
+    /** Sabit konum döndüren sahte; `null` verirsen konum okunamaz. */
     private class FakeLocationProvider(
-        private val coordinates: io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates?,
-        private val gate: kotlinx.coroutines.CompletableDeferred<io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates?>? = null
-    ) : io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider {
+        private val coordinates: Coordinates?,
+        private val gate: CompletableDeferred<Coordinates?>? = null
+    ) : LocationProvider {
         var callCount: Int = 0
             private set
 
-        override suspend fun currentCoordinates(): io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates? {
+        override suspend fun currentCoordinates(): Coordinates? {
             callCount++
             return gate?.await() ?: coordinates
         }
     }
 
+    /** Kalıcı "diyalog gösterildi" bayrağının sahtesi. */
     private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
+        val askedFlag: Boolean get() = asked
+
         override suspend fun wasAsked(): Boolean = asked
 
         override suspend fun markAsked() {
@@ -240,7 +449,8 @@ class EvSayfasiViewModelTest {
         }
     }
 
-    private class GatedCityPermissions(private val gate: kotlinx.coroutines.CompletableDeferred<Boolean>) : CityPermissions {
+    /** Bayrak okumasını istenen ana kadar bekleten sahte. */
+    private class GatedCityPermissions(private val gate: CompletableDeferred<Boolean>) : CityPermissions {
         override suspend fun wasAsked(): Boolean = gate.await()
 
         override suspend fun markAsked() {}

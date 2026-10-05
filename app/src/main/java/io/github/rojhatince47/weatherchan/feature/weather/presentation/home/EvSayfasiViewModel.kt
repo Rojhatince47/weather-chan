@@ -51,9 +51,15 @@ class EvSayfasiViewModel @Inject constructor(
             cityRepository.cities.collect { cities ->
                 val pages = buildPages(cities)
                 _uiState.update { state ->
+                    // Konum kartı listeden silinirse "Konumumu ekle" geri
+                    // gelmelidir. `Idle`, okunamadı anlamındaki `Unavailable`
+                    // değildir: konumu kullanıcı kendisi sildi, hiçbir şey
+                    // başarısız olmadı.
+                    val locationRemoved = state.pages.any { it.isLocation } && pages.none { it.isLocation }
                     state.copy(
                         pages = pages,
-                        currentPage = clampPage(state.currentPage, pages.size)
+                        currentPage = clampPage(state.currentPage, pages.size),
+                        locationState = if (locationRemoved) LocationState.Idle else state.locationState
                     )
                 }
                 loadVisibleForecasts()
@@ -237,6 +243,10 @@ class EvSayfasiViewModel @Inject constructor(
     }
 
     fun onAddLocation() {
+        refreshLocation()
+    }
+
+    fun onRetryLocation() {
         refreshLocation()
     }
 }
