@@ -72,11 +72,11 @@ class EvSayfasiViewModel @Inject constructor(
     }
 
     fun onRetry(cityId: Long) {
-        loadForecast(cityId, force = true)
+        loadForecast(cityId, force = true, isRefresh = false)
     }
 
     fun onRefresh(cityId: Long) {
-        loadForecast(cityId, force = true)
+        loadForecast(cityId, force = true, isRefresh = true)
     }
 
     /**
@@ -90,11 +90,11 @@ class EvSayfasiViewModel @Inject constructor(
             .filter { it in state.pages.indices }
             .distinct()
         window.forEach { index ->
-            loadForecast(state.pages[index].id, force = false)
+            loadForecast(state.pages[index].id, force = false, isRefresh = false)
         }
     }
 
-    private fun loadForecast(cityId: Long, force: Boolean) {
+    private fun loadForecast(cityId: Long, force: Boolean, isRefresh: Boolean = false) {
         val city = _uiState.value.pages.find { it.id == cityId } ?: return
         if (cityId in forecastJobs) return
         if (!force && forecastCache.containsKey(cityId)) return
@@ -102,9 +102,13 @@ class EvSayfasiViewModel @Inject constructor(
             try {
                 _uiState.update { state ->
                     val existing = state.forecasts[cityId]
+                    val content = existing?.content
                     state.copy(
                         forecasts = state.forecasts + (
-                            cityId to (existing ?: DetailUiState(content = UiState.Loading))
+                            cityId to DetailUiState(
+                                content = if (isRefresh && content is UiState.Success) content else content ?: UiState.Loading,
+                                isRefreshing = isRefresh
+                            )
                             )
                     )
                 }
@@ -118,17 +122,27 @@ class EvSayfasiViewModel @Inject constructor(
                             )
                             state.copy(
                                 forecasts = state.forecasts + (
-                                    cityId to DetailUiState(content = UiState.Success(ui))
+                                    cityId to DetailUiState(
+                                        content = UiState.Success(ui),
+                                        isRefreshing = false
+                                    )
                                     )
                             )
                         }
                     }
                     is AppResult.Failure -> {
                         _uiState.update { state ->
+                            val existing = state.forecasts[cityId]
+                            val keepContent = existing?.content
                             state.copy(
                                 forecasts = state.forecasts + (
                                     cityId to DetailUiState(
-                                        content = UiState.Error(result.error.toUiText())
+                                        content = if (existing?.content is UiState.Success) {
+                                            existing.content
+                                        } else {
+                                            UiState.Error(result.error.toUiText())
+                                        },
+                                        isRefreshing = false
                                     )
                                     )
                             )
@@ -150,11 +164,13 @@ class EvSayfasiViewModel @Inject constructor(
             state.copy(
                 forecasts = state.forecasts.mapValues { (cityId, detail) ->
                     val cached = forecastCache[cityId]
-                    if (cached != null) {
+                    val content = detail.content
+                    if (cached != null && content is UiState.Success) {
                         DetailUiState(
                             content = UiState.Success(
                                 uiMapper.toForecastDetailUiModel(cached, unit = unit)
-                            )
+                            ),
+                            isRefreshing = detail.isRefreshing
                         )
                     } else {
                         detail
