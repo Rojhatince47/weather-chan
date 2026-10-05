@@ -11,6 +11,10 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
+import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -27,7 +31,9 @@ class EvSayfasiViewModel @Inject constructor(
     private val cityRepository: CityRepository,
     private val getForecast: GetForecastUseCase,
     private val unitRepository: TemperatureUnitRepository,
-    private val uiMapper: WeatherUiMapper
+    private val uiMapper: WeatherUiMapper,
+    private val getLocationCity: GetLocationCityUseCase? = null,
+    private val cityPermissions: CityPermissions? = null
 ) : ViewModel() {
 
     /** Şehir başına uçuştaki tahmin işleri; eşzamanlı yinelenen istek engellenir. */
