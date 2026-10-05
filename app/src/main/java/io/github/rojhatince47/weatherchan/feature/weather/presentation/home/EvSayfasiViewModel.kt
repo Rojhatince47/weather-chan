@@ -41,6 +41,7 @@ class EvSayfasiViewModel @Inject constructor(
 
     /** Birim değişince yeniden eşleme yapmak için son başarılı tahminler. */
     private val forecastCache = mutableMapOf<Long, Forecast>()
+    private var locationJob: Job? = null
 
     private val _uiState = MutableStateFlow(EvSayfasiUiState())
     val uiState: StateFlow<EvSayfasiUiState> = _uiState.asStateFlow()
@@ -60,6 +61,9 @@ class EvSayfasiViewModel @Inject constructor(
         }
         viewModelScope.launch {
             unitRepository.unit.collect { remapCachedForecasts() }
+        }
+        viewModelScope.launch {
+            restoreLocationPermissionState()
         }
     }
 
@@ -184,5 +188,55 @@ class EvSayfasiViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    private suspend fun restoreLocationPermissionState() {
+        val permissions = cityPermissions ?: return
+        if (permissions.wasAsked()) {
+            _uiState.update { it.copy(permissionState = LocationPermissionState.Asked) }
+            refreshLocation()
+        } else {
+            _uiState.update { it.copy(permissionState = LocationPermissionState.NotAsked) }
+        }
+    }
+
+    fun onPermissionResult(granted: Boolean) {
+        viewModelScope.launch {
+            val permissions = cityPermissions ?: return@launch
+            permissions.markAsked()
+            _uiState.update {
+                it.copy(
+                    permissionState = if (granted) {
+                        LocationPermissionState.Granted
+                    } else {
+                        LocationPermissionState.Denied
+                    }
+                )
+            }
+            if (granted) {
+                refreshLocation()
+            } else {
+                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+            }
+        }
+    }
+
+    fun refreshLocation() {
+        if (locationJob?.isActive == true) return
+        locationJob = viewModelScope.launch {
+            _uiState.update { it.copy(locationState = LocationState.Loading) }
+            val locationCity = getLocationCity ?: return@launch
+            val city = locationCity()
+            if (city == null) {
+                _uiState.update { it.copy(locationState = LocationState.Unavailable) }
+                return@launch
+            }
+            cityRepository.addAsLocation(city)
+            _uiState.update { it.copy(locationState = LocationState.Resolved) }
+        }
+    }
+
+    fun onAddLocation() {
+        refreshLocation()
     }
 }
