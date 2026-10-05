@@ -38,14 +38,13 @@ class EvSayfasiViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun city(name: String, lat: Double, isLocation: Boolean = false) =
-        City(
-            name = name,
-            region = "",
-            country = "",
-            coordinates = Coordinates(lat, 28.0),
-            isLocation = isLocation
-        )
+    private fun city(name: String, lat: Double, isLocation: Boolean = false) = City(
+        name = name,
+        region = "",
+        country = "",
+        coordinates = Coordinates(lat, 28.0),
+        isLocation = isLocation
+    )
 
     private fun evViewModel(
         fakeWeather: FakeWeatherRepository = FakeWeatherRepository().apply { autoCompleteGates = true },
