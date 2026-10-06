@@ -14,15 +14,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainRoute(
-    onCityClick: (City) -> Unit,
-    onAddCityClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    onSelectCity: (Long) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel(),
     // NavHost üstünde alınan ortak örnek; giriş başına ayrı örnek oluşmaz.
@@ -65,17 +63,12 @@ fun MainRoute(
     MainScreen(
         uiState = uiState,
         themeMode = themeMode,
-        onCityClick = { cityId -> viewModel.findCity(cityId)?.let(onCityClick) },
-        onAddCityClick = onAddCityClick,
-        onSettingsClick = onSettingsClick,
+        onCityClick = onSelectCity,
+        onBack = onBack,
         onDeleteCity = viewModel::onDeleteCity,
         onRetryCity = viewModel::onRetryCity,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
-        // Konum eylemi pager'a taşındı (EvSayfasiRoute); listedeki konum
-        // satırı Task 6'da tamamen kalkar.
-        onAddLocation = {},
-        onRetryLocation = {},
         modifier = modifier,
         snackbarHostState = snackbarHostState
     )

@@ -9,7 +9,6 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.state.toLoadState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
-import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
@@ -17,7 +16,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +40,6 @@ class MainViewModel @Inject constructor(
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
     private val cityRepository: CityRepository,
-    private val getLocationCity: GetLocationCityUseCase,
-    private val cityPermissions: CityPermissions,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
@@ -152,16 +148,6 @@ class MainViewModel @Inject constructor(
         return CachedWeathers(fetchedAt, cached).isStale(clock.instant())
     }
 
-    /**
-     * Detay gezinmesi için şehir bulma: **depoya** düşer; yalnız başarıyla yüklenenlere değil.
-     *
-     * Yüklenemeyen şehrin kartı da çizilir ve tıklanabilir olmalı (detay
-     * ekranı kendi hata durumunu gösterir). `loadedCities` yalnız başarılı
-     * fetch'ten dolduğu için tek başına yeterli değildir: yüksüz kartın
-     * tıklaması sessizce yutulurdu.
-     */
-    fun findCity(cityId: Long): City? = loadedCities[cityId] ?: storedCities.firstOrNull { it.id == cityId }
-
     fun onRetry() {
         loadData()
     }
@@ -252,18 +238,6 @@ class MainViewModel @Inject constructor(
         val deleted = storedCities[index]
         pendingUndo = PendingUndo(deleted, index)
         viewModelScope.launch { cityRepository.remove(cityId) }
-        if (deleted.isLocation) {
-            // Konum kartı silindi. Durum `Resolved` kalırsa "Konumumu ekle"
-            // satırı hiç görünmez ve kullanıcı konumu yalnız uygulamayı
-            // yeniden başlatarak geri getirebilirdi.
-            //
-            // `Idle`, **okunamadı** anlamına gelen `Unavailable` değildir:
-            // konumu kullanıcı kendisi sildi, hiçbir şey başarısız olmadı.
-            // `Unavailable` seçilseydi ekranda "Konum okunamadı · Tekrar dene"
-            // görünürdü; kullanıcı sanki bir hata çözüyormuş gibi geri almayı
-            // denemek zorunda kalırdı. Doğru olan "Konumumu ekle".
-            _uiState.update { it.copy(locationState = LocationState.Idle) }
-        }
         _events.trySend(
             MainEvent.ShowSnackbar(
                 message = UiText.Resource(R.string.city_deleted, deleted.name),

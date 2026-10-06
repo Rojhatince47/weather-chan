@@ -21,9 +21,10 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
     ) {
         composable<ListDestination> {
             MainRoute(
-                onCityClick = { city -> navController.navigate(city.toForecastDestination()) },
-                onAddCityClick = { navController.navigate(AddCityDestination) },
-                onSettingsClick = { navController.navigate(SettingsDestination) },
+                // Seçim pager'a id olarak taşınır; bu yönün kablolaması
+                // Task 7'de (EvSayfasiDestination) tamamlanır.
+                onSelectCity = { },
+                onBack = { navController.popBackStack() },
                 settingsViewModel = settingsViewModel
             )
         }

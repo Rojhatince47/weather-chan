@@ -12,8 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +37,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
-import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
@@ -55,12 +53,9 @@ fun MainScreen(
     uiState: MainUiState,
     themeMode: ThemeMode,
     onCityClick: (Long) -> Unit,
-    onAddCityClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    onBack: () -> Unit,
     onDeleteCity: (Long) -> Unit,
     onRetryCity: (Long) -> Unit = {},
-    onAddLocation: () -> Unit,
-    onRetryLocation: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
@@ -83,27 +78,18 @@ fun MainScreen(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            // Ana ekran yalnız hava listesidir: arama ve ayarlar kendi
-            // ekranlarına taşındı, üst çubukta yalnız iki giriş kalır.
+            // İnce yönetim ekranı: ekleme ve ayarlar ana ekrandadır; burada
+            // yalnız geri dönüş ve başlık kalır.
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
-                        onClick = onAddCityClick,
-                        modifier = Modifier.testTag("action_add_city")
+                        onClick = onBack,
+                        modifier = Modifier.testTag("action_back")
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.action_open_add_city)
-                        )
-                    }
-                    IconButton(
-                        onClick = onSettingsClick,
-                        modifier = Modifier.testTag("action_settings")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = stringResource(R.string.action_open_settings)
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back)
                         )
                     }
                 }
@@ -143,30 +129,6 @@ fun MainScreen(
                                     cityWeather.cityId in uiState.loadingCityIds
                             )
                         }
-                        // Konum kaydı silinmişse ya da hiç okunamamışsa geri
-                        // eklenebilir. Liste doluyken de görünür olmalı: aksi
-                        // halde kullanıcı konumu yalnız listeyi boşaltarak geri
-                        // getirebilirdi.
-                        //
-                        // Görünürlük `locationState`'in kendisine bakılarak
-                        // karar verilmez: o durum her açılışta `Idle`/`Loading`
-                        // ile başlar ve yalnız o anki yenileme denemesi
-                        // bitince `Resolved` olur. Depoda önceki oturumdan kalma
-                        // konum kartı varken de o süre boyunca buton görünür
-                        // yanlışlıkla (konum okuma + geocoding + yedek ağ turu
-                        // yavaş ağda ~25 s sürüyor). Karar veren veridir:
-                        // konum kartı ekrandaysa satırın gösterileceği bir
-                        // durum yoktur.
-                        val hasLocationCard = content.data.any { it.isLocation }
-                        if (!hasLocationCard && uiState.locationState !is LocationState.Resolved) {
-                            item(key = "add_location") {
-                                AddLocationRow(
-                                    locationState = uiState.locationState,
-                                    onAddLocation = onAddLocation,
-                                    onRetryLocation = onRetryLocation
-                                )
-                            }
-                        }
                     }
                     // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
                     // aksi halde PullToRefreshBox aşma hareketini harcayamaz, çekme
@@ -181,10 +143,9 @@ fun MainScreen(
                             is UiState.Loading -> CircularProgressIndicator(
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
-                            is UiState.Empty -> LocationEmptyState(
-                                locationState = uiState.locationState,
-                                onAddLocation = onAddLocation,
-                                onRetryLocation = onRetryLocation
+                            is UiState.Empty -> Text(
+                                text = stringResource(R.string.home_empty_state),
+                                modifier = Modifier.padding(HavaSpacing.xl)
                             )
                             is UiState.Error -> {
                                 Text(
@@ -218,53 +179,6 @@ fun MainScreen(
     }
 }
 
-/**
- * Liste boşken gösterilen konum eylemi.
- *
- * Konum okunamadıysa mesaj **nedenini** anlatır ve eylem "Tekrar dene" olur;
- * aksi halde "Konumumu ekle" gösterilir. Konum okunuyorsa kısa bir bekleme
- * metni çıkar. Konum eklenemezse kullanıcı şehri üst çubuktaki + ile
- * arayarak ekleyebilir.
- */
-@Composable
-private fun LocationEmptyState(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(HavaSpacing.xl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(HavaSpacing.md)
-    ) {
-        when (locationState) {
-            is LocationState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.padding(HavaSpacing.sm))
-                Text(
-                    text = stringResource(R.string.location_loading),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            is LocationState.Unavailable -> {
-                Text(
-                    text = stringResource(R.string.location_unavailable),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Button(onClick = onRetryLocation) {
-                    Text(text = stringResource(R.string.location_retry))
-                }
-            }
-            else -> {
-                Text(
-                    text = stringResource(R.string.location_permission_rationale),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Button(onClick = onAddLocation) {
-                    Text(text = stringResource(R.string.location_add_action))
-                }
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true, widthDp = 360)
 @Composable
 private fun MainScreenCompactPreview() {
@@ -273,14 +187,11 @@ private fun MainScreenCompactPreview() {
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
             onCityClick = {},
-            onAddCityClick = {},
-            onSettingsClick = {},
+            onBack = {},
             onDeleteCity = {},
             onRetryCity = {},
             onRetry = {},
-            onRefresh = {},
-            onAddLocation = {},
-            onRetryLocation = {}
+            onRefresh = {}
         )
     }
 }
@@ -293,14 +204,11 @@ private fun MainScreenMediumPreview() {
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
             onCityClick = {},
-            onAddCityClick = {},
-            onSettingsClick = {},
+            onBack = {},
             onDeleteCity = {},
             onRetryCity = {},
             onRetry = {},
-            onRefresh = {},
-            onAddLocation = {},
-            onRetryLocation = {}
+            onRefresh = {}
         )
     }
 }
@@ -313,14 +221,11 @@ private fun MainScreenExpandedPreview() {
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
             onCityClick = {},
-            onAddCityClick = {},
-            onSettingsClick = {},
+            onBack = {},
             onDeleteCity = {},
             onRetryCity = {},
             onRetry = {},
-            onRefresh = {},
-            onAddLocation = {},
-            onRetryLocation = {}
+            onRefresh = {}
         )
     }
 }
