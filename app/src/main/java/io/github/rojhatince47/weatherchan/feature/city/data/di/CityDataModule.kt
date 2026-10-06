@@ -38,7 +38,9 @@ abstract class CityDataModule {
     abstract fun bindCitySuggestionProvider(impl: AssetCitySuggestionProvider): CitySuggestionProvider
 
     @Binds
-    internal abstract fun bindNearbyCitySuggestionProvider(impl: io.github.rojhatince47.weatherchan.feature.city.data.suggestion.OverpassNearbyCitySuggestionProvider): io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.NearbyCitySuggestionProvider
+    internal abstract fun bindNearbyCitySuggestionProvider(
+        impl: io.github.rojhatince47.weatherchan.feature.city.data.suggestion.OverpassNearbyCitySuggestionProvider
+    ): io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.NearbyCitySuggestionProvider
 
     @Binds
     abstract fun bindDeviceCountryProvider(impl: LocaleDeviceCountryProvider): DeviceCountryProvider
