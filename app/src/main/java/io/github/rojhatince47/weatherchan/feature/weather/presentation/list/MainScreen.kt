@@ -166,7 +166,8 @@ fun MainScreen(
 
         pendingDelete?.let { (cityId, cityName) ->
             DeleteConfirmationBottomSheet(
-                cityName = cityName,
+                // Konumun adı boş olabilir; dil kaynağından çözülür.
+                cityName = cityName.ifBlank { stringResource(R.string.location_default_name) },
                 onConfirm = {
                     onDeleteCity(cityId)
                     pendingDelete = null

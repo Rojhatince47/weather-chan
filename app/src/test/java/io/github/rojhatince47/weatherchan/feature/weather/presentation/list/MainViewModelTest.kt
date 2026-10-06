@@ -1049,4 +1049,24 @@ class MainViewModelTest {
             firstRequest.size
         )
     }
+
+    @Test
+    fun `adisiz konum silinince konum silindi mesaji cikar`() = runTest {
+        val konum = City("", null, null, Coordinates(41.01, 28.98), isLocation = true)
+        val cities = FakeCityRepository(initial = listOf(konum))
+        val viewModel = mainViewModel(
+            fakeWeather = FakeWeatherRepository().apply { autoCompleteGates = true },
+            fakeCities = cities
+        )
+        viewModel.loadData()
+        runCurrent()
+
+        viewModel.onDeleteCity(konum.id)
+        runCurrent()
+
+        viewModel.events.test {
+            val event = expectMostRecentItem() as MainEvent.ShowSnackbar
+            assertEquals(UiText.Resource(R.string.location_deleted), event.message)
+        }
+    }
 }

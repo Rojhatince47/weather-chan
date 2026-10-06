@@ -166,12 +166,18 @@ private fun CityWeatherCardContent(
                     )
                 }
                 Text(
-                    text = cityWeather.name,
+                    // Konumun adı boş olabilir; dil kaynağından çözülür.
+                    text = cityWeather.name.ifBlank { stringResource(R.string.location_default_name) },
                     style = MaterialTheme.typography.titleMedium,
                     color = contentColor
                 )
                 Text(
-                    text = listOfNotNull(cityWeather.region, cityWeather.country).joinToString(", "),
+                    // Konum kartında ad zaten bölge olduğundan alt satırda
+                    // bölge tekrarlanmaz (spec §7).
+                    text = listOfNotNull(
+                        if (cityWeather.isLocation) null else cityWeather.region,
+                        cityWeather.country
+                    ).joinToString(", "),
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.7f)
                 )

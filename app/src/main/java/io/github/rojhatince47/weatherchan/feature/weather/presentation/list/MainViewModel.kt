@@ -237,9 +237,16 @@ class MainViewModel @Inject constructor(
         val deleted = storedCities[index]
         pendingUndo = PendingUndo(deleted, index)
         viewModelScope.launch { cityRepository.remove(cityId) }
+        // Adı boş olan konum kaydı için ayrı anahtar: "%1$s silindi" boş
+        // adla anlamsız kalırdı (spec §7).
+        val message = if (deleted.isLocation && deleted.name.isBlank()) {
+            UiText.Resource(R.string.location_deleted)
+        } else {
+            UiText.Resource(R.string.city_deleted, deleted.name)
+        }
         _events.trySend(
             MainEvent.ShowSnackbar(
-                message = UiText.Resource(R.string.city_deleted, deleted.name),
+                message = message,
                 actionLabel = UiText.Resource(R.string.undo_delete),
                 action = { onUndoDelete(deleted) }
             )

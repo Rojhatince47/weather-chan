@@ -165,9 +165,11 @@ fun EvSayfasiScreen(
 private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Unit, openListText: String) {
     val safeIndex = currentPage.coerceIn(0, (cities.size - 1).coerceAtLeast(0))
     val current = cities.getOrNull(safeIndex)
+    // Ad boş olabilir (konum çözülemediyse); presentation dile göre çözer.
+    val title = current?.name.orEmpty().ifBlank { stringResource(R.string.location_default_name) }
     // contentDescription birleştirilerek duyurulur: yalnız "listeyi aç"
     // deseği mevcut şehrin adını maskelerdi.
-    val titleDescription = if (current != null) "${current.name}, $openListText" else openListText
+    val titleDescription = if (current != null) "$title, $openListText" else openListText
     Column(
         modifier = Modifier
             .testTag("action_open_list")
@@ -179,7 +181,7 @@ private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Un
                 Text(text = "📍")
             }
             Text(
-                text = current?.name.orEmpty(),
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics { heading() }
             )

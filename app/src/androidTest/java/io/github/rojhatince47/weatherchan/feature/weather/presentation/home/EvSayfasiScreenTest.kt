@@ -107,4 +107,11 @@ class EvSayfasiScreenTest {
         composeRule.onNodeWithText("Konumumu ekle").performClick()
         assertTrue(clicked)
     }
+
+    @Test
+    fun adisizKonumSayfasiVarsayilanAdGosterir() {
+        val konum = City("", null, null, Coordinates(41.01, 28.98), isLocation = true)
+        setScreen(listOf(konum))
+        composeRule.onNodeWithText("Konum").assertIsDisplayed()
+    }
 }
