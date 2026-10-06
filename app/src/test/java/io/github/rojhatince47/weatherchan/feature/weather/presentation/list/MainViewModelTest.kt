@@ -23,7 +23,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRep
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -386,12 +385,6 @@ class MainViewModelTest {
         assertEquals(emptySet<Long>(), viewModel.uiState.value.loadingCityIds)
     }
 
-    /**
-     * Yüklenemeyen şehrin kartı da tıklanabilir olmalı (spec: hata kartı
-     * detayı açar). `findCity` yalnız başarıyla yüklenenlere baksaydı,
-     * yüksüz kartın tıklaması sessizce yutulurdu — kart görünür ama ölü
-     * olurdu.
-     */
     @Test
     fun `tekrar deneme basarili olunca kart yuklenmis olur`() = runTest {
         val fakeWeather = FakeWeatherRepository().apply {
@@ -820,13 +813,6 @@ class MainViewModelTest {
             content.data.count { it.cityId == istanbul.id }
         )
     }
-
-    /**
-     * Konumun kimliği her açılışta yeniden çözümlendiği için değişebiliyor.
-     * Önbellek, depodaki güncel konum kaydıyla eşleştirilir; aksi hâlde her
-     * açılışta konum kartı "hava durumu yok" diye bir an yanıp sönüyor ve
-     * (eski kayıt da önbellekte kaldığı için) iki konum kartı beliriyordu.
-     */
 
     /**
      * Geri al, şehri listenin sonuna değil **eski yerine** koyar: kart geri

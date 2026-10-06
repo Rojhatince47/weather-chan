@@ -43,7 +43,6 @@ class MainViewModel @Inject constructor(
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
-    private val loadedCities = mutableMapOf<Long, City>()
     private var loadJob: Job? = null
 
     /**
@@ -295,8 +294,6 @@ class MainViewModel @Inject constructor(
     /**
      * Tek bir şehrin sonucunu önbelleğe birleştirir. Mevcut liste korunur;
      * yalnız aynı id'li kayıt yerini yenisiyle değiştirir.
-     * [applyFetchedData] yeniden kullanılır: `loadedCities` (detay ekranı
-     * gezinmesi bunu okur) böylece tutarsız kalmaz.
      *
      * Eşzamanlılık notu: retry'dan önce başlamış bir tam liste yüklemesi
      * retry'dan sonra biterse önbelleği bütünüyle değiştirir ("son yazan
@@ -343,11 +340,9 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    /** Önbelleği ve ondan türetilen şehir eşlemesini birlikte günceller. */
+    /** Önbelleği günceller. */
     private fun replaceCache(cityWeathers: List<CityWeather>) {
         cachedCityWeathers = cityWeathers
-        loadedCities.clear()
-        loadedCities.putAll(cityWeathers.associate { it.city.id to it.city })
     }
 
     /**
