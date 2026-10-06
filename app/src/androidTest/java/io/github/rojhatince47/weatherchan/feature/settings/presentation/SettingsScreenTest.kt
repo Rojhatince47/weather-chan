@@ -1,11 +1,13 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.core.os.LocaleListCompat
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -107,5 +109,25 @@ class SettingsScreenTest {
         }
         composeRule.onNodeWithText("English").performClick()
         assertEquals(AppLanguage.ENGLISH, selected)
+    }
+
+    @Test
+    fun dilIngilizceyeGecinceMetinlerIngilizceDoner() {
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+        composeRule.setContent {
+            HavaTheme {
+                SettingsScreen(
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.ENGLISH,
+                    onUnitSelected = {},
+                    onThemeModeSelected = {},
+                    onAppLanguageSelected = {},
+                    onBack = {}
+                )
+            }
+        }
+        composeRule.onNodeWithText("Language").assertIsDisplayed()
+        composeRule.onNodeWithText("Theme").assertIsDisplayed()
     }
 }
