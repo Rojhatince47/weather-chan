@@ -19,7 +19,12 @@ fun AddCityRoute(
         uiState = uiState,
         onQueryChange = viewModel::onQueryChange,
         onAddCity = viewModel::onAddCity,
-        onOpenCity = onCityClick,
+        onOpenCity = { city ->
+            // Büyüteç "göster" sözü verir: listeye eklenmemiş şehir önce
+            // depoya yazılır (ekleme idempotent'tir), ardından pager'da açılır.
+            viewModel.onAddCity(city)
+            onCityClick(city)
+        },
         onBack = onBack,
         modifier = modifier
     )

@@ -24,7 +24,8 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 
 /**
  * Canlı arama sonuç satırı. Satırın kendisi listeye ekler (listede ise
- * eklemez, yalnızca onay işareti gösterir); ayrı büyüteç düğmesi detayı açar.
+ * eklemez, yalnızca onay işareti gösterir); ayrı büyüteç düğmesi şehri
+ * depoya ekleyip pager'da açar (ekleme idempotent'tir).
  *
  * Öneri satırlarında büyüteç gizlenir (`onOpenClick = null`) ve mesafe
  * gösterilir (`distanceKm`) — öneri keşif, arama ise doğrulama akışıdır.

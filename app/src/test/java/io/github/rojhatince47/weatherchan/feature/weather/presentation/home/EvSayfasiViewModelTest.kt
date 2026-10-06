@@ -135,6 +135,31 @@ class EvSayfasiViewModelTest {
         assertEquals(3, viewModel.uiState.value.currentPage)
     }
 
+    /**
+     * Arama sonucundaki büyüteç, listeye eklenmemiş şehri de açabilmelidir:
+     * şehir depoya yazılıncaya kadar seçim bekletilir, sayfa yayımlandığında
+     * gerçekleştirilir (ekleme ile seçim arasında yarış vardır).
+     */
+    @Test
+    fun `sayfasi olmayan sehrin secimi sehri gelince gerceklesir`() = runTest(dispatcher) {
+        val first = city("İstanbul", 41.0)
+        val second = city("Ankara", 39.0)
+        val fakeCities = FakeCityRepository(initial = listOf(first, second))
+        val viewModel = evViewModel(fakeCities = fakeCities)
+        runCurrent()
+        assertEquals(0, viewModel.uiState.value.currentPage)
+
+        val yeni = city("Van", 38.5)
+        viewModel.selectCity(yeni.id)
+        runCurrent()
+        assertEquals("Sayfa yokken seçim uygulanmamalı", 0, viewModel.uiState.value.currentPage)
+
+        fakeCities.add(yeni)
+        runCurrent()
+        assertEquals("Şehir gelince seçim gerçekleşmeli", 2, viewModel.uiState.value.currentPage)
+        assertEquals(yeni.id, viewModel.uiState.value.pages[2].id)
+    }
+
     @Test
     fun `sayfa sayisi kuculunce mevcut sayfa sinirlanir`() = runTest(dispatcher) {
         val first = city("İstanbul", 41.0)

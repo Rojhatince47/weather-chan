@@ -13,7 +13,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.Settings
 @Composable
 fun HavaApp(
     modifier: Modifier = Modifier,
-    // NavHost üstünde alınan ortak örnek: Main ve Detail ekranları
+    // NavHost üstünde alınan ortak örnek: ev sayfası ve liste ekranları
     // sıcaklık birimi durumunu bu kaynaktan kullanır.
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {

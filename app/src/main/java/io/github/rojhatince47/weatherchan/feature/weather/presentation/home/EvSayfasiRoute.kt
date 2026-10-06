@@ -118,7 +118,7 @@ fun EvSayfasiRoute(
         onSettingsClick = onSettingsClick,
         onSelectCity = { selectedCityId ->
             // null = "listeyi aç" sinyali; liste seçiminden pager'a dönüş
-            // Task 7'de kablonir.
+            // Task 7'de kablolandı.
             if (selectedCityId == null) onOpenList()
         },
         onRetry = viewModel::onRetry,

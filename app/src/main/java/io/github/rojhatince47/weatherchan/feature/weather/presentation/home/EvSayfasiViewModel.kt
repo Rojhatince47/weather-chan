@@ -43,6 +43,13 @@ class EvSayfasiViewModel @Inject constructor(
     private val forecastCache = mutableMapOf<Long, Forecast>()
     private var locationJob: Job? = null
 
+    /**
+     * Sayfası henüz yayımlanmamış bir şehrin bekleyen seçimi. Arama
+     * sonucundan büyüteç, şehri depoya ekleyip hemen seçer; yazım ile
+     * yayım arasında yarış olduğundan seçim sayfa gelene dek bekletilir.
+     */
+    private var pendingSelection: Long? = null
+
     private val _uiState = MutableStateFlow(EvSayfasiUiState())
     val uiState: StateFlow<EvSayfasiUiState> = _uiState.asStateFlow()
 
@@ -56,9 +63,16 @@ class EvSayfasiViewModel @Inject constructor(
                     // değildir: konumu kullanıcı kendisi sildi, hiçbir şey
                     // başarısız olmadı.
                     val locationRemoved = state.pages.any { it.isLocation } && pages.none { it.isLocation }
+                    // Bekleyen seçim, sayfası yayımlanan şehre iner.
+                    val pending = pendingSelection
+                    val pendingIndex = pending?.let { id -> pages.indexOfFirst { it.id == id } } ?: -1
+                    if (pendingIndex >= 0) pendingSelection = null
                     state.copy(
                         pages = pages,
-                        currentPage = clampPage(state.currentPage, pages.size),
+                        currentPage = clampPage(
+                            if (pendingIndex >= 0) pendingIndex else state.currentPage,
+                            pages.size
+                        ),
                         locationState = if (locationRemoved) LocationState.Idle else state.locationState
                     )
                 }
@@ -77,8 +91,13 @@ class EvSayfasiViewModel @Inject constructor(
     fun selectCity(cityId: Long) {
         val index = _uiState.value.pages.indexOfFirst { it.id == cityId }
         if (index >= 0) {
+            pendingSelection = null
             _uiState.update { it.copy(currentPage = index) }
             loadVisibleForecasts()
+        } else {
+            // Sayfa henüz yok: şehir eklenmekte olabilir. Seçim bekletilir;
+            // sayfalar yayımlandığında gerçekleştirilir.
+            pendingSelection = cityId
         }
     }
 
