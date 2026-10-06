@@ -366,8 +366,8 @@ class EvSayfasiViewModelTest {
 
         val names = viewModel.uiState.value.pages.map { it.name }
         assertEquals(
-            "Konum başa alınmalı, kalan sıra korunmalı",
-            listOf("Ankara", "İstanbul"),
+            "Bölge adı tercih edilmeli, kalan sıra korunmalı",
+            listOf("İç Anadolu", "İstanbul"),
             names
         )
     }

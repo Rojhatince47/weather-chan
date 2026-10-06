@@ -49,26 +49,33 @@ class GetLocationCityUseCase @Inject constructor(
             return it.copy(coordinates = coordinates, isLocation = true)
         }
 
-        val resolved = when (val result = weatherRepository.search(coordinates.toQuery())) {
+        val query = coordinates.toQuery()
+        val resolved = when (val result = weatherRepository.search(query)) {
             is AppResult.Success -> result.data.firstOrNull()
             is AppResult.Failure -> null
         }
+        // wttr.in boş alanlarda fallback olarak sorgunun kendisini
+        // (koordinat dizesi) döndürebilir; bu "ad" sayılmaz (spec §7).
+        val areaName = resolved?.name?.takeIf { it.isNotBlank() && it != query }
+        val region = resolved?.region?.takeIf { it.isNotBlank() }
 
-        val city = (resolved ?: City(name = FALLBACK_NAME, region = null, country = null, coordinates = coordinates))
-            .copy(isLocation = true)
-        // Yalnız gerçek ad saklanır: "Konum" yedeği bir sonraki açılışta
-        // yeniden denenir, diske gömülmez.
-        if (resolved != null) {
+        // Doğruluk > hassasiyet (spec §3): bölge adı yerleşim adına tercih
+        // edilir. Koordinat daima GPS'tir; çözülen kaydın merkezi kullanılmaz.
+        val city = City(
+            name = region ?: areaName ?: "",
+            region = region,
+            country = resolved?.country,
+            coordinates = coordinates,
+            isLocation = true
+        )
+        // Önbelleğe yalnız gerçek, boş olmayan ad yazılır (spec §7/§10).
+        if (city.name.isNotBlank()) {
             weatherRepository.saveLocationCity(city)
         }
         return city
     }
 
     private fun Coordinates.toQuery() = String.format(Locale.US, "%.4f,%.4f", latitude, longitude)
-
-    private companion object {
-        const val FALLBACK_NAME = "Konum"
-    }
 }
 
 /**

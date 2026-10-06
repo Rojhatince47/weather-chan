@@ -36,7 +36,8 @@ class GetLocationCityUseCaseTest {
     fun `ad cozumlenir ve konum isareti tasinir`() = runTest {
         val weather = FakeWeatherRepository().apply {
             searchResult = AppResult.Success(
-                listOf(City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98)))
+                // Çözülen kaydın koordinatı GPS'ten farklı: kullanılmamalı.
+                listOf(City("Kuzguncuk", "Istanbul", "Türkiye", Coordinates(41.05, 29.05)))
             )
         }
         val useCase = GetLocationCityUseCase(
@@ -47,7 +48,10 @@ class GetLocationCityUseCaseTest {
         val city = requireNotNull(useCase())
 
         assertTrue("Sonuç konum olarak işaretlenmeli", city.isLocation)
-        assertEquals("İstanbul", city.name)
+        // Doğruluk > hassasiyet: bölge adı yerleşim adına tercih edilir.
+        assertEquals("Istanbul", city.name)
+        // Veri daima gerçek GPS koordinatından okunur; yerleşim merkezi değil.
+        assertEquals(coordinates, city.coordinates)
         // Coğrafi çözümleme yapmayan ham sorgu gönderilmeli. Ondalık ayırıcı
         // nokta olmalı (Locale.US) ve hassasiyet 4 basamak.
         assertEquals(listOf("41.0100,28.9800"), weather.searchRequests)
@@ -65,9 +69,10 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        // Akış durmaz; konum yine de eklenebilir olmalı.
+        // Akış durmaz; konum yine de eklenebilir olmalı. Ad çözülemediyse
+        // boş kalır — presentation dile göre çözer (spec §7).
         assertTrue(city.isLocation)
-        assertEquals("Konum", city.name)
+        assertEquals("", city.name)
     }
 
     @Test
@@ -82,7 +87,7 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        assertEquals("Konum", city.name)
+        assertEquals("", city.name)
     }
 
     @Test
@@ -122,11 +127,12 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        assertEquals("Uskudar", city.name)
+        // Bölge adı gerçek addır; önbelleğe da o yazılır.
+        assertEquals("Istanbul", city.name)
         assertTrue(city.isLocation)
         assertEquals(1, weather.searchRequests.size)
         assertEquals(listOf(city), weather.savedLocationCities)
-        assertEquals("Uskudar", weather.savedLocationCities.single().name)
+        assertEquals("Istanbul", weather.savedLocationCities.single().name)
     }
 
     @Test
@@ -137,14 +143,14 @@ class GetLocationCityUseCaseTest {
             searchResult = AppResult.Failure(AppError.Network)
         }
         val useCase = GetLocationCityUseCase(
-            // Kayıttan uzak koordinat (~2.5 km) → ıska → ağ yolu → hata → "Konum" yedeği.
+            // Kayıttan uzak koordinat (~2.5 km) → ıska → ağ yolu → hata → boş ad.
             locationProvider = FakeLocationProvider(Coordinates(41.0325, 28.98)),
             weatherRepository = weather
         )
 
         val city = requireNotNull(useCase())
 
-        assertEquals("Konum", city.name)
+        assertEquals("", city.name)
         assertTrue(weather.savedLocationCities.isEmpty())
     }
 
@@ -217,8 +223,46 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        assertEquals("İstanbul", city.name)
+        assertEquals("Marmara", city.name)
         assertEquals(1, weather.savedLocationCities.size)
+    }
+
+    @Test
+    fun `bolge yoksa yerlesim adi kullanilir`() = runTest {
+        val weather = FakeWeatherRepository().apply {
+            searchResult = AppResult.Success(
+                listOf(City("Kuzguncuk", null, "Türkiye", Coordinates(41.03, 29.03)))
+            )
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Kuzguncuk", city.name)
+        assertEquals(coordinates, city.coordinates)
+    }
+
+    @Test
+    fun `koordinat dizisi cozumlenen ad bos sayilir`() = runTest {
+        val weather = FakeWeatherRepository().apply {
+            // wttr.in boş alanlarda fallback olarak sorgunun kendisini
+            // döndürebilir; bu "ad" sayılmaz (spec §7).
+            searchResult = AppResult.Success(
+                listOf(City("41.0100,28.9800", null, null, Coordinates(41.01, 28.98)))
+            )
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("", city.name)
+        assertTrue(weather.savedLocationCities.isEmpty())
     }
 }
 
