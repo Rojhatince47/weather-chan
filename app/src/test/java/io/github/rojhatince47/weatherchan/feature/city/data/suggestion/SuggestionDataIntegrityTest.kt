@@ -28,7 +28,7 @@ class SuggestionDataIntegrityTest {
     @Test
     fun `dosya parse edilebiliyor ve surum destekleniyor`() {
         val data = parse()
-        assertEquals(1, data.version)
+        assertEquals(2, data.version)
         // Boş sıra, dünya dalını sessizce öldürür: ülkeler testi boş listeyle
         // kendiliğinden geçerdi. Sıra dolu ve tekrarsız olmalı.
         assertTrue("worldFallbackOrder boş olamaz", data.worldFallbackOrder.isNotEmpty())

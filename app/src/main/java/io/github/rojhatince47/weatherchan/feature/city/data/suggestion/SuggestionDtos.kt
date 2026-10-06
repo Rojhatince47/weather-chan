@@ -27,8 +27,10 @@ internal data class SuggestionFileDto(
 @Serializable
 internal data class CityDto(
     @SerialName("name") val name: String,
+    @SerialName("nameEn") val nameEn: String? = null,
     @SerialName("code") val code: String,
     @SerialName("country") val country: String,
+    @SerialName("countryEn") val countryEn: String? = null,
     @SerialName("lat") val lat: Double,
     @SerialName("lon") val lon: Double
 )
@@ -45,11 +47,11 @@ internal data class CityDto(
  */
 internal object SuggestionFileParser {
 
-    const val SUPPORTED_VERSION = 1
+    const val SUPPORTED_VERSION = 2
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun parse(raw: String?): SuggestionData? {
+    fun parse(raw: String?, preferEnglish: Boolean = false): SuggestionData? {
         if (raw.isNullOrBlank()) return null
         val dto = runCatching { json.decodeFromString<SuggestionFileDto>(raw) }.getOrNull() ?: return null
         if (dto.version != SUPPORTED_VERSION) return null
@@ -57,10 +59,12 @@ internal object SuggestionFileParser {
             cities = dto.cities
                 .filter { it.name.isNotBlank() && it.code.length == 2 }
                 .map {
+                    val name = (if (preferEnglish) it.nameEn else null) ?: it.name
+                    val countryName = (if (preferEnglish) it.countryEn else null) ?: it.country
                     CitySeed(
-                        name = it.name,
+                        name = name,
                         countryCode = it.code,
-                        countryName = it.country,
+                        countryName = countryName,
                         coordinates = Coordinates(it.lat, it.lon)
                     )
                 },

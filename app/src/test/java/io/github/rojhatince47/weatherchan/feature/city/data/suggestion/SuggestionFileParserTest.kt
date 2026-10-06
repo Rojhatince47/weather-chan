@@ -8,7 +8,7 @@ class SuggestionFileParserTest {
 
     private val valid = """
         {
-          "version": 1,
+          "version": 2,
           "worldFallbackOrder": ["GB"],
           "cities": [
             { "name": "Ankara", "code": "TR", "country": "Türkiye", "lat": 39.93, "lon": 32.86 }
@@ -27,7 +27,7 @@ class SuggestionFileParserTest {
 
     @Test
     fun `desteklenmeyen surum reddedilir`() {
-        assertNull(SuggestionFileParser.parse(valid.replace("\"version\": 1", "\"version\": 2")))
+        assertNull(SuggestionFileParser.parse(valid.replace("\"version\": 2", "\"version\": 1")))
     }
 
     @Test
