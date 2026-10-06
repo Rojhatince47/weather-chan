@@ -36,7 +36,9 @@ class NearbyCachePreferencesTest {
         override fun getZone() = ZoneOffset.UTC
         override fun withZone(zone: java.time.ZoneId?) = this
         override fun instant() = instant
-        fun advance(d: Duration) { instant = instant.plus(d) }
+        fun advance(d: Duration) {
+            instant = instant.plus(d)
+        }
     }
 
     @Before
