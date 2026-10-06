@@ -1,186 +1,1637 @@
 {
-  "version": 1,
-  "worldFallbackOrder": ["GB", "US", "TR", "FR", "DE", "JP", "IT", "ES", "NL", "AE"],
+  "version": 2,
+  "worldFallbackOrder": [
+    "GB",
+    "US",
+    "TR",
+    "FR",
+    "DE",
+    "JP",
+    "IT",
+    "ES",
+    "NL",
+    "AE"
+  ],
   "cities": [
-    { "name": "İstanbul", "code": "TR", "country": "Türkiye", "lat": 41.0082, "lon": 28.9784 },
-    { "name": "Ankara", "code": "TR", "country": "Türkiye", "lat": 39.9334, "lon": 32.8597 },
-    { "name": "İzmir", "code": "TR", "country": "Türkiye", "lat": 38.4237, "lon": 27.1428 },
-    { "name": "Bursa", "code": "TR", "country": "Türkiye", "lat": 40.1885, "lon": 29.061 },
-    { "name": "Antalya", "code": "TR", "country": "Türkiye", "lat": 36.8969, "lon": 30.7133 },
-    { "name": "Adana", "code": "TR", "country": "Türkiye", "lat": 37.0, "lon": 35.3213 },
-    { "name": "Konya", "code": "TR", "country": "Türkiye", "lat": 37.8746, "lon": 32.4932 },
-    { "name": "Gaziantep", "code": "TR", "country": "Türkiye", "lat": 37.0662, "lon": 37.3833 },
-    { "name": "Mersin", "code": "TR", "country": "Türkiye", "lat": 36.8121, "lon": 34.6415 },
-    { "name": "Kayseri", "code": "TR", "country": "Türkiye", "lat": 38.7312, "lon": 35.4787 },
-    { "name": "Eskişehir", "code": "TR", "country": "Türkiye", "lat": 39.7667, "lon": 30.5256 },
-    { "name": "Diyarbakır", "code": "TR", "country": "Türkiye", "lat": 37.9144, "lon": 40.2306 },
-    { "name": "Şanlıurfa", "code": "TR", "country": "Türkiye", "lat": 37.1591, "lon": 38.7969 },
-    { "name": "Kahramanmaraş", "code": "TR", "country": "Türkiye", "lat": 37.5858, "lon": 36.9371 },
-    { "name": "Malatya", "code": "TR", "country": "Türkiye", "lat": 38.3552, "lon": 38.3095 },
-    { "name": "Sivas", "code": "TR", "country": "Türkiye", "lat": 39.7477, "lon": 37.0179 },
-    { "name": "Trabzon", "code": "TR", "country": "Türkiye", "lat": 41.0027, "lon": 39.7168 },
-    { "name": "Erzurum", "code": "TR", "country": "Türkiye", "lat": 39.9, "lon": 41.27 },
-    { "name": "Van", "code": "TR", "country": "Türkiye", "lat": 38.4891, "lon": 43.4089 },
-    { "name": "Elazığ", "code": "TR", "country": "Türkiye", "lat": 38.681, "lon": 39.2264 },
-    { "name": "Denizli", "code": "TR", "country": "Türkiye", "lat": 37.7765, "lon": 29.0864 },
-    { "name": "Samsun", "code": "TR", "country": "Türkiye", "lat": 41.2867, "lon": 36.33 },
-    { "name": "Kocaeli", "code": "TR", "country": "Türkiye", "lat": 40.7654, "lon": 29.9408 },
-    { "name": "Manisa", "code": "TR", "country": "Türkiye", "lat": 38.6191, "lon": 27.4289 },
-    { "name": "Balıkesir", "code": "TR", "country": "Türkiye", "lat": 39.6484, "lon": 27.8826 },
-    { "name": "Aydın", "code": "TR", "country": "Türkiye", "lat": 37.856, "lon": 27.8416 },
-    { "name": "Muğla", "code": "TR", "country": "Türkiye", "lat": 37.2153, "lon": 28.3636 },
-    { "name": "Ordu", "code": "TR", "country": "Türkiye", "lat": 40.9839, "lon": 37.8764 },
-    { "name": "Zonguldak", "code": "TR", "country": "Türkiye", "lat": 41.4564, "lon": 31.7987 },
-    { "name": "Bolu", "code": "TR", "country": "Türkiye", "lat": 40.735, "lon": 31.6089 },
-    { "name": "Çorum", "code": "TR", "country": "Türkiye", "lat": 40.5506, "lon": 34.9556 },
-    { "name": "Tokat", "code": "TR", "country": "Türkiye", "lat": 40.3167, "lon": 36.55 },
-    { "name": "Osmaniye", "code": "TR", "country": "Türkiye", "lat": 37.0742, "lon": 36.2464 },
-    { "name": "Hatay", "code": "TR", "country": "Türkiye", "lat": 36.2025, "lon": 36.1606 },
-    { "name": "Mardin", "code": "TR", "country": "Türkiye", "lat": 37.3122, "lon": 40.7351 },
-    { "name": "Kütahya", "code": "TR", "country": "Türkiye", "lat": 39.4242, "lon": 29.9833 },
-    { "name": "Afyonkarahisar", "code": "TR", "country": "Türkiye", "lat": 38.7638, "lon": 30.5403 },
-    { "name": "Kırıkkale", "code": "TR", "country": "Türkiye", "lat": 39.8468, "lon": 33.5153 },
-    { "name": "Yozgat", "code": "TR", "country": "Türkiye", "lat": 39.8181, "lon": 34.8147 },
-    { "name": "Amasya", "code": "TR", "country": "Türkiye", "lat": 40.6499, "lon": 35.8353 },
-    { "name": "Sinop", "code": "TR", "country": "Türkiye", "lat": 42.0231, "lon": 35.1531 },
-    { "name": "Rize", "code": "TR", "country": "Türkiye", "lat": 41.0201, "lon": 40.5234 },
-    { "name": "Artvin", "code": "TR", "country": "Türkiye", "lat": 41.1828, "lon": 41.8183 },
-    { "name": "Kars", "code": "TR", "country": "Türkiye", "lat": 40.6013, "lon": 43.0975 },
-    { "name": "Adıyaman", "code": "TR", "country": "Türkiye", "lat": 37.7648, "lon": 38.2786 },
-    { "name": "Bitlis", "code": "TR", "country": "Türkiye", "lat": 38.4006, "lon": 42.1095 },
-    { "name": "Siirt", "code": "TR", "country": "Türkiye", "lat": 37.9333, "lon": 41.95 },
-    { "name": "Kırklareli", "code": "TR", "country": "Türkiye", "lat": 41.7333, "lon": 27.2167 },
-    { "name": "Tekirdağ", "code": "TR", "country": "Türkiye", "lat": 40.9781, "lon": 27.5117 },
-    { "name": "Edirne", "code": "TR", "country": "Türkiye", "lat": 41.6771, "lon": 26.5557 },
-    { "name": "Kırşehir", "code": "TR", "country": "Türkiye", "lat": 39.1425, "lon": 34.1709 },
-    { "name": "Nevşehir", "code": "TR", "country": "Türkiye", "lat": 38.6244, "lon": 34.7231 },
-    { "name": "Isparta", "code": "TR", "country": "Türkiye", "lat": 37.7648, "lon": 30.5566 },
-    { "name": "Bilecik", "code": "TR", "country": "Türkiye", "lat": 40.1426, "lon": 29.9793 },
-    { "name": "Kastamonu", "code": "TR", "country": "Türkiye", "lat": 41.3887, "lon": 33.7827 },
-    { "name": "Çankırı", "code": "TR", "country": "Türkiye", "lat": 40.6013, "lon": 33.6134 },
-    { "name": "Karaman", "code": "TR", "country": "Türkiye", "lat": 37.1759, "lon": 33.2287 },
-    { "name": "Aksaray", "code": "TR", "country": "Türkiye", "lat": 38.3687, "lon": 34.037 },
-    { "name": "Bayburt", "code": "TR", "country": "Türkiye", "lat": 40.2552, "lon": 40.2249 },
-    { "name": "Sakarya", "code": "TR", "country": "Türkiye", "lat": 40.694, "lon": 30.4358 },
-    { "name": "Batman", "code": "TR", "country": "Türkiye", "lat": 37.8812, "lon": 41.1351 },
-    { "name": "Çanakkale", "code": "TR", "country": "Türkiye", "lat": 40.1553, "lon": 26.4142 },
-    { "name": "Giresun", "code": "TR", "country": "Türkiye", "lat": 40.9128, "lon": 38.3895 },
-    { "name": "Erzincan", "code": "TR", "country": "Türkiye", "lat": 39.75, "lon": 39.5 },
-    { "name": "Uşak", "code": "TR", "country": "Türkiye", "lat": 38.6823, "lon": 29.4082 },
-    { "name": "Niğde", "code": "TR", "country": "Türkiye", "lat": 37.9667, "lon": 34.6833 },
-    { "name": "Ağrı", "code": "TR", "country": "Türkiye", "lat": 39.7191, "lon": 43.0503 },
-    { "name": "Muş", "code": "TR", "country": "Türkiye", "lat": 38.7432, "lon": 41.5064 },
-    { "name": "Bingöl", "code": "TR", "country": "Türkiye", "lat": 38.8854, "lon": 40.4983 },
-    { "name": "Şırnak", "code": "TR", "country": "Türkiye", "lat": 37.5164, "lon": 42.4611 },
-    { "name": "Düzce", "code": "TR", "country": "Türkiye", "lat": 40.8438, "lon": 31.1565 },
-    { "name": "Yalova", "code": "TR", "country": "Türkiye", "lat": 40.65, "lon": 29.2667 },
-    { "name": "Karabük", "code": "TR", "country": "Türkiye", "lat": 41.2061, "lon": 32.6204 },
-    { "name": "Gümüşhane", "code": "TR", "country": "Türkiye", "lat": 40.4386, "lon": 39.5086 },
-    { "name": "Tunceli", "code": "TR", "country": "Türkiye", "lat": 39.1079, "lon": 39.5401 },
-    { "name": "Hakkari", "code": "TR", "country": "Türkiye", "lat": 37.5833, "lon": 43.7333 },
-    { "name": "Iğdır", "code": "TR", "country": "Türkiye", "lat": 39.9208, "lon": 44.0448 },
-    { "name": "Kilis", "code": "TR", "country": "Türkiye", "lat": 36.7184, "lon": 37.1212 },
-    { "name": "Burdur", "code": "TR", "country": "Türkiye", "lat": 37.7203, "lon": 30.2908 },
-    { "name": "Ardahan", "code": "TR", "country": "Türkiye", "lat": 41.1105, "lon": 42.7022 },
-    { "name": "Bartın", "code": "TR", "country": "Türkiye", "lat": 41.6344, "lon": 32.3375 },
-    { "name": "Londra", "code": "GB", "country": "Birleşik Krallık", "lat": 51.5074, "lon": -0.1278 },
-    { "name": "Birmingham", "code": "GB", "country": "Birleşik Krallık", "lat": 52.4862, "lon": -1.8904 },
-    { "name": "Manchester", "code": "GB", "country": "Birleşik Krallık", "lat": 53.4808, "lon": -2.2426 },
-    { "name": "Glasgow", "code": "GB", "country": "Birleşik Krallık", "lat": 55.8642, "lon": -4.2518 },
-    { "name": "Liverpool", "code": "GB", "country": "Birleşik Krallık", "lat": 53.4084, "lon": -2.9916 },
-    { "name": "Leeds", "code": "GB", "country": "Birleşik Krallık", "lat": 53.8008, "lon": -1.5491 },
-    { "name": "Sheffield", "code": "GB", "country": "Birleşik Krallık", "lat": 53.3811, "lon": -1.4701 },
-    { "name": "Edinburgh", "code": "GB", "country": "Birleşik Krallık", "lat": 55.9533, "lon": -3.1883 },
-    { "name": "New York", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 40.7128, "lon": -74.006 },
-    { "name": "Los Angeles", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 34.0522, "lon": -118.2437 },
-    { "name": "Chicago", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 41.8781, "lon": -87.6298 },
-    { "name": "Houston", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 29.7604, "lon": -95.3698 },
-    { "name": "Phoenix", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 33.4484, "lon": -112.074 },
-    { "name": "Philadelphia", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 39.9526, "lon": -75.1652 },
-    { "name": "San Antonio", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 29.4241, "lon": -98.4936 },
-    { "name": "San Diego", "code": "US", "country": "Amerika Birleşik Devletleri", "lat": 32.7157, "lon": -117.1611 },
-    { "name": "Paris", "code": "FR", "country": "Fransa", "lat": 48.8566, "lon": 2.3522 },
-    { "name": "Marsilya", "code": "FR", "country": "Fransa", "lat": 43.2965, "lon": 5.3698 },
-    { "name": "Lyon", "code": "FR", "country": "Fransa", "lat": 45.764, "lon": 4.8357 },
-    { "name": "Toulouse", "code": "FR", "country": "Fransa", "lat": 43.6047, "lon": 1.4442 },
-    { "name": "Nice", "code": "FR", "country": "Fransa", "lat": 43.7102, "lon": 7.262 },
-    { "name": "Nantes", "code": "FR", "country": "Fransa", "lat": 47.2184, "lon": -1.5536 },
-    { "name": "Strazburg", "code": "FR", "country": "Fransa", "lat": 48.5734, "lon": 7.7521 },
-    { "name": "Bordo", "code": "FR", "country": "Fransa", "lat": 44.8378, "lon": -0.5792 },
-    { "name": "Berlin", "code": "DE", "country": "Almanya", "lat": 52.52, "lon": 13.405 },
-    { "name": "Hamburg", "code": "DE", "country": "Almanya", "lat": 53.5511, "lon": 9.9937 },
-    { "name": "Münih", "code": "DE", "country": "Almanya", "lat": 48.1351, "lon": 11.582 },
-    { "name": "Köln", "code": "DE", "country": "Almanya", "lat": 50.9375, "lon": 6.9603 },
-    { "name": "Frankfurt", "code": "DE", "country": "Almanya", "lat": 50.1109, "lon": 8.6821 },
-    { "name": "Stuttgart", "code": "DE", "country": "Almanya", "lat": 48.7758, "lon": 9.1829 },
-    { "name": "Düsseldorf", "code": "DE", "country": "Almanya", "lat": 51.2277, "lon": 6.7735 },
-    { "name": "Leipzig", "code": "DE", "country": "Almanya", "lat": 51.3397, "lon": 12.3731 },
-    { "name": "Tokyo", "code": "JP", "country": "Japonya", "lat": 35.6762, "lon": 139.6503 },
-    { "name": "Osaka", "code": "JP", "country": "Japonya", "lat": 34.6937, "lon": 135.5023 },
-    { "name": "Nagoya", "code": "JP", "country": "Japonya", "lat": 35.1815, "lon": 136.9066 },
-    { "name": "Fukuoka", "code": "JP", "country": "Japonya", "lat": 33.5904, "lon": 130.4017 },
-    { "name": "Sapporo", "code": "JP", "country": "Japonya", "lat": 43.0618, "lon": 141.3545 },
-    { "name": "Kyoto", "code": "JP", "country": "Japonya", "lat": 35.0116, "lon": 135.7681 },
-    { "name": "Kobe", "code": "JP", "country": "Japonya", "lat": 34.6901, "lon": 135.1955 },
-    { "name": "Hiroşima", "code": "JP", "country": "Japonya", "lat": 34.3853, "lon": 132.4553 },
-    { "name": "Roma", "code": "IT", "country": "İtalya", "lat": 41.9028, "lon": 12.4964 },
-    { "name": "Milano", "code": "IT", "country": "İtalya", "lat": 45.4642, "lon": 9.19 },
-    { "name": "Napoli", "code": "IT", "country": "İtalya", "lat": 40.8518, "lon": 14.2681 },
-    { "name": "Torino", "code": "IT", "country": "İtalya", "lat": 45.0703, "lon": 7.6869 },
-    { "name": "Palermo", "code": "IT", "country": "İtalya", "lat": 38.1157, "lon": 13.3615 },
-    { "name": "Cenova", "code": "IT", "country": "İtalya", "lat": 44.4056, "lon": 8.9463 },
-    { "name": "Bologna", "code": "IT", "country": "İtalya", "lat": 44.4949, "lon": 11.3426 },
-    { "name": "Floransa", "code": "IT", "country": "İtalya", "lat": 43.7696, "lon": 11.2558 },
-    { "name": "Madrid", "code": "ES", "country": "İspanya", "lat": 40.4168, "lon": -3.7038 },
-    { "name": "Barselona", "code": "ES", "country": "İspanya", "lat": 41.3874, "lon": 2.1686 },
-    { "name": "Valensiya", "code": "ES", "country": "İspanya", "lat": 39.4699, "lon": -0.3763 },
-    { "name": "Sevilla", "code": "ES", "country": "İspanya", "lat": 37.3891, "lon": -5.9845 },
-    { "name": "Zaragoza", "code": "ES", "country": "İspanya", "lat": 41.6488, "lon": -0.8891 },
-    { "name": "Malaga", "code": "ES", "country": "İspanya", "lat": 36.7213, "lon": -4.4214 },
-    { "name": "Bilbao", "code": "ES", "country": "İspanya", "lat": 43.263, "lon": -2.935 },
-    { "name": "Granada", "code": "ES", "country": "İspanya", "lat": 37.1773, "lon": -3.5986 },
-    { "name": "Amsterdam", "code": "NL", "country": "Hollanda", "lat": 52.3676, "lon": 4.9041 },
-    { "name": "Rotterdam", "code": "NL", "country": "Hollanda", "lat": 51.9244, "lon": 4.4777 },
-    { "name": "Lahey", "code": "NL", "country": "Hollanda", "lat": 52.0705, "lon": 4.3007 },
-    { "name": "Utrecht", "code": "NL", "country": "Hollanda", "lat": 52.0907, "lon": 5.1214 },
-    { "name": "Eindhoven", "code": "NL", "country": "Hollanda", "lat": 51.4416, "lon": 5.4697 },
-    { "name": "Groningen", "code": "NL", "country": "Hollanda", "lat": 53.2194, "lon": 6.5665 },
-    { "name": "Tilburg", "code": "NL", "country": "Hollanda", "lat": 51.5555, "lon": 5.0913 },
-    { "name": "Breda", "code": "NL", "country": "Hollanda", "lat": 51.5953, "lon": 4.7807 },
-    { "name": "Dubai", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.2048, "lon": 55.2708 },
-    { "name": "Abu Dabi", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 24.4539, "lon": 54.3773 },
-    { "name": "Şarika", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.3463, "lon": 55.4209 },
-    { "name": "Al-Ayn", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 24.2075, "lon": 55.7447 },
-    { "name": "Acman", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.4052, "lon": 55.5136 },
-    { "name": "Ras Al-Hayme", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.7895, "lon": 55.9432 },
-    { "name": "Fuceyre", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.1288, "lon": 56.3265 },
-    { "name": "Umm Al-Kayven", "code": "AE", "country": "Birleşik Arap Emirlikleri", "lat": 25.5647, "lon": 55.5532 },
-    { "name": "Pekin", "code": "CN", "country": "Çin", "lat": 39.9042, "lon": 116.4074 },
-    { "name": "Şanghay", "code": "CN", "country": "Çin", "lat": 31.2304, "lon": 121.4737 },
-    { "name": "Moskova", "code": "RU", "country": "Rusya", "lat": 55.7558, "lon": 37.6173 },
-    { "name": "Sankt Peterburg", "code": "RU", "country": "Rusya", "lat": 59.9311, "lon": 30.3609 },
-    { "name": "Kahire", "code": "EG", "country": "Mısır", "lat": 30.0444, "lon": 31.2357 },
-    { "name": "Sidney", "code": "AU", "country": "Avustralya", "lat": -33.8688, "lon": 151.2093 },
-    { "name": "Melbourne", "code": "AU", "country": "Avustralya", "lat": -37.8136, "lon": 144.9631 },
-    { "name": "Toronto", "code": "CA", "country": "Kanada", "lat": 43.6532, "lon": -79.3832 },
-    { "name": "Vancouver", "code": "CA", "country": "Kanada", "lat": 49.2827, "lon": -123.1207 },
-    { "name": "Sao Paulo", "code": "BR", "country": "Brezilya", "lat": -23.5505, "lon": -46.6333 },
-    { "name": "Rio de Janeiro", "code": "BR", "country": "Brezilya", "lat": -22.9068, "lon": -43.1729 },
-    { "name": "Buenos Aires", "code": "AR", "country": "Arjantin", "lat": -34.6037, "lon": -58.3816 },
-    { "name": "Meksiko", "code": "MX", "country": "Meksika", "lat": 19.4326, "lon": -99.1332 },
-    { "name": "Seul", "code": "KR", "country": "Güney Kore", "lat": 37.566, "lon": 126.9784 },
-    { "name": "Hong Kong", "code": "HK", "country": "Hong Kong", "lat": 22.3193, "lon": 114.1694 },
-    { "name": "Varşova", "code": "PL", "country": "Polonya", "lat": 52.2297, "lon": 21.0122 },
-    { "name": "Prag", "code": "CZ", "country": "Çekya", "lat": 50.0755, "lon": 14.4378 },
-    { "name": "Viyana", "code": "AT", "country": "Avusturya", "lat": 48.2082, "lon": 16.3738 },
-    { "name": "Atina", "code": "GR", "country": "Yunanistan", "lat": 37.9838, "lon": 23.7275 },
-    { "name": "Lizbon", "code": "PT", "country": "Portekiz", "lat": 38.7223, "lon": -9.1393 },
-    { "name": "Dublin", "code": "IE", "country": "İrlanda", "lat": 53.3498, "lon": -6.2603 },
-    { "name": "Kopenhag", "code": "DK", "country": "Danimarka", "lat": 55.6761, "lon": 12.5683 },
-    { "name": "Oslo", "code": "NO", "country": "Norveç", "lat": 59.9139, "lon": 10.7522 },
-    { "name": "Stockholm", "code": "SE", "country": "İsveç", "lat": 59.3293, "lon": 18.0686 },
-    { "name": "Helsinki", "code": "FI", "country": "Finlandiya", "lat": 60.1699, "lon": 24.9384 },
-    { "name": "Zürih", "code": "CH", "country": "İsviçre", "lat": 47.3769, "lon": 8.5417 },
-    { "name": "Cenevre", "code": "CH", "country": "İsviçre", "lat": 46.2044, "lon": 6.1432 }
+    {
+      "name": "İstanbul",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.0082,
+      "lon": 28.9784,
+      "nameEn": "Istanbul",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Ankara",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.9334,
+      "lon": 32.8597,
+      "nameEn": "Ankara",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "İzmir",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.4237,
+      "lon": 27.1428,
+      "nameEn": "Izmir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bursa",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.1885,
+      "lon": 29.061,
+      "nameEn": "Bursa",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Antalya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 36.8969,
+      "lon": 30.7133,
+      "nameEn": "Antalya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Adana",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.0,
+      "lon": 35.3213,
+      "nameEn": "Adana",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Konya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.8746,
+      "lon": 32.4932,
+      "nameEn": "Konya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Gaziantep",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.0662,
+      "lon": 37.3833,
+      "nameEn": "Gaziantep",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Mersin",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 36.8121,
+      "lon": 34.6415,
+      "nameEn": "Mersin",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kayseri",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.7312,
+      "lon": 35.4787,
+      "nameEn": "Kayseri",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Eskişehir",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.7667,
+      "lon": 30.5256,
+      "nameEn": "Eskisehir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Diyarbakır",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.9144,
+      "lon": 40.2306,
+      "nameEn": "Diyarbakir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Şanlıurfa",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.1591,
+      "lon": 38.7969,
+      "nameEn": "Sanliurfa",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kahramanmaraş",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.5858,
+      "lon": 36.9371,
+      "nameEn": "Kahramanmaras",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Malatya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.3552,
+      "lon": 38.3095,
+      "nameEn": "Malatya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Sivas",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.7477,
+      "lon": 37.0179,
+      "nameEn": "Sivas",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Trabzon",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.0027,
+      "lon": 39.7168,
+      "nameEn": "Trabzon",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Erzurum",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.9,
+      "lon": 41.27,
+      "nameEn": "Erzurum",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Van",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.4891,
+      "lon": 43.4089,
+      "nameEn": "Van",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Elazığ",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.681,
+      "lon": 39.2264,
+      "nameEn": "Elazig",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Denizli",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.7765,
+      "lon": 29.0864,
+      "nameEn": "Denizli",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Samsun",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.2867,
+      "lon": 36.33,
+      "nameEn": "Samsun",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kocaeli",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.7654,
+      "lon": 29.9408,
+      "nameEn": "Kocaeli",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Manisa",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.6191,
+      "lon": 27.4289,
+      "nameEn": "Manisa",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Balıkesir",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.6484,
+      "lon": 27.8826,
+      "nameEn": "Balikesir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Aydın",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.856,
+      "lon": 27.8416,
+      "nameEn": "Aydin",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Muğla",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.2153,
+      "lon": 28.3636,
+      "nameEn": "Mugla",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Ordu",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.9839,
+      "lon": 37.8764,
+      "nameEn": "Ordu",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Zonguldak",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.4564,
+      "lon": 31.7987,
+      "nameEn": "Zonguldak",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bolu",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.735,
+      "lon": 31.6089,
+      "nameEn": "Bolu",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Çorum",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.5506,
+      "lon": 34.9556,
+      "nameEn": "Corum",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Tokat",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.3167,
+      "lon": 36.55,
+      "nameEn": "Tokat",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Osmaniye",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.0742,
+      "lon": 36.2464,
+      "nameEn": "Osmaniye",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Hatay",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 36.2025,
+      "lon": 36.1606,
+      "nameEn": "Hatay",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Mardin",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.3122,
+      "lon": 40.7351,
+      "nameEn": "Mardin",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kütahya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.4242,
+      "lon": 29.9833,
+      "nameEn": "Kutahya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Afyonkarahisar",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.7638,
+      "lon": 30.5403,
+      "nameEn": "Afyonkarahisar",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kırıkkale",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.8468,
+      "lon": 33.5153,
+      "nameEn": "Kirikkale",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Yozgat",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.8181,
+      "lon": 34.8147,
+      "nameEn": "Yozgat",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Amasya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.6499,
+      "lon": 35.8353,
+      "nameEn": "Amasya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Sinop",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 42.0231,
+      "lon": 35.1531,
+      "nameEn": "Sinop",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Rize",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.0201,
+      "lon": 40.5234,
+      "nameEn": "Rize",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Artvin",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.1828,
+      "lon": 41.8183,
+      "nameEn": "Artvin",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kars",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.6013,
+      "lon": 43.0975,
+      "nameEn": "Kars",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Adıyaman",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.7648,
+      "lon": 38.2786,
+      "nameEn": "Adiyaman",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bitlis",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.4006,
+      "lon": 42.1095,
+      "nameEn": "Bitlis",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Siirt",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.9333,
+      "lon": 41.95,
+      "nameEn": "Siirt",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kırklareli",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.7333,
+      "lon": 27.2167,
+      "nameEn": "Kirklareli",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Tekirdağ",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.9781,
+      "lon": 27.5117,
+      "nameEn": "Tekirdag",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Edirne",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.6771,
+      "lon": 26.5557,
+      "nameEn": "Edirne",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kırşehir",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.1425,
+      "lon": 34.1709,
+      "nameEn": "Kirsehir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Nevşehir",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.6244,
+      "lon": 34.7231,
+      "nameEn": "Nevsehir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Isparta",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.7648,
+      "lon": 30.5566,
+      "nameEn": "Isparta",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bilecik",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.1426,
+      "lon": 29.9793,
+      "nameEn": "Bilecik",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kastamonu",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.3887,
+      "lon": 33.7827,
+      "nameEn": "Kastamonu",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Çankırı",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.6013,
+      "lon": 33.6134,
+      "nameEn": "Cankiri",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Karaman",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.1759,
+      "lon": 33.2287,
+      "nameEn": "Karaman",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Aksaray",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.3687,
+      "lon": 34.037,
+      "nameEn": "Aksaray",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bayburt",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.2552,
+      "lon": 40.2249,
+      "nameEn": "Bayburt",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Sakarya",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.694,
+      "lon": 30.4358,
+      "nameEn": "Sakarya",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Batman",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.8812,
+      "lon": 41.1351,
+      "nameEn": "Batman",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Çanakkale",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.1553,
+      "lon": 26.4142,
+      "nameEn": "Canakkale",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Giresun",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.9128,
+      "lon": 38.3895,
+      "nameEn": "Giresun",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Erzincan",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.75,
+      "lon": 39.5,
+      "nameEn": "Erzincan",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Uşak",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.6823,
+      "lon": 29.4082,
+      "nameEn": "Usak",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Niğde",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.9667,
+      "lon": 34.6833,
+      "nameEn": "Nigde",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Ağrı",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.7191,
+      "lon": 43.0503,
+      "nameEn": "Agri",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Muş",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.7432,
+      "lon": 41.5064,
+      "nameEn": "Mus",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bingöl",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 38.8854,
+      "lon": 40.4983,
+      "nameEn": "Bingol",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Şırnak",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.5164,
+      "lon": 42.4611,
+      "nameEn": "Sirnak",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Düzce",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.8438,
+      "lon": 31.1565,
+      "nameEn": "Duzce",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Yalova",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.65,
+      "lon": 29.2667,
+      "nameEn": "Yalova",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Karabük",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.2061,
+      "lon": 32.6204,
+      "nameEn": "Karabuk",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Gümüşhane",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 40.4386,
+      "lon": 39.5086,
+      "nameEn": "Gumushane",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Tunceli",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.1079,
+      "lon": 39.5401,
+      "nameEn": "Tunceli",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Hakkari",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.5833,
+      "lon": 43.7333,
+      "nameEn": "Hakkari",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Iğdır",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 39.9208,
+      "lon": 44.0448,
+      "nameEn": "Igdir",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Kilis",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 36.7184,
+      "lon": 37.1212,
+      "nameEn": "Kilis",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Burdur",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 37.7203,
+      "lon": 30.2908,
+      "nameEn": "Burdur",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Ardahan",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.1105,
+      "lon": 42.7022,
+      "nameEn": "Ardahan",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Bartın",
+      "code": "TR",
+      "country": "Türkiye",
+      "lat": 41.6344,
+      "lon": 32.3375,
+      "nameEn": "Bartin",
+      "countryEn": "Turkey"
+    },
+    {
+      "name": "Londra",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 51.5074,
+      "lon": -0.1278,
+      "nameEn": "London",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Birmingham",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 52.4862,
+      "lon": -1.8904,
+      "nameEn": "Birmingham",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Manchester",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 53.4808,
+      "lon": -2.2426,
+      "nameEn": "Manchester",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Glasgow",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 55.8642,
+      "lon": -4.2518,
+      "nameEn": "Glasgow",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Liverpool",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 53.4084,
+      "lon": -2.9916,
+      "nameEn": "Liverpool",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Leeds",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 53.8008,
+      "lon": -1.5491,
+      "nameEn": "Leeds",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Sheffield",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 53.3811,
+      "lon": -1.4701,
+      "nameEn": "Sheffield",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "Edinburgh",
+      "code": "GB",
+      "country": "Birleşik Krallık",
+      "lat": 55.9533,
+      "lon": -3.1883,
+      "nameEn": "Edinburgh",
+      "countryEn": "United Kingdom"
+    },
+    {
+      "name": "New York",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 40.7128,
+      "lon": -74.006,
+      "nameEn": "New York",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Los Angeles",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 34.0522,
+      "lon": -118.2437,
+      "nameEn": "Los Angeles",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Chicago",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 41.8781,
+      "lon": -87.6298,
+      "nameEn": "Chicago",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Houston",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 29.7604,
+      "lon": -95.3698,
+      "nameEn": "Houston",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Phoenix",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 33.4484,
+      "lon": -112.074,
+      "nameEn": "Phoenix",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Philadelphia",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 39.9526,
+      "lon": -75.1652,
+      "nameEn": "Philadelphia",
+      "countryEn": "United States"
+    },
+    {
+      "name": "San Antonio",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 29.4241,
+      "lon": -98.4936,
+      "nameEn": "San Antonio",
+      "countryEn": "United States"
+    },
+    {
+      "name": "San Diego",
+      "code": "US",
+      "country": "Amerika Birleşik Devletleri",
+      "lat": 32.7157,
+      "lon": -117.1611,
+      "nameEn": "San Diego",
+      "countryEn": "United States"
+    },
+    {
+      "name": "Paris",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 48.8566,
+      "lon": 2.3522,
+      "nameEn": "Paris",
+      "countryEn": "France"
+    },
+    {
+      "name": "Marsilya",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 43.2965,
+      "lon": 5.3698,
+      "nameEn": "Marseille",
+      "countryEn": "France"
+    },
+    {
+      "name": "Lyon",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 45.764,
+      "lon": 4.8357,
+      "nameEn": "Lyon",
+      "countryEn": "France"
+    },
+    {
+      "name": "Toulouse",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 43.6047,
+      "lon": 1.4442,
+      "nameEn": "Toulouse",
+      "countryEn": "France"
+    },
+    {
+      "name": "Nice",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 43.7102,
+      "lon": 7.262,
+      "nameEn": "Nice",
+      "countryEn": "France"
+    },
+    {
+      "name": "Nantes",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 47.2184,
+      "lon": -1.5536,
+      "nameEn": "Nantes",
+      "countryEn": "France"
+    },
+    {
+      "name": "Strazburg",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 48.5734,
+      "lon": 7.7521,
+      "nameEn": "Strasbourg",
+      "countryEn": "France"
+    },
+    {
+      "name": "Bordo",
+      "code": "FR",
+      "country": "Fransa",
+      "lat": 44.8378,
+      "lon": -0.5792,
+      "nameEn": "Bordeaux",
+      "countryEn": "France"
+    },
+    {
+      "name": "Berlin",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 52.52,
+      "lon": 13.405,
+      "nameEn": "Berlin",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Hamburg",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 53.5511,
+      "lon": 9.9937,
+      "nameEn": "Hamburg",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Münih",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 48.1351,
+      "lon": 11.582,
+      "nameEn": "Munich",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Köln",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 50.9375,
+      "lon": 6.9603,
+      "nameEn": "Cologne",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Frankfurt",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 50.1109,
+      "lon": 8.6821,
+      "nameEn": "Frankfurt",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Stuttgart",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 48.7758,
+      "lon": 9.1829,
+      "nameEn": "Stuttgart",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Düsseldorf",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 51.2277,
+      "lon": 6.7735,
+      "nameEn": "Dusseldorf",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Leipzig",
+      "code": "DE",
+      "country": "Almanya",
+      "lat": 51.3397,
+      "lon": 12.3731,
+      "nameEn": "Leipzig",
+      "countryEn": "Germany"
+    },
+    {
+      "name": "Tokyo",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 35.6762,
+      "lon": 139.6503,
+      "nameEn": "Tokyo",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Osaka",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 34.6937,
+      "lon": 135.5023,
+      "nameEn": "Osaka",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Nagoya",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 35.1815,
+      "lon": 136.9066,
+      "nameEn": "Nagoya",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Fukuoka",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 33.5904,
+      "lon": 130.4017,
+      "nameEn": "Fukuoka",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Sapporo",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 43.0618,
+      "lon": 141.3545,
+      "nameEn": "Sapporo",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Kyoto",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 35.0116,
+      "lon": 135.7681,
+      "nameEn": "Kyoto",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Kobe",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 34.6901,
+      "lon": 135.1955,
+      "nameEn": "Kobe",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Hiroşima",
+      "code": "JP",
+      "country": "Japonya",
+      "lat": 34.3853,
+      "lon": 132.4553,
+      "nameEn": "Hiroshima",
+      "countryEn": "Japan"
+    },
+    {
+      "name": "Roma",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 41.9028,
+      "lon": 12.4964,
+      "nameEn": "Rome",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Milano",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 45.4642,
+      "lon": 9.19,
+      "nameEn": "Milan",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Napoli",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 40.8518,
+      "lon": 14.2681,
+      "nameEn": "Naples",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Torino",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 45.0703,
+      "lon": 7.6869,
+      "nameEn": "Turin",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Palermo",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 38.1157,
+      "lon": 13.3615,
+      "nameEn": "Palermo",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Cenova",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 44.4056,
+      "lon": 8.9463,
+      "nameEn": "Genoa",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Bologna",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 44.4949,
+      "lon": 11.3426,
+      "nameEn": "Bologna",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Floransa",
+      "code": "IT",
+      "country": "İtalya",
+      "lat": 43.7696,
+      "lon": 11.2558,
+      "nameEn": "Florence",
+      "countryEn": "Italy"
+    },
+    {
+      "name": "Madrid",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 40.4168,
+      "lon": -3.7038,
+      "nameEn": "Madrid",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Barselona",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 41.3874,
+      "lon": 2.1686,
+      "nameEn": "Barcelona",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Valensiya",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 39.4699,
+      "lon": -0.3763,
+      "nameEn": "Valencia",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Sevilla",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 37.3891,
+      "lon": -5.9845,
+      "nameEn": "Sevilla",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Zaragoza",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 41.6488,
+      "lon": -0.8891,
+      "nameEn": "Zaragoza",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Malaga",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 36.7213,
+      "lon": -4.4214,
+      "nameEn": "Malaga",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Bilbao",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 43.263,
+      "lon": -2.935,
+      "nameEn": "Bilbao",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Granada",
+      "code": "ES",
+      "country": "İspanya",
+      "lat": 37.1773,
+      "lon": -3.5986,
+      "nameEn": "Granada",
+      "countryEn": "Spain"
+    },
+    {
+      "name": "Amsterdam",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 52.3676,
+      "lon": 4.9041,
+      "nameEn": "Amsterdam",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Rotterdam",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 51.9244,
+      "lon": 4.4777,
+      "nameEn": "Rotterdam",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Lahey",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 52.0705,
+      "lon": 4.3007,
+      "nameEn": "The Hague",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Utrecht",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 52.0907,
+      "lon": 5.1214,
+      "nameEn": "Utrecht",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Eindhoven",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 51.4416,
+      "lon": 5.4697,
+      "nameEn": "Eindhoven",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Groningen",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 53.2194,
+      "lon": 6.5665,
+      "nameEn": "Groningen",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Tilburg",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 51.5555,
+      "lon": 5.0913,
+      "nameEn": "Tilburg",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Breda",
+      "code": "NL",
+      "country": "Hollanda",
+      "lat": 51.5953,
+      "lon": 4.7807,
+      "nameEn": "Breda",
+      "countryEn": "Netherlands"
+    },
+    {
+      "name": "Dubai",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.2048,
+      "lon": 55.2708,
+      "nameEn": "Dubai",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Abu Dabi",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 24.4539,
+      "lon": 54.3773,
+      "nameEn": "Abu Dhabi",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Şarika",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.3463,
+      "lon": 55.4209,
+      "nameEn": "Sharjah",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Al-Ayn",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 24.2075,
+      "lon": 55.7447,
+      "nameEn": "Al-Ayn",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Acman",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.4052,
+      "lon": 55.5136,
+      "nameEn": "Ajman",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Ras Al-Hayme",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.7895,
+      "lon": 55.9432,
+      "nameEn": "Ras Al-Khaimah",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Fuceyre",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.1288,
+      "lon": 56.3265,
+      "nameEn": "Fujairah",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Umm Al-Kayven",
+      "code": "AE",
+      "country": "Birleşik Arap Emirlikleri",
+      "lat": 25.5647,
+      "lon": 55.5532,
+      "nameEn": "Umm Al-Quwain",
+      "countryEn": "United Arab Emirates"
+    },
+    {
+      "name": "Pekin",
+      "code": "CN",
+      "country": "Çin",
+      "lat": 39.9042,
+      "lon": 116.4074,
+      "nameEn": "Beijing",
+      "countryEn": "China"
+    },
+    {
+      "name": "Şanghay",
+      "code": "CN",
+      "country": "Çin",
+      "lat": 31.2304,
+      "lon": 121.4737,
+      "nameEn": "Shanghai",
+      "countryEn": "China"
+    },
+    {
+      "name": "Moskova",
+      "code": "RU",
+      "country": "Rusya",
+      "lat": 55.7558,
+      "lon": 37.6173,
+      "nameEn": "Moscow",
+      "countryEn": "Russia"
+    },
+    {
+      "name": "Sankt Peterburg",
+      "code": "RU",
+      "country": "Rusya",
+      "lat": 59.9311,
+      "lon": 30.3609,
+      "nameEn": "Saint Petersburg",
+      "countryEn": "Russia"
+    },
+    {
+      "name": "Kahire",
+      "code": "EG",
+      "country": "Mısır",
+      "lat": 30.0444,
+      "lon": 31.2357,
+      "nameEn": "Cairo",
+      "countryEn": "Egypt"
+    },
+    {
+      "name": "Sidney",
+      "code": "AU",
+      "country": "Avustralya",
+      "lat": -33.8688,
+      "lon": 151.2093,
+      "nameEn": "Sydney",
+      "countryEn": "Australia"
+    },
+    {
+      "name": "Melbourne",
+      "code": "AU",
+      "country": "Avustralya",
+      "lat": -37.8136,
+      "lon": 144.9631,
+      "nameEn": "Melbourne",
+      "countryEn": "Australia"
+    },
+    {
+      "name": "Toronto",
+      "code": "CA",
+      "country": "Kanada",
+      "lat": 43.6532,
+      "lon": -79.3832,
+      "nameEn": "Toronto",
+      "countryEn": "Canada"
+    },
+    {
+      "name": "Vancouver",
+      "code": "CA",
+      "country": "Kanada",
+      "lat": 49.2827,
+      "lon": -123.1207,
+      "nameEn": "Vancouver",
+      "countryEn": "Canada"
+    },
+    {
+      "name": "Sao Paulo",
+      "code": "BR",
+      "country": "Brezilya",
+      "lat": -23.5505,
+      "lon": -46.6333,
+      "nameEn": "Sao Paulo",
+      "countryEn": "Brazil"
+    },
+    {
+      "name": "Rio de Janeiro",
+      "code": "BR",
+      "country": "Brezilya",
+      "lat": -22.9068,
+      "lon": -43.1729,
+      "nameEn": "Rio de Janeiro",
+      "countryEn": "Brazil"
+    },
+    {
+      "name": "Buenos Aires",
+      "code": "AR",
+      "country": "Arjantin",
+      "lat": -34.6037,
+      "lon": -58.3816,
+      "nameEn": "Buenos Aires",
+      "countryEn": "Argentina"
+    },
+    {
+      "name": "Meksiko",
+      "code": "MX",
+      "country": "Meksika",
+      "lat": 19.4326,
+      "lon": -99.1332,
+      "nameEn": "Mexico City",
+      "countryEn": "Mexico"
+    },
+    {
+      "name": "Seul",
+      "code": "KR",
+      "country": "Güney Kore",
+      "lat": 37.566,
+      "lon": 126.9784,
+      "nameEn": "Seoul",
+      "countryEn": "South Korea"
+    },
+    {
+      "name": "Hong Kong",
+      "code": "HK",
+      "country": "Hong Kong",
+      "lat": 22.3193,
+      "lon": 114.1694,
+      "nameEn": "Hong Kong",
+      "countryEn": "Hong Kong"
+    },
+    {
+      "name": "Varşova",
+      "code": "PL",
+      "country": "Polonya",
+      "lat": 52.2297,
+      "lon": 21.0122,
+      "nameEn": "Warsaw",
+      "countryEn": "Poland"
+    },
+    {
+      "name": "Prag",
+      "code": "CZ",
+      "country": "Çekya",
+      "lat": 50.0755,
+      "lon": 14.4378,
+      "nameEn": "Prague",
+      "countryEn": "Czechia"
+    },
+    {
+      "name": "Viyana",
+      "code": "AT",
+      "country": "Avusturya",
+      "lat": 48.2082,
+      "lon": 16.3738,
+      "nameEn": "Vienna",
+      "countryEn": "Austria"
+    },
+    {
+      "name": "Atina",
+      "code": "GR",
+      "country": "Yunanistan",
+      "lat": 37.9838,
+      "lon": 23.7275,
+      "nameEn": "Athens",
+      "countryEn": "Greece"
+    },
+    {
+      "name": "Lizbon",
+      "code": "PT",
+      "country": "Portekiz",
+      "lat": 38.7223,
+      "lon": -9.1393,
+      "nameEn": "Lisbon",
+      "countryEn": "Portugal"
+    },
+    {
+      "name": "Dublin",
+      "code": "IE",
+      "country": "İrlanda",
+      "lat": 53.3498,
+      "lon": -6.2603,
+      "nameEn": "Dublin",
+      "countryEn": "Ireland"
+    },
+    {
+      "name": "Kopenhag",
+      "code": "DK",
+      "country": "Danimarka",
+      "lat": 55.6761,
+      "lon": 12.5683,
+      "nameEn": "Copenhagen",
+      "countryEn": "Denmark"
+    },
+    {
+      "name": "Oslo",
+      "code": "NO",
+      "country": "Norveç",
+      "lat": 59.9139,
+      "lon": 10.7522,
+      "nameEn": "Oslo",
+      "countryEn": "Norway"
+    },
+    {
+      "name": "Stockholm",
+      "code": "SE",
+      "country": "İsveç",
+      "lat": 59.3293,
+      "lon": 18.0686,
+      "nameEn": "Stockholm",
+      "countryEn": "Sweden"
+    },
+    {
+      "name": "Helsinki",
+      "code": "FI",
+      "country": "Finlandiya",
+      "lat": 60.1699,
+      "lon": 24.9384,
+      "nameEn": "Helsinki",
+      "countryEn": "Finland"
+    },
+    {
+      "name": "Zürih",
+      "code": "CH",
+      "country": "İsviçre",
+      "lat": 47.3769,
+      "lon": 8.5417,
+      "nameEn": "Zurich",
+      "countryEn": "Switzerland"
+    },
+    {
+      "name": "Cenevre",
+      "code": "CH",
+      "country": "İsviçre",
+      "lat": 46.2044,
+      "lon": 6.1432,
+      "nameEn": "Geneva",
+      "countryEn": "Switzerland"
+    }
   ]
 }
