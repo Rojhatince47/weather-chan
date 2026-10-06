@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Cihaz testlerinin host etkinliği: uygulama sürecinde yaşar
+         (instrumentation startActivitySync aynı süreç ister), tema ve
+         kaynaklar ana uygulamayla paylaşılır. -->
+    <application>
+        <activity
+            android:name="io.github.rojhatince47.weatherchan.testing.HavaTestActivity"
+            android:exported="true" />
+    </application>
+</manifest>

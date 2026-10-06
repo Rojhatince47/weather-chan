@@ -1,6 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -27,7 +27,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.Weat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
-import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
+import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,10 +46,7 @@ import org.junit.Test
  */
 class MainRouteTest {
     @get:Rule
-    val composeRule = createComposeRule()
-
-    @get:Rule
-    val forceTurkish = ForceTurkishLocaleRule()
+    val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
     @Test
     fun deletingCityViaRouteRestoresItAfterSnackbarUndo() {

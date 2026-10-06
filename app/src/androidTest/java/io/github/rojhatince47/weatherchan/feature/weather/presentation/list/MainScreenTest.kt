@@ -5,7 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -22,7 +22,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
-import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
+import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -30,10 +30,7 @@ import org.junit.Test
 
 class MainScreenTest {
     @get:Rule
-    val composeRule = createComposeRule()
-
-    @get:Rule
-    val forceTurkish = ForceTurkishLocaleRule()
+    val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
     @Test
     fun mainScreenShowsCities() {

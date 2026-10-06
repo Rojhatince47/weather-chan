@@ -1,7 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -13,7 +13,7 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.Suggest
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
-import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
+import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,10 +22,7 @@ import org.junit.Test
 class AddCityScreenTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
-
-    @get:Rule
-    val forceTurkish = ForceTurkishLocaleRule()
+    val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
     private val kocaeli = CitySeed("Kocaeli", "TR", "Türkiye", Coordinates(40.7654, 29.9408)).toCity()
 

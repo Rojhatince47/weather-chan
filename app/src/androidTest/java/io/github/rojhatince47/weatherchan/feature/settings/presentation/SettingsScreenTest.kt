@@ -1,19 +1,17 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.core.os.LocaleListCompat
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
-import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
+import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,10 +20,7 @@ import org.junit.Test
 class SettingsScreenTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
-
-    @get:Rule
-    val forceTurkish = ForceTurkishLocaleRule()
+    val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
     @Test
     fun birimSecimiCagrilir() {
@@ -113,21 +108,28 @@ class SettingsScreenTest {
 
     @Test
     fun dilIngilizceyeGecinceMetinlerIngilizceDoner() {
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.ENGLISH,
-                    onUnitSelected = {},
-                    onThemeModeSelected = {},
-                    onAppLanguageSelected = {},
-                    onBack = {}
-                )
+        // Host etkinliği Türkçe açılır; İngilizce, etkinlik yeniden
+        // kurulduğunda kaynaklardan çözümlenir.
+        HavaTestActivity.overrideLocaleTag = "en"
+        try {
+            composeRule.activityRule.scenario.recreate()
+            composeRule.setContent {
+                HavaTheme {
+                    SettingsScreen(
+                        unit = TemperatureUnit.CELSIUS.toUiModel(),
+                        themeMode = ThemeMode.SYSTEM,
+                        appLanguage = AppLanguage.ENGLISH,
+                        onUnitSelected = {},
+                        onThemeModeSelected = {},
+                        onAppLanguageSelected = {},
+                        onBack = {}
+                    )
+                }
             }
+            composeRule.onNodeWithText("Language").assertIsDisplayed()
+            composeRule.onNodeWithText("Theme").assertIsDisplayed()
+        } finally {
+            HavaTestActivity.overrideLocaleTag = null
         }
-        composeRule.onNodeWithText("Language").assertIsDisplayed()
-        composeRule.onNodeWithText("Theme").assertIsDisplayed()
     }
 }
