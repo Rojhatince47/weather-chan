@@ -13,7 +13,8 @@ class OpenMeteoWeatherDataSource @Inject constructor(
     private val api: OpenMeteoApi,
     private val geocodingApi: OpenMeteoGeocodingApi,
     private val mapper: OpenMeteoWeatherMapper,
-    private val errorMapper: ErrorMapper
+    private val errorMapper: ErrorMapper,
+    private val languageProvider: () -> String
 ) {
 
     suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>> = errorMapper.batchAll(cities) { city ->
@@ -33,6 +34,6 @@ class OpenMeteoWeatherDataSource @Inject constructor(
     }
 
     suspend fun searchCities(query: String): AppResult<List<City>> = errorMapper.runCatchingApp {
-        geocodingApi.search(name = query).results.map(mapper::toCity)
+        geocodingApi.search(name = query, language = languageProvider()).results.map(mapper::toCity)
     }
 }

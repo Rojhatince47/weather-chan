@@ -87,7 +87,8 @@ class WeatherRepositoryTest {
                 api = primaryRetrofit.create(OpenMeteoApi::class.java),
                 geocodingApi = primaryRetrofit.create(OpenMeteoGeocodingApi::class.java),
                 mapper = OpenMeteoWeatherMapper(),
-                errorMapper = errorMapper
+                errorMapper = errorMapper,
+                languageProvider = { "tr" }
             ),
             backup = WttrInWeatherDataSource(
                 api = backupRetrofit.create(WttrInApi::class.java),

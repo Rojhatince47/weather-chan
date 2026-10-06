@@ -1,6 +1,8 @@
 package io.github.rojhatince47.weatherchan.feature.weather.data.di
 
 import android.content.Context
+import android.content.res.Resources
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -40,5 +42,20 @@ abstract class WeatherDataModule {
         @Singleton
         fun provideWeatherCachePreferences(@WeatherCacheDataStore dataStore: DataStore<Preferences>): WeatherCachePreferences =
             WeatherCachePreferences(dataStore)
+
+        /**
+         * Geocoding dili çağrı anındaki uygulama dilinden çözülür. Okuma
+         * AppCompatDelegate'ten yapılır: API<33'te application context'in
+         * configuration'ı per-app dil seçimini yansıtmaz (spec §6).
+         */
+        @Provides
+        @Singleton
+        fun provideGeocodingLanguage(): () -> String = {
+            val locales = AppCompatDelegate.getApplicationLocales()
+            val selected = if (locales.isEmpty) null else locales[0]?.language
+            val system = Resources.getSystem().configuration.locales[0].language
+            val code = selected ?: system
+            if (code == "tr" || code == "en") code else "en"
+        }
     }
 }

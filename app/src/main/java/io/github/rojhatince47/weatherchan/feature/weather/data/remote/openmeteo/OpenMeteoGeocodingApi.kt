@@ -9,7 +9,7 @@ interface OpenMeteoGeocodingApi {
     suspend fun search(
         @Query("name") name: String,
         @Query("count") count: Int = 10,
-        @Query("language") language: String = "tr",
+        @Query("language") language: String,
         @Query("format") format: String = "json"
     ): OpenMeteoGeocodingDto
 }

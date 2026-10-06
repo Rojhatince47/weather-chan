@@ -27,12 +27,13 @@ class OpenMeteoWeatherDataSourceTest {
 
     private val server = MockWebServer()
     private lateinit var dataSource: OpenMeteoWeatherDataSource
+    private lateinit var retrofit: Retrofit
 
     @Before
     fun setUp() {
         server.start()
         val json = Json { ignoreUnknownKeys = true }
-        val retrofit = Retrofit.Builder()
+        retrofit = Retrofit.Builder()
             .baseUrl(server.url("/"))
             .client(OkHttpClient())
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
@@ -41,7 +42,8 @@ class OpenMeteoWeatherDataSourceTest {
             api = retrofit.create(OpenMeteoApi::class.java),
             geocodingApi = retrofit.create(OpenMeteoGeocodingApi::class.java),
             mapper = OpenMeteoWeatherMapper(),
-            errorMapper = DefaultErrorMapper()
+            errorMapper = DefaultErrorMapper(),
+            languageProvider = { "tr" }
         )
     }
 
@@ -100,6 +102,30 @@ class OpenMeteoWeatherDataSourceTest {
         val path = request!!.path!!
         assertEquals("/v1/search", path.substringBefore("?"))
         assertTrue(path.contains("count=10"))
+    }
+
+    @Test
+    fun `dil saglayicisi geocoding sorgusuna tasinir`() = runTest {
+        server.enqueue(MockResponse().setBody(GEOCODING_JSON))
+        dataSource.searchCities("İstanbul")
+        assertEquals(
+            "tr",
+            server.takeRequest(2, TimeUnit.SECONDS)!!.requestUrl!!.queryParameter("language")
+        )
+
+        server.enqueue(MockResponse().setBody(GEOCODING_JSON))
+        val english = OpenMeteoWeatherDataSource(
+            api = retrofit.create(OpenMeteoApi::class.java),
+            geocodingApi = retrofit.create(OpenMeteoGeocodingApi::class.java),
+            mapper = OpenMeteoWeatherMapper(),
+            errorMapper = DefaultErrorMapper(),
+            languageProvider = { "en" }
+        )
+        english.searchCities("İstanbul")
+        assertEquals(
+            "en",
+            server.takeRequest(2, TimeUnit.SECONDS)!!.requestUrl!!.queryParameter("language")
+        )
     }
 
     private fun testCity(name: String = "İstanbul", latitude: Double = 41.01, longitude: Double = 28.98): City = City(

@@ -47,7 +47,8 @@ class OpenMeteoCityWeathersConcurrencyTest {
         api = api,
         geocodingApi = StubGeocodingApi(),
         mapper = OpenMeteoWeatherMapper(),
-        errorMapper = DefaultErrorMapper()
+        errorMapper = DefaultErrorMapper(),
+        languageProvider = { "tr" }
     )
 
     private fun testCity(index: Int) = City(
