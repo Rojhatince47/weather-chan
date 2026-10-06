@@ -23,18 +23,23 @@ import kotlinx.coroutines.withContext
 @Singleton
 class AssetCitySuggestionProvider @Inject constructor(
     @ApplicationContext private val context: Context,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val languageProvider: () -> String
 ) : CitySuggestionProvider {
 
     private val mutex = Mutex()
 
     @Volatile
+    private var cachedLanguage: String? = null
+
+    @Volatile
     private var cached: SuggestionData? = null
 
     override suspend fun load(): SuggestionData? {
-        cached?.let { return it }
+        val currentLang = languageProvider()
+        cached?.let { if (cachedLanguage == currentLang) return it }
         return mutex.withLock {
-            cached?.let { return@withLock it }
+            cached?.let { if (cachedLanguage == currentLang) return@withLock it }
             // İptal yutulmaz (proje kuralı, bkz. runCatchingApp): çağıran
             // coroutine iptal edildiyse "veri yok" değil iptal olarak yayılır.
             val data = withContext(ioDispatcher) {
@@ -42,9 +47,15 @@ class AssetCitySuggestionProvider @Inject constructor(
                     context.assets.open(FILE_NAME).bufferedReader().use { it.readText() }
                 }.onFailure { if (it is CancellationException) throw it }
                     .getOrNull()
-                SuggestionFileParser.parse(raw)
+                val preferEnglish = currentLang == "en"
+                SuggestionFileParser.parse(raw, preferEnglish = preferEnglish)
             }
-            data.also { if (it != null) cached = it }
+            data.also {
+                if (it != null) {
+                    cached = it
+                    cachedLanguage = currentLang
+                }
+            }
         }
     }
 
