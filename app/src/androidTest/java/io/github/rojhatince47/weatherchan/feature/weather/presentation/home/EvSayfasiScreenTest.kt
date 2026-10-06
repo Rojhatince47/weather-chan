@@ -13,6 +13,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMod
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
+import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -23,6 +24,9 @@ class EvSayfasiScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val forceTurkish = ForceTurkishLocaleRule()
 
     private val istanbul = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
     private val ankara = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85))

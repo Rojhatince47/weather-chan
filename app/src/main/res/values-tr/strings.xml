@@ -1,0 +1,90 @@
+<resources>
+    <string name="app_name">Hava</string>
+
+    <string name="home_title">Weather-chan</string>
+    <string name="home_open_list">Şehir listesini aç</string>
+    <string name="home_empty_state">Henüz şehir yok</string>
+
+    <string name="action_retry">Tekrar dene</string>
+    <string name="action_back">Geri</string>
+    <string name="search_placeholder">Şehir ara</string>
+    <string name="search_clear">Aramayı temizle</string>
+    <string name="action_add_city">Şehri listeye ekle</string>
+    <string name="action_open_detail">Detayı aç</string>
+    <string name="search_result_in_list">Listede</string>
+
+    <string name="detail_title">Hava Durumu</string>
+
+    <string name="add_city_title">Şehir ekle</string>
+    <string name="settings_title">Ayarlar</string>
+    <string name="action_open_add_city">Şehir ekle</string>
+    <string name="action_open_settings">Ayarlar</string>
+    <string name="settings_unit_section">Birim</string>
+    <string name="settings_theme_section">Tema</string>
+    <string name="settings_language_section">Dil</string>
+    <string name="language_system">Sistem</string>
+    <string name="language_turkish">Türkçe</string>
+    <string name="language_english">English</string>
+
+    <string name="suggestion_nearby">Yakınında</string>
+    <string name="suggestion_country">Ülkende</string>
+    <string name="suggestion_world">Dünyada</string>
+    <string name="suggestion_distance_km">%1$d km</string>
+    <string name="section_hourly">Saatlik Tahmin</string>
+    <string name="section_daily">Günlük Tahmin</string>
+    <string name="section_current">Şu an</string>
+
+    <string name="state_empty_list">Sonuç bulunamadı</string>
+
+    <!-- Konum: liste yalnız mevcut konumu içermelidir, tohum şehir yoktur. -->
+    <string name="location_add_action">Konumumu ekle</string>
+    <string name="location_unavailable">Konum alınamadı. Listeye bir şehir arayabilir veya konumunuzu tekrar deneyebilirsiniz.</string>
+    <string name="location_retry">Tekrar dene</string>
+    <string name="location_locating">Konumunuz bulunuyor…</string>
+    <string name="location_loading">Konum okunuyor…</string>
+    <string name="location_permission_rationale">Hava durumunuzu bulunduğunuz yere göre görmek için konum iznine ihtiyacımız var.</string>
+    <string name="location_card_label">Konumunuz</string>
+    <string name="location_default_name">Konum</string>
+    <string name="location_deleted">Konum silindi</string>
+    <string name="state_empty_search">Aramanızla eşleşen şehir bulunamadı</string>
+    <string name="state_empty_detail">Veri bulunamadı</string>
+    <string name="card_weather_unavailable">Hava durumu alınamadı</string>
+    <string name="card_weather_loading">Hava durumu yükleniyor…</string>
+    <string name="city_retrying">Yeniden deneniyor</string>
+
+    <!-- Hata sözlüğü. state_* bir durum, error_* bir hatadır: aynı metni
+         paylaşsalar da ayrı anahtarları vardır, çünkü ileride ayrışabilirler
+         (örn. boş liste "şehir yok", bulunamadı hatası "şehir silinmiş"). -->
+    <string name="error_network">Bağlantı kurulamadı veya zaman aşımına uğradı</string>
+    <string name="error_server">Sunucu hatası (%1$d)</string>
+    <string name="error_server_unavailable">Hizmet şu anda yanıt vermiyor, lütfen tekrar deneyin</string>
+    <string name="error_rate_limited">Çok fazla istek gönderildi, lütfen biraz sonra tekrar deneyin</string>
+    <string name="error_not_found">Sonuç bulunamadı</string>
+    <string name="error_parse">Veri okunamadı</string>
+    <string name="error_unexpected">Beklenmeyen bir hata oluştu</string>
+
+    <string name="unit_celsius">°C</string>
+    <string name="unit_fahrenheit">°F</string>
+
+    <string name="forecast_today">Bugün</string>
+    <string name="forecast_day_offset">+%1$d gün</string>
+
+    <string name="theme_mode_system">Sistem</string>
+    <string name="theme_mode_light">Açık</string>
+    <string name="theme_mode_dark">Koyu</string>
+
+    <string name="condition_clear">Açık</string>
+    <string name="condition_partly_cloudy">Parçalı bulutlu</string>
+    <string name="condition_cloudy">Bulutlu</string>
+    <string name="condition_rain">Yağmurlu</string>
+    <string name="condition_light_showers">Hafif sağanak</string>
+    <string name="condition_snow">Kar yağışlı</string>
+    <string name="condition_thunderstorm">Gök gürültülü</string>
+
+    <string name="delete_city_title">Şehri sil</string>
+    <string name="delete_city_confirmation">%1$s silinsin mi?</string>
+    <string name="delete_cancel">İptal</string>
+    <string name="delete_confirm">Sil</string>
+    <string name="city_deleted">%1$s silindi</string>
+    <string name="undo_delete">Geri al</string>
+</resources>

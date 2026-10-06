@@ -13,6 +13,7 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.Suggest
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,6 +23,9 @@ class AddCityScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val forceTurkish = ForceTurkishLocaleRule()
 
     private val kocaeli = CitySeed("Kocaeli", "TR", "Türkiye", Coordinates(40.7654, 29.9408)).toCity()
 

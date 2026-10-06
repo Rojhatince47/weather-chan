@@ -22,6 +22,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -30,6 +31,9 @@ import org.junit.Test
 class MainScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val forceTurkish = ForceTurkishLocaleRule()
 
     @Test
     fun mainScreenShowsCities() {

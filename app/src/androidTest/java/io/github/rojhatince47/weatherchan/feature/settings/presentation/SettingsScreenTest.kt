@@ -10,6 +10,7 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import io.github.rojhatince47.weatherchan.testing.ForceTurkishLocaleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -19,6 +20,9 @@ class SettingsScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val forceTurkish = ForceTurkishLocaleRule()
 
     @Test
     fun birimSecimiCagrilir() {
