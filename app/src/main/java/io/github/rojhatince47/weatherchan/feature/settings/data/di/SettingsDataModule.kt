@@ -5,8 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.rojhatince47.weatherchan.core.di.SettingsDataStore
+import io.github.rojhatince47.weatherchan.feature.settings.data.repository.AppCompatAppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreThemeModeRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import dagger.Binds
@@ -28,6 +30,9 @@ abstract class SettingsDataModule {
 
     @Binds
     abstract fun bindThemeModeRepository(impl: DataStoreThemeModeRepository): ThemeModeRepository
+
+    @Binds
+    abstract fun bindAppLanguageApplier(impl: AppCompatAppLanguageApplier): AppLanguageApplier
 
     companion object {
         @Provides

@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
@@ -32,6 +33,8 @@ class SettingsScreenTest {
                 SettingsScreen(
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.SYSTEM,
+                    onAppLanguageSelected = {},
                     onUnitSelected = { selected = it },
                     onThemeModeSelected = {},
                     onBack = {}
@@ -53,7 +56,9 @@ class SettingsScreenTest {
                 SettingsScreen(
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.SYSTEM,
                     onUnitSelected = {},
+                    onAppLanguageSelected = {},
                     onThemeModeSelected = { selected = it },
                     onBack = {}
                 )
@@ -72,7 +77,9 @@ class SettingsScreenTest {
                 SettingsScreen(
                     unit = TemperatureUnit.CELSIUS.toUiModel(),
                     themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.SYSTEM,
                     onUnitSelected = {},
+                    onAppLanguageSelected = {},
                     onThemeModeSelected = {},
                     onBack = { back = true }
                 )
@@ -80,5 +87,25 @@ class SettingsScreenTest {
         }
         composeRule.onNodeWithTag("action_back").performClick()
         assertTrue(back)
+    }
+
+    @Test
+    fun languageSelectionInvokesCallback() {
+        var selected: AppLanguage? = null
+        composeRule.setContent {
+            HavaTheme {
+                SettingsScreen(
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.SYSTEM,
+                    onUnitSelected = {},
+                    onThemeModeSelected = {},
+                    onAppLanguageSelected = { selected = it },
+                    onBack = {}
+                )
+            }
+        }
+        composeRule.onNodeWithText("English").performClick()
+        assertEquals(AppLanguage.ENGLISH, selected)
     }
 }

@@ -3,16 +3,20 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -20,7 +24,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: TemperatureUnitRepository,
-    private val themeModeRepository: ThemeModeRepository
+    private val themeModeRepository: ThemeModeRepository,
+    private val appLanguageApplier: AppLanguageApplier
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = repository.unit
@@ -59,5 +64,19 @@ class SettingsViewModel @Inject constructor(
 
     fun onThemeModeSelected(themeMode: ThemeMode) {
         viewModelScope.launch { themeModeRepository.setThemeMode(themeMode) }
+    }
+
+    // Dil tercihi AppCompat'te kalıcıdır; state yalnızca seçim görselliği
+    // içindir ve ayarlar ekranına her girişte tazelenir (spec §5).
+    private val _appLanguage = MutableStateFlow(appLanguageApplier.current)
+    val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
+
+    fun refreshAppLanguage() {
+        _appLanguage.value = appLanguageApplier.current
+    }
+
+    fun onAppLanguageSelected(language: AppLanguage) {
+        appLanguageApplier.apply(language)
+        _appLanguage.value = language
     }
 }

@@ -9,8 +9,10 @@ import androidx.compose.ui.test.performTouchInput
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
@@ -62,7 +64,7 @@ class MainRouteTest {
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
-        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository())
+        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
 
         composeRule.setContent {
             HavaTheme {
@@ -118,7 +120,7 @@ class MainRouteTest {
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
-        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository())
+        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
 
         composeRule.setContent {
             HavaTheme {
@@ -163,6 +165,12 @@ class MainRouteTest {
         }
         assertTrue("Yalnizca son silinen sehir geri alinmali", fakeCities.current().any { it.id == ankara.id })
         assertTrue("Onceki silinen sehir geri gelmemeli", fakeCities.current().none { it.id == istanbul.id })
+    }
+
+    /** Dil akışı bu testlerde kapsanmaz; seçim etkisiz. */
+    private class RouteAppLanguageApplier : AppLanguageApplier {
+        override val current: AppLanguage = AppLanguage.SYSTEM
+        override fun apply(language: AppLanguage) {}
     }
 
     private class RouteUnitRepository : TemperatureUnitRepository {

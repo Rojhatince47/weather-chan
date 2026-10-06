@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -27,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
@@ -44,8 +46,10 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.to
 fun SettingsScreen(
     unit: TemperatureUnitUiModel,
     themeMode: ThemeMode,
+    appLanguage: AppLanguage,
     onUnitSelected: (TemperatureUnit) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
+    onAppLanguageSelected: (AppLanguage) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -111,6 +115,28 @@ fun SettingsScreen(
                     )
                 }
             }
+            SectionTitle(
+                text = stringResource(R.string.settings_language_section),
+                modifier = Modifier.padding(top = HavaSpacing.md)
+            )
+            Column {
+                AppLanguage.entries.forEach { option ->
+                    FilterChip(
+                        selected = option == appLanguage,
+                        onClick = { onAppLanguageSelected(option) },
+                        label = {
+                            Text(
+                                when (option) {
+                                    AppLanguage.SYSTEM -> stringResource(R.string.language_system)
+                                    AppLanguage.TURKISH -> stringResource(R.string.language_turkish)
+                                    AppLanguage.ENGLISH -> stringResource(R.string.language_english)
+                                }
+                            )
+                        },
+                        modifier = Modifier.padding(vertical = HavaSpacing.xs)
+                    )
+                }
+            }
         }
     }
 }
@@ -131,14 +157,19 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 fun SettingsRoute(onBack: () -> Unit, modifier: Modifier = Modifier, settingsViewModel: SettingsViewModel = hiltViewModel()) {
     val unitState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
+    val appLanguage by settingsViewModel.appLanguage.collectAsStateWithLifecycle()
+    // Ekran her açılışında seçim dış kaynakla (sistem ayarları) tazelenir.
+    LaunchedEffect(Unit) { settingsViewModel.refreshAppLanguage() }
     // `UiState` yalnız yükleme sırasında farklı olabilir; ölümcül değil, bu
     // ekranda güvenli varsayılan gösterilir (MainRoute ile aynı desen).
     val unit = (unitState as? UiState.Success)?.data ?: TemperatureUnit.CELSIUS.toUiModel()
     SettingsScreen(
         unit = unit,
         themeMode = themeMode,
+        appLanguage = appLanguage,
         onUnitSelected = settingsViewModel::onUnitSelected,
         onThemeModeSelected = settingsViewModel::onThemeModeSelected,
+        onAppLanguageSelected = settingsViewModel::onAppLanguageSelected,
         onBack = onBack,
         modifier = modifier
     )

@@ -2,8 +2,10 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
 import kotlinx.coroutines.Dispatchers
@@ -125,8 +127,38 @@ class SettingsViewModelTest {
         }
     }
 
-    private fun newViewModel(): SettingsViewModel = SettingsViewModel(
+    private fun newViewModel(applier: AppLanguageApplier = FakeAppLanguageApplier()): SettingsViewModel = SettingsViewModel(
         FakeTemperatureUnitRepository(),
-        FakeThemeModeRepository()
+        FakeThemeModeRepository(),
+        applier
     )
+
+    // --- dil ---
+
+    private class FakeAppLanguageApplier : AppLanguageApplier {
+        var applied: AppLanguage? = null
+        override var current: AppLanguage = AppLanguage.SYSTEM
+        override fun apply(language: AppLanguage) {
+            applied = language
+            current = language
+        }
+    }
+
+    @Test
+    fun `dil secimi appliera tasinir`() = runTest {
+        val applier = FakeAppLanguageApplier()
+        val viewModel = newViewModel(applier = applier)
+        viewModel.onAppLanguageSelected(AppLanguage.ENGLISH)
+        assertEquals(AppLanguage.ENGLISH, applier.applied)
+        assertEquals(AppLanguage.ENGLISH, viewModel.appLanguage.value)
+    }
+
+    @Test
+    fun `dil durumu dis kaynak degisince tazelenir`() = runTest {
+        val applier = FakeAppLanguageApplier()
+        val viewModel = newViewModel(applier = applier)
+        applier.current = AppLanguage.TURKISH // API 33+ sistem ayarlarından değişim
+        viewModel.refreshAppLanguage()
+        assertEquals(AppLanguage.TURKISH, viewModel.appLanguage.value)
+    }
 }
