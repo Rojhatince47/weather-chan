@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -164,11 +165,14 @@ fun EvSayfasiScreen(
 private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Unit, openListText: String) {
     val safeIndex = currentPage.coerceIn(0, (cities.size - 1).coerceAtLeast(0))
     val current = cities.getOrNull(safeIndex)
+    // contentDescription birleştirilerek duyurulur: yalnız "listeyi aç"
+    // deseği mevcut şehrin adını maskelerdi.
+    val titleDescription = if (current != null) "${current.name}, $openListText" else openListText
     Column(
         modifier = Modifier
             .testTag("action_open_list")
-            .semantics { contentDescription = openListText }
-            .clickable { onOpenList() }
+            .semantics { contentDescription = titleDescription }
+            .clickable(role = Role.Button) { onOpenList() }
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (current?.isLocation == true) {
@@ -225,8 +229,10 @@ private fun HomePager(
             pagerState.animateScrollToPage(currentPage)
         }
     }
+    // Kararlı (settled) sayfa yayınlanır: `currentPage` kaydırmanın ortasında
+    // ara değerler alır ve programatik atlama animasyonunu iptal ederdi.
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }.collect { page -> onPageChanged(page) }
+        snapshotFlow { pagerState.settledPage }.collect { page -> onPageChanged(page) }
     }
     HorizontalPager(
         state = pagerState,
