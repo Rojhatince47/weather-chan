@@ -9,6 +9,7 @@ import io.github.rojhatince47.weatherchan.feature.city.data.permission.DataStore
 import io.github.rojhatince47.weatherchan.feature.city.data.repository.DataStoreCityRepository
 import io.github.rojhatince47.weatherchan.feature.city.data.suggestion.AssetCitySuggestionProvider
 import io.github.rojhatince47.weatherchan.feature.city.data.suggestion.LocaleDeviceCountryProvider
+import io.github.rojhatince47.weatherchan.feature.city.data.suggestion.nearbyDataStore
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestionProvider
@@ -44,5 +45,11 @@ abstract class CityDataModule {
         @Singleton
         @CityDataStore
         fun provideCityDataStore(@ApplicationContext context: Context): DataStore<Preferences> = context.cityDataStore
+
+        @Provides
+        @Singleton
+        @io.github.rojhatince47.weatherchan.feature.city.data.suggestion.NearbyDataStore
+        fun provideNearbyDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+            context.nearbyDataStore
     }
 }
