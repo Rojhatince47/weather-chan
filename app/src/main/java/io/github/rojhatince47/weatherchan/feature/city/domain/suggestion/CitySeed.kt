@@ -18,7 +18,9 @@ data class CitySeed(
     fun toCity(): City = City(
         name = name,
         region = null,
-        country = countryName,
+        // Boş dize → null: Overpass kayıtları ülke taşımaz; listOfNotNull
+        // boş parça göstermez (spec §4).
+        country = countryName.ifBlank { null },
         coordinates = coordinates
     )
 }
