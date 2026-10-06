@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Hava" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- AppCompatActivity AppCompat kökenli tema ister; framework teması
+         "You need to use a Theme.AppCompat theme" istisnasıyla çöker.
+         DayNight.NoActionBar, Material.Light.NoActionBar ile işlevsel
+         eşdeğerdir (koyu tema HavaTheme/Material3 yönetir). -->
+    <style name="Theme.Hava" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>
