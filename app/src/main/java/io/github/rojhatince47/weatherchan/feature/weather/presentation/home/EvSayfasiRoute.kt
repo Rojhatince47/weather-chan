@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.rojhatince47.weatherchan.core.navigation.SELECTED_CITY_ID
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
@@ -41,11 +43,28 @@ fun EvSayfasiRoute(
     modifier: Modifier = Modifier,
     viewModel: EvSayfasiViewModel = hiltViewModel(),
     // NavHost üstünde alınan ortak örnek; giriş başına ayrı örnek oluşmaz.
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    // Pager'ın kendi back stack girdisi: liste/ekleme dönüşünde seçilen
+    // şehir kimliği bu kanaldan taşınır.
+    savedStateHandle: SavedStateHandle? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    // Liste ya da şehir ekleme ekranı kapandığında seçilen şehrin kimliği
+    // buradan okunur; pager o sayfaya kaydırır ve anahtar temizlenir ki
+    // aynı seçim ileri geri dönüşlerde yeniden tetiklenmesin.
+    val selectCityId = savedStateHandle
+        ?.getStateFlow<Long?>(SELECTED_CITY_ID, null)
+        ?.collectAsStateWithLifecycle()
+        ?.value
+    LaunchedEffect(selectCityId) {
+        if (selectCityId != null) {
+            viewModel.selectCity(selectCityId)
+            savedStateHandle?.set(SELECTED_CITY_ID, null)
+        }
+    }
 
     // Sistem izin diyaloğu. Cevap ViewModel'e bırakılır; kalıcı bayrak orada
     // yazılır ve bu launcher bir daha tetiklenmez.
