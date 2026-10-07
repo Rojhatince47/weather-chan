@@ -4,6 +4,7 @@ import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
 import io.github.rojhatince47.weatherchan.feature.city.data.local.CityPreferences
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityProximity
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,8 +25,10 @@ class DataStoreCityRepository @Inject constructor(
     override val cities: Flow<List<City>> = preferences.cities()
 
     override suspend fun add(city: City): List<City> = mutate { current ->
-        // Zaten varsa üzerine yazma: mükerrer kayıt oluşmasın.
-        if (current.any { it.id == city.id }) current else current + city
+        // Zaten aynı yerde bir kayıt varsa üzerine yazma: mükerrer kayıt
+        // oluşmasın. Kimlik değil yakınlık: aynı yer GPS/geocoding/asset/
+        // Overpass koordinatlarında farklı `id` taşır (`CityProximity` KDoc).
+        if (current.any { CityProximity.isSamePlace(it, city) }) current else current + city
     }
 
     override suspend fun remove(cityId: Long): List<City> = mutate { current ->
@@ -33,22 +36,27 @@ class DataStoreCityRepository @Inject constructor(
     }
 
     override suspend fun restore(city: City, index: Int): List<City> = mutate { current ->
-        if (current.any { it.id == city.id }) current else current.insertAt(index.coerceIn(0, current.size), city)
+        if (current.any { CityProximity.isSamePlace(it, city) }) current else current.insertAt(index.coerceIn(0, current.size), city)
     }
 
     private fun <T> List<T>.insertAt(position: Int, element: T): List<T> = toMutableList().apply { add(position, element) }
 
     override suspend fun addAsLocation(city: City): List<City> = mutate { current ->
-        val location = city.copy(isLocation = true)
         // Konum tekildir. Ad çözümlemesi her açılışta yeniden koşar ve ağın
         // durumuna göre aynı yere farklı kimlik döndürebilir: başarılı çözüm
         // geocoding koordinatını, başarısız çözüm GPS koordinatını verir.
-        // Eski konum kaydı yalnız aynı kimlikte çıkarılsaydı kimlik farkı
-        // aynı yeri iki konum kartı yapardı — cihazda tam olarak böyle oldu.
-        // Bu yüzden kimliğe değil konum bayrağına bakılır.
-        val withoutLocation = current.filterNot { it.isLocation || it.id == location.id }
+        // Bu yüzden kimliğe değil konum bayrağına **ve yakınlığa** bakılır.
+        // Geocoding başarısızsa gelen kayıt isimsizdir; düşürülen isimli
+        // kartın adı korunur — isimli kart boş isimli konuma dönüşmez.
+        val sibling = current.firstOrNull { !it.isLocation && CityProximity.isSamePlace(it, city) }
+        val location = city.copy(
+            isLocation = true,
+            name = city.name.ifBlank { sibling?.name.orEmpty() },
+            region = city.region ?: sibling?.region,
+            country = city.country ?: sibling?.country
+        )
         // Konum başa; geri kalanlar eski sıralarını korur.
-        listOf(location) + withoutLocation
+        listOf(location) + current.filterNot { it.isLocation || CityProximity.isSamePlace(it, location) }
     }
 
     /**

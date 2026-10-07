@@ -462,4 +462,54 @@ class DataStoreCityRepositoryTest {
 
         assertEquals(listOf("Istanbul", "Ankara", "Izmir"), names)
     }
+
+    // --- yakınlık mükerrer kontrolü ---------------------------------------------
+
+    @Test
+    fun `kaynaklar arasi ayni yer mukerrer olusmaz`() = runTest {
+        // Gerçek cihaz çifti: GPS 7 basamak ↔ geocoding 5 basamak.
+        val repository = createRepository(createDataStore())
+        repository.add(City("Mardin", "Mardin", "Turkey", Coordinates(37.3652283, 40.2676315)))
+        repository.add(City("Derik", "Mardin", "Türkiye Cumhuriyeti", Coordinates(37.36336, 40.26473)))
+
+        assertEquals(listOf("Mardin"), repository.cities.first().map { it.name })
+    }
+
+    @Test
+    fun `uzak sehirler ayri kalir`() = runTest {
+        val repository = createRepository(createDataStore())
+        repository.add(bursa)
+        repository.add(ankara)
+
+        assertEquals(2, repository.cities.first().size)
+    }
+
+    @Test
+    fun `konum ayni yerdeki isimli karti bolmez ve ismi korur`() = runTest {
+        // Geocoding başarısız düşüşü: isimsiz konum kaydı, aynı-yer isimli
+        // kartı ezmemeli — isim korunur (spec K2.2).
+        val repository = createRepository(createDataStore())
+        repository.add(City("Derik", "Mardin", "Türkiye", Coordinates(37.36336, 40.26473)))
+
+        repository.addAsLocation(City("", null, null, Coordinates(37.3652283, 40.2676315)))
+
+        val stored = repository.cities.first()
+        assertEquals(1, stored.size)
+        assertTrue(stored.single().isLocation)
+        assertEquals("Derik", stored.single().name)
+    }
+
+    @Test
+    fun `geri alma ayni yer karti dururken sessizce atlanir`() = runTest {
+        val repository = createRepository(createDataStore())
+        val derik = City("Derik", "Mardin", "Türkiye", Coordinates(37.36336, 40.26473))
+        repository.add(derik)
+        repository.remove(derik.id)
+        // Aynı yere başka kaynaklı kayıt eklendi:
+        repository.add(City("Mardin", "Mardin", "Turkey", Coordinates(37.3652283, 40.2676315)))
+
+        val restored = repository.restore(derik, 0)
+
+        assertEquals(listOf("Mardin"), restored.map { it.name })
+    }
 }

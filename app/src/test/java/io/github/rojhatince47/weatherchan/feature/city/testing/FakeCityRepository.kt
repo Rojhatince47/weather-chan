@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.city.testing
 
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityProximity
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +18,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * vermek zorundadır.
  *
  * `cities` bilinçli olarak `StateFlow` **değil** `Flow` olarak sunulur: gerçek
- * uygulamada depo `Flow` yayar ve dinleyen ilk değeri gerçek veridir. Sahte de
+ * uygulamada depo `Flow` yaylar ve dinleyen ilk değeri gerçek veridir. Sahte de
  * aynı sözleşmeyi korur, böylece testler "ilk yayım doğru listeden başlar"
  * davranışını gerçekle üzerinde sınar. (Eski `staleStartupValue` ile
  * taklit edilen soğuk açılış yarışı artık mümkün değildir ve kaldırıldı.)
+ *
+ * Mükerrer kontrol gerçek depo gibi **yakınlıkla** yapılır (`CityProximity`,
+ * 10 km): aynı yer farklı kaynak koordinatlarıyla gelirse tek kayıttır.
  */
 class FakeCityRepository(
     initial: List<City> = listOf(
@@ -39,7 +43,7 @@ class FakeCityRepository(
     fun current(): List<City> = state.value
 
     override suspend fun add(city: City): List<City> {
-        val updated = if (state.value.any { it.id == city.id }) state.value else state.value + city
+        val updated = if (state.value.any { CityProximity.isSamePlace(it, city) }) state.value else state.value + city
         state.value = updated
         return updated
     }
@@ -52,7 +56,7 @@ class FakeCityRepository(
 
     override suspend fun restore(city: City, index: Int): List<City> {
         val current = state.value
-        val updated = if (current.any { it.id == city.id }) {
+        val updated = if (current.any { CityProximity.isSamePlace(it, city) }) {
             current
         } else {
             current.toMutableList().apply { add(index.coerceIn(0, current.size), city) }
@@ -62,10 +66,16 @@ class FakeCityRepository(
     }
 
     override suspend fun addAsLocation(city: City): List<City> {
-        val location = city.copy(isLocation = true)
-        // Gerçek depo sözleşmesi: konum tektir ve kimliği değişse bile eski
-        // konum kaydı düşer (bayrağa bakılır, kimliğe değil).
-        val updated = listOf(location) + state.value.filterNot { it.isLocation || it.id == location.id }
+        // Gerçek depo sözleşmesi: konum tektir, mükerrer kontrol yakınlıkladır;
+        // isimsiz konum kaydı aynı-yer isimli kartın adını korur.
+        val sibling = state.value.firstOrNull { !it.isLocation && CityProximity.isSamePlace(it, city) }
+        val location = city.copy(
+            isLocation = true,
+            name = city.name.ifBlank { sibling?.name.orEmpty() },
+            region = city.region ?: sibling?.region,
+            country = city.country ?: sibling?.country
+        )
+        val updated = listOf(location) + state.value.filterNot { it.isLocation || CityProximity.isSamePlace(it, location) }
         state.value = updated
         return updated
     }
