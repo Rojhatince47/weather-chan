@@ -1,5 +1,8 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,8 +19,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
@@ -67,10 +73,27 @@ fun SearchResultRow(
                 )
             }
             if (result.isInList) {
+                // Hafif "pop": tik belirirken scale (spring). `Animatable` +
+                // `LaunchedEffect` sayesinde satır ekran açılıştan beri
+                // tikliyken de aynı geçişi oynar (spec §4.1).
+                val scale = remember { Animatable(0.75f) }
+                LaunchedEffect(Unit) {
+                    scale.animateTo(
+                        targetValue = 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                }
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = stringResource(R.string.search_result_in_list),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                    }
                 )
             } else {
                 IconButton(onClick = onAddClick) {
