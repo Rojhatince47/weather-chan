@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -29,8 +30,9 @@ class AddCityScreenTest {
     private fun state(
         suggestions: SuggestionGroup? = SuggestionGroup(SuggestionKind.Nearby, listOf(CitySuggestion(kocaeli, 42))),
         searchState: SearchUiState = SearchUiState.Idle,
-        query: String = ""
-    ) = AddCityUiState(query = query, suggestions = suggestions, searchState = searchState)
+        query: String = "",
+        existingIds: Set<Long> = emptySet()
+    ) = AddCityUiState(query = query, suggestions = suggestions, existingIds = existingIds, searchState = searchState)
 
     private fun setScreen(state: AddCityUiState, onAddCity: (City) -> Unit = {}, onBack: () -> Unit = {}) {
         composeRule.setContent {
@@ -80,6 +82,43 @@ class AddCityScreenTest {
         setScreen(state(), onAddCity = { added = it })
         composeRule.onNodeWithText("Kocaeli").performClick()
         assertEquals(kocaeli, added)
+    }
+
+    @Test
+    fun oneriEkleninceSatirKalirVeTikOlur() {
+        // Spec: eklenen satır kaybolmaz, + yerine tik çizilir.
+        val uiState = mutableStateOf(state())
+        composeRule.setContent {
+            HavaTheme {
+                AddCityScreen(
+                    uiState = uiState.value,
+                    onQueryChange = {},
+                    onAddCity = { uiState.value = state(existingIds = setOf(kocaeli.id)) },
+                    onOpenCity = {},
+                    onBack = {}
+                )
+            }
+        }
+        composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertIsDisplayed()
+        composeRule.onNodeWithText("Kocaeli").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Kocaeli").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Listede").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertDoesNotExist()
+    }
+
+    @Test
+    fun aramaSonucundaEklenmisSehirTikOlur() {
+        // Arama tarafı aynı bayrağı paylaşır (mevcut SearchResultRow davranışı,
+        // bu test kilitler).
+        setScreen(
+            state(
+                query = "Koc",
+                searchState = SearchUiState.Success(listOf(SearchResultUiModel(kocaeli, isInList = true)))
+            )
+        )
+        composeRule.onNodeWithContentDescription("Listede").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertDoesNotExist()
     }
 
     @Test
