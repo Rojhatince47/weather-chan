@@ -59,10 +59,11 @@ class GetLocationCityUseCase @Inject constructor(
         val areaName = resolved?.name?.takeIf { it.isNotBlank() && it != query }
         val region = resolved?.region?.takeIf { it.isNotBlank() }
 
-        // Doğruluk > hassasiyet (spec §3): bölge adı yerleşim adına tercih
-        // edilir. Koordinat daima GPS'tir; çözülen kaydın merkezi kullanılmaz.
+        // Yerleşim adı önce, bölge ayrı: görünen tam ad presentation'da
+        // `displayTitle` ile birleştirilir (spec: konum tam adı). Koordinat
+        // daima GPS'tir; çözülen kaydın merkezi kullanılmaz.
         val city = City(
-            name = region ?: areaName ?: "",
+            name = areaName ?: region ?: "",
             region = region,
             country = resolved?.country,
             coordinates = coordinates,

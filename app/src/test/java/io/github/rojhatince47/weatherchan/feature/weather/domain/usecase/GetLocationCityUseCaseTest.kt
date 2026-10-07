@@ -48,8 +48,9 @@ class GetLocationCityUseCaseTest {
         val city = requireNotNull(useCase())
 
         assertTrue("Sonuç konum olarak işaretlenmeli", city.isLocation)
-        // Doğruluk > hassasiyet: bölge adı yerleşim adına tercih edilir.
-        assertEquals("Istanbul", city.name)
+        // Yerleşim adı önce; bölge ayrı alanda kalır.
+        assertEquals("Kuzguncuk", city.name)
+        assertEquals("Istanbul", city.region)
         // Veri daima gerçek GPS koordinatından okunur; yerleşim merkezi değil.
         assertEquals(coordinates, city.coordinates)
         // Coğrafi çözümleme yapmayan ham sorgu gönderilmeli. Ondalık ayırıcı
@@ -127,12 +128,12 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        // Bölge adı gerçek addır; önbelleğe da o yazılır.
-        assertEquals("Istanbul", city.name)
+        // Yerleşim adı gerçek addır; önbelleğe da o yazılır.
+        assertEquals("Uskudar", city.name)
         assertTrue(city.isLocation)
         assertEquals(1, weather.searchRequests.size)
         assertEquals(listOf(city), weather.savedLocationCities)
-        assertEquals("Istanbul", weather.savedLocationCities.single().name)
+        assertEquals("Uskudar", weather.savedLocationCities.single().name)
     }
 
     @Test
@@ -223,7 +224,7 @@ class GetLocationCityUseCaseTest {
 
         val city = requireNotNull(useCase())
 
-        assertEquals("Marmara", city.name)
+        assertEquals("İstanbul", city.name)
         assertEquals(1, weather.savedLocationCities.size)
     }
 
