@@ -2,7 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.testing
 
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
@@ -82,9 +82,9 @@ class FakeWeatherRepository : WeatherRepository {
     val searchRequests = mutableListOf<String>()
     val cityWeathersRequests = mutableListOf<List<City>>()
 
-    var cachedWeathers: CachedWeathers? = null
+    var cachedForecasts: Map<Long, CachedForecast> = emptyMap()
 
-    override fun cachedWeathers(): Flow<CachedWeathers?> = flowOf(cachedWeathers)
+    override fun cachedForecasts(): Flow<Map<Long, CachedForecast>> = flowOf(cachedForecasts)
 
     var cachedLocationCity: City? = null
     val savedLocationCities = mutableListOf<City>()

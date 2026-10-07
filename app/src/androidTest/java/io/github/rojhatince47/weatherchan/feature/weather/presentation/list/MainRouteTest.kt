@@ -16,7 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.App
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -24,7 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWe
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
@@ -56,7 +56,7 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
-            getCachedWeathers = GetCachedWeathersUseCase(weather),
+            getCachedForecasts = GetCachedForecastsUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities
@@ -112,7 +112,7 @@ class MainRouteTest {
         val unitRepository = RouteUnitRepository()
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
-            getCachedWeathers = GetCachedWeathersUseCase(weather),
+            getCachedForecasts = GetCachedForecastsUseCase(weather),
             uiMapper = WeatherUiMapper(),
             unitRepository = unitRepository,
             cityRepository = fakeCities
@@ -230,7 +230,7 @@ class MainRouteTest {
     }
 
     private class RouteWeatherRepository : WeatherRepository {
-        override fun cachedWeathers(): Flow<CachedWeathers?> = emptyFlow()
+        override fun cachedForecasts(): Flow<Map<Long, CachedForecast>> = emptyFlow()
 
         override fun cachedLocationCity(): Flow<City?> = flowOf(null)
 

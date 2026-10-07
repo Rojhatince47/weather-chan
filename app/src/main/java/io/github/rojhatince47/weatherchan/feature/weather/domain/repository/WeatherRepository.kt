@@ -1,7 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.domain.repository
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
@@ -14,8 +14,8 @@ interface WeatherRepository {
      */
     suspend fun cityWeathers(cities: List<City>): AppResult<List<CityWeather>>
 
-    /** Diskteki son başarılı tur; yoksa/bozuksa `null` akar. */
-    fun cachedWeathers(): Flow<CachedWeathers?>
+    /** Şehir-başı son başarılı tahminler; `Long.MIN_VALUE` konum kaydıdır. Boş map = kayıt yok. */
+    fun cachedForecasts(): Flow<Map<Long, CachedForecast>>
 
     /** Diskteki son çözülmüş konum adı; yoksa/bozuksa `null` akar. */
     fun cachedLocationCity(): Flow<City?>

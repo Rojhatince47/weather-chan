@@ -11,10 +11,10 @@ import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
-import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getCityWeathers: GetCityWeathersUseCase,
-    private val getCachedWeathers: GetCachedWeathersUseCase,
+    private val getCachedForecasts: GetCachedForecastsUseCase,
     private val uiMapper: WeatherUiMapper,
     private val unitRepository: TemperatureUnitRepository,
     private val cityRepository: CityRepository,
@@ -74,8 +74,11 @@ class MainViewModel @Inject constructor(
     /** Son başarılı [GetCityWeathersUseCase] cevabı. Liste [deriveContent] ile buradan, [storedCities] sırası ve birimden türetilir; ağa gidilmez. */
     private var cachedCityWeathers: List<CityWeather>? = null
 
-    /** Diskten gelen son başarılı turun damgası; `null` = tohum yok. */
-    private var lastFetchedAt: Instant? = null
+    /** Disk tohum map'i; türetim ilk depo yayımında bir kez koşar. */
+    private var seedForecasts: Map<Long, CachedForecast>? = null
+
+    /** Tohum girişlerinin damgaları; `needsFetch` kararı buradan verilir. */
+    private var seedTimestamps: Map<Long, Instant> = emptyMap()
 
     /**
      * Depodan **yayılan** son liste.
@@ -107,14 +110,22 @@ class MainViewModel @Inject constructor(
         // gelene kadar listenin ne olduğu bilinmez. Akışın ilk yayımı zaten
         // gerçek veridir, dolayısıyla ilk yükleme de doğru listeden başlar.
         viewModelScope.launch {
-            // Tohum, toplayıcı başlamadan önce okunur (sıralama şarttır).
-            getCachedWeathers()?.let { seed ->
-                cachedCityWeathers = seed.weathers
-                lastFetchedAt = seed.fetchedAt
-                rederiveContent()
-            }
+            // Tohum map'i, toplayıcı başlamadan önce okunur (sıralama şarttır);
+            // türetim ilk depo yayımında bir kez koşar.
+            seedForecasts = getCachedForecasts()
             cityRepository.cities.collect { stored ->
                 storedCities = stored
+                seedForecasts?.let { seed ->
+                    seedForecasts = null
+                    val derived = deriveForecastSeed(seed, stored)
+                    // Boş/eksik tohum "yok" demektir: bellek tohumu null kalır,
+                    // `needsFetch` tur atar — eski boş-açılış davranışı korunur.
+                    if (derived.isNotEmpty()) {
+                        cachedCityWeathers = derived
+                        seedTimestamps = seed.mapValues { it.value.fetchedAt }
+                        rederiveContent()
+                    }
+                }
                 // Depo gerçeği ağ turundan **bağımsızdır**: silinen şehir
                 // ekranda kalmamalı, eklenen şehir hemen görünmeli. Aksi hâlde
                 // kullanıcı "silinmedi" sanıp aynı şehri yeniden silmeye
@@ -132,6 +143,16 @@ class MainViewModel @Inject constructor(
     }
 
     /**
+     * Disk tohumunu depo listesiyle kesiştirir: `CityWeather` listesi türetir.
+     * Konum önce `LOCATION_KEY`'den aranır, yoksa kendi kimliğine düşer;
+     * depoda olmayan kayıt görünmez.
+     */
+    private fun deriveForecastSeed(seed: Map<Long, CachedForecast>, stored: List<City>): List<CityWeather> = stored.mapNotNull { city ->
+        val entry = if (city.isLocation) seed[CachedForecast.LOCATION_KEY] ?: seed[city.id] else seed[city.id]
+        entry?.let { CityWeather(city, it.forecast.currentWeather) }
+    }
+
+    /**
      * Bu yayımda ağ turu gerekli mi?
      *
      * - Önbellek yoksa / tohum okunamadıysa: evet.
@@ -143,8 +164,12 @@ class MainViewModel @Inject constructor(
     private fun needsFetch(stored: List<City>): Boolean {
         val cached = cachedCityWeathers ?: return true
         if (stored.any { city -> cached.none { it.city.id == city.id } }) return true
-        val fetchedAt = lastFetchedAt ?: return true
-        return CachedWeathers(fetchedAt, cached).isStale(clock.instant())
+        val now = clock.instant()
+        return stored.any { city ->
+            val key = if (city.isLocation) CachedForecast.LOCATION_KEY else city.id
+            val fetchedAt = seedTimestamps[key] ?: return true
+            CachedForecast.isStale(fetchedAt, now)
+        }
     }
 
     fun onRetry() {
@@ -188,7 +213,9 @@ class MainViewModel @Inject constructor(
                 when (val result = getCityWeathers(stored)) {
                     is AppResult.Success -> {
                         applyFetchedData(result.data)
-                        lastFetchedAt = clock.instant()
+                        seedTimestamps =
+                            seedTimestamps +
+                            stored.associate { (if (it.isLocation) CachedForecast.LOCATION_KEY else it.id) to clock.instant() }
                         _uiState.update { it.copy(isRefreshing = false) }
                     }
                     is AppResult.Failure -> if (keepContent) {

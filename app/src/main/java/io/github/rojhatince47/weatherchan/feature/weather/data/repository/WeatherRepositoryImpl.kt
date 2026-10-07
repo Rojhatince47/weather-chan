@@ -1,14 +1,14 @@
 package io.github.rojhatince47.weatherchan.feature.weather.data.repository
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.CachedForecastDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
-import io.github.rojhatince47.weatherchan.feature.weather.data.local.toCachedDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toCity
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDomain
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherDataSource
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedWeathers
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
@@ -25,9 +25,11 @@ class WeatherRepositoryImpl @Inject constructor(
     private val clock: Clock
 ) : WeatherRepository {
 
-    // `toDomain()` bilinmeyen enum adında fırlatır (`valueOf`); blob-düzeyi
-    // `runCatching` burada kurulur. Bozuk kayıt → `null` → önbellek-yok davranışı.
-    override fun cachedWeathers(): Flow<CachedWeathers?> = cache.cached().map { runCatching { it?.toDomain() }.getOrNull() }
+    // Bozuk giriş yalnız kendi kaydını düşürür (`valueOf` fırlatır);
+    // yapısal bozukluk tüm map'i düşürür (preferences katmanı `null` verir).
+    override fun cachedForecasts(): Flow<Map<Long, CachedForecast>> = cache.cachedForecasts().map { blob ->
+        blob?.entries?.mapNotNull { (key, dto) -> runCatching { key to dto.toDomain() }.getOrNull() }?.toMap().orEmpty()
+    }
 
     override fun cachedLocationCity(): Flow<City?> = cache.locationCity().map { it?.toCity() }
 
@@ -40,18 +42,21 @@ class WeatherRepositoryImpl @Inject constructor(
             is AppResult.Success -> primaryResult
             is AppResult.Failure -> backup.cityWeathers(cities)
         }
-        // Yalnız tam kapsama yazılır: kısmi turda eksik şehir düşerdi.
-        if (result is AppResult.Success &&
-            result.data.map { it.city.id }.containsAll(cities.map { it.id })
-        ) {
-            cache.write(result.data.toCachedDto(clock.instant().toEpochMilli()))
-        }
         return result
     }
 
-    override suspend fun forecast(city: City): AppResult<Forecast> = when (val primaryResult = primary.forecast(city)) {
-        is AppResult.Success -> primaryResult
-        is AppResult.Failure -> backup.forecast(city)
+    override suspend fun forecast(city: City): AppResult<Forecast> {
+        val result = when (val primaryResult = primary.forecast(city)) {
+            is AppResult.Success -> primaryResult
+            is AppResult.Failure -> backup.forecast(city)
+        }
+        // Tek yazıcı: başarı o şehrin girişini günceller; konum kimlik her
+        // açılışta döndüğü için sabit `LOCATION_KEY` altında saklanır.
+        if (result is AppResult.Success) {
+            val key = if (city.isLocation) CachedForecast.LOCATION_KEY else city.id
+            cache.writeForecast(key, CachedForecastDto(clock.instant().toEpochMilli(), result.data.toDto()))
+        }
+        return result
     }
 
     /**

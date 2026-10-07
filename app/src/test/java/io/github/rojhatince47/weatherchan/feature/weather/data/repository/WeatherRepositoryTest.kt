@@ -5,6 +5,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.CachedForecastDto
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.CurrentWeatherDto
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.ForecastDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
@@ -14,6 +17,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherDataSource
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInWeatherMapper
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
@@ -250,47 +254,54 @@ class WeatherRepositoryTest {
     }
 
     @Test
-    fun `basarili tur onbellege yazar`() = runTest {
-        val cities = testCities(2)
-        repeat(2) {
-            primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
-        }
-
-        val result = repository.cityWeathers(cities)
-
-        assertTrue(result is AppResult.Success)
-        val cached = repository.cachedWeathers().first()
-        assertEquals(
-            cities.map { it.id }.toSet(),
-            cached!!.weathers.map { it.city.id }.toSet()
-        )
-        assertEquals(fixedNow, cached.fetchedAt)
-    }
-
-    @Test
-    fun `basarisiz tur yazmaz`() = runTest {
-        repeat(2) {
-            primaryServer.enqueue(MockResponse().setResponseCode(500))
-            backupServer.enqueue(MockResponse().setResponseCode(500))
-        }
-
-        assertTrue(repository.cityWeathers(testCities(2)) is AppResult.Failure)
-        assertNull(repository.cachedWeathers().first())
-    }
-
-    @Test
-    fun `kismi tur yazmaz`() = runTest {
-        // İki paralel istekten biri 500 alır: `batchAll` kalanı `Success(eksik
-        // liste)` döner. Hangi şehrin düştüğü belirsizdir (paralel yarış) ama
-        // sonuç her durumda eksiktir → yazma atlanır.
+    fun `basarili forecast sehir girisini yazar`() = runTest {
         primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
-        primaryServer.enqueue(MockResponse().setResponseCode(500))
+        val city = dynamicCity()
 
-        val result = repository.cityWeathers(testCities(2))
+        val result = repository.forecast(city = city)
 
         assertTrue(result is AppResult.Success)
-        assertEquals(1, (result as AppResult.Success).data.size)
-        assertNull(repository.cachedWeathers().first())
+        val cached = repository.cachedForecasts().first()
+        assertEquals(setOf(city.id), cached.keys)
+        assertEquals(fixedNow, cached.getValue(city.id).fetchedAt)
+    }
+
+    @Test
+    fun `basarisiz forecast yazmaz`() = runTest {
+        primaryServer.enqueue(MockResponse().setResponseCode(500))
+        backupServer.enqueue(MockResponse().setResponseCode(500))
+
+        assertTrue(repository.forecast(city = dynamicCity()) is AppResult.Failure)
+        assertTrue(repository.cachedForecasts().first().isEmpty())
+    }
+
+    @Test
+    fun `konum forecasti sentinel anahtara yazar`() = runTest {
+        primaryServer.enqueue(MockResponse().setBody(FORECAST_JSON))
+        val location = dynamicCity().copy(isLocation = true)
+
+        assertTrue(repository.forecast(city = location) is AppResult.Success)
+
+        val cached = repository.cachedForecasts().first()
+        assertEquals(setOf(CachedForecast.LOCATION_KEY), cached.keys)
+        assertTrue(cached.getValue(CachedForecast.LOCATION_KEY).forecast.city.isLocation)
+    }
+
+    @Test
+    fun `bilinmeyen enum tek girisi dusurur`() = runTest {
+        val good = dynamicCity()
+        cachePreferences.writeForecast(
+            good.id,
+            CachedForecastDto(1L, ForecastDto(good.toDto(), CurrentWeatherDto(20, "CLEAR", 5, 40, true), emptyList(), emptyList()))
+        )
+        cachePreferences.writeForecast(
+            999L,
+            CachedForecastDto(1L, ForecastDto(good.toDto(), CurrentWeatherDto(20, "FIRTINA", 5, 40, true), emptyList(), emptyList()))
+        )
+
+        val cached = repository.cachedForecasts().first()
+
+        assertEquals(setOf(good.id), cached.keys)
     }
 
     @Test

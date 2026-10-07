@@ -39,28 +39,51 @@ class WeatherCachePreferencesTest {
         scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + Job())
     ) { file }
 
-    private fun sampleDto() = CachedWeathersDto(
+    private fun sampleForecastEntry() = CachedForecastDto(
         fetchedAtEpochMillis = 1_750_000_000_000L,
-        weathers = emptyList()
+        forecast = ForecastDto(
+            city = City("Ankara", "İç Anadolu", "Türkiye", Coordinates(39.92, 32.85)).toDto(),
+            current = CurrentWeatherDto(14, "CLOUDY", 6, 45, true),
+            hourly = listOf(HourlyForecastDto(10, 15, "CLEAR", 5)),
+            daily = listOf(DailyForecastDto(0, 8, 16, "PARTLY_CLOUDY"))
+        )
     )
 
     @Test
-    fun `yazilan okunur`() = runTest {
+    fun `yazilan girisler map olarak okunur`() = runTest {
         val preferences = createPreferences(createDataStore())
-        preferences.write(sampleDto())
-        assertEquals(sampleDto(), preferences.cached().first())
+        preferences.writeForecast(42L, sampleForecastEntry())
+        assertEquals(mapOf(42L to sampleForecastEntry()), preferences.cachedForecasts().first())
+    }
+
+    @Test
+    fun `eski girisler yeni yazimda korunur`() = runTest {
+        val preferences = createPreferences(createDataStore())
+        preferences.writeForecast(1L, sampleForecastEntry())
+        preferences.writeForecast(2L, sampleForecastEntry())
+
+        assertEquals(setOf(1L, 2L), preferences.cachedForecasts().first()!!.keys)
     }
 
     @Test
     fun `bosken null doner`() = runTest {
-        assertNull(createPreferences(createDataStore()).cached().first())
+        assertNull(createPreferences(createDataStore()).cachedForecasts().first())
     }
 
     @Test
     fun `bozuk icerik null doner`() = runTest {
         val dataStore = createDataStore()
-        dataStore.edit { it[stringPreferencesKey("cached_weathers")] = "{ bozuk" }
-        assertNull(createPreferences(dataStore).cached().first())
+        dataStore.edit { it[stringPreferencesKey("cached_forecasts")] = "{ bozuk" }
+        assertNull(createPreferences(dataStore).cachedForecasts().first())
+    }
+
+    @Test
+    fun `eski cached_weathers anahtari bir kez temizlenir`() = runTest {
+        val dataStore = createDataStore()
+        dataStore.edit { it[stringPreferencesKey("cached_weathers")] = """{"x":1}""" }
+        createPreferences(dataStore).cachedForecasts().first()
+
+        assertNull(dataStore.data.first()[stringPreferencesKey("cached_weathers")])
     }
 
     @Test
