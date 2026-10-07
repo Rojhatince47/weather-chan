@@ -20,7 +20,8 @@ import kotlin.math.roundToInt
  * **Konum izni asla bu akışta istenmez.** [LocationProvider] izni okumaz,
  * yalnız okumayı dener; izin yoksa `null` döner ve akış ülkeye düşer.
  *
- * Eleme yapılmaz: "ekli" işareti VM/UI katmanındadır (spec: tik donutu).
+ * Eleme bu akışta yapılmaz: "ekli" işareti ve öneri filtresi VM katmanındadır,
+ * yakınlık eşleşmesiyle (spec: yakinlik eslesmesi ve oneri elemesi).
  */
 class SuggestCitiesUseCase @Inject constructor(
     private val suggestionProvider: CitySuggestionProvider,

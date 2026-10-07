@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * vermek zorundadır.
  *
  * `cities` bilinçli olarak `StateFlow` **değil** `Flow` olarak sunulur: gerçek
- * uygulamada depo `Flow` yaylar ve dinleyen ilk değeri gerçek veridir. Sahte de
+ * uygulamada depo `Flow` yayar ve dinleyen ilk değeri gerçek veridir. Sahte de
  * aynı sözleşmeyi korur, böylece testler "ilk yayım doğru listeden başlar"
  * davranışını gerçekle üzerinde sınar. (Eski `staleStartupValue` ile
  * taklit edilen soğuk açılış yarışı artık mümkün değildir ve kaldırıldı.)

@@ -266,7 +266,10 @@ class AddCityViewModelTest {
         // toplayıcıyı BEKLEMEMELİ — satır anında düşer. Eski kodda toplayıcı
         // Aşama B'nin 12 sn GPS bekleme noktasında askıda kalıyordu.
         val vm = viewModel(
-            location = LocationProvider { delay(10_000); seed.coordinates }
+            location = LocationProvider {
+                delay(10_000)
+                seed.coordinates
+            }
         )
         vm.onAddCity(kocaeli)
 

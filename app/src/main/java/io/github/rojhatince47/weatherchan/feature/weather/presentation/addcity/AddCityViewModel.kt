@@ -164,7 +164,9 @@ class AddCityViewModel @Inject constructor(
                 is AppResult.Success -> _uiState.update {
                     it.copy(
                         searchState = SearchUiState.Success(
-                            result.data.map { city -> SearchResultUiModel(city, existingCities.any { CityProximity.isSamePlace(city, it) }) }
+                            result.data.map { city ->
+                                SearchResultUiModel(city, existingCities.any { CityProximity.isSamePlace(city, it) })
+                            }
                         )
                     )
                 }
