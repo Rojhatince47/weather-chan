@@ -10,7 +10,9 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -78,12 +80,28 @@ class WeatherCachePreferencesTest {
     }
 
     @Test
+    fun `es zamanli yazim kayip guncelleme yapmaz`() = runTest {
+        // Pager penceresi ~3 eşzamanlı yazma üretir; `edit` içi birleştirme
+        // sayesinde hiçbir giriş kaybolmaz.
+        val preferences = createPreferences(createDataStore())
+        coroutineScope {
+            launch { preferences.writeForecast(1L, sampleForecastEntry()) }
+            launch { preferences.writeForecast(2L, sampleForecastEntry()) }
+        }
+        assertEquals(setOf(1L, 2L), preferences.cachedForecasts().first()!!.keys)
+    }
+
+    @Test
     fun `eski cached_weathers anahtari bir kez temizlenir`() = runTest {
         val dataStore = createDataStore()
         dataStore.edit { it[stringPreferencesKey("cached_weathers")] = """{"x":1}""" }
         createPreferences(dataStore).cachedForecasts().first()
-
         assertNull(dataStore.data.first()[stringPreferencesKey("cached_weathers")])
+
+        // Bayrak yazıldı: legacy anahtar yeniden eklense bile ikinci okuma silmez.
+        dataStore.edit { it[stringPreferencesKey("cached_weathers")] = """{"y":2}""" }
+        createPreferences(dataStore).cachedForecasts().first()
+        assertEquals("""{"y":2}""", dataStore.data.first()[stringPreferencesKey("cached_weathers")])
     }
 
     @Test

@@ -18,12 +18,13 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 /**
- * Hava durumu önbelleğinin disk katmanı: tek blob + tek anahtar.
+ * Hava durumu önbelleğinin disk katmanı: şehir-başı tahmin map'i + konum adı.
  *
  * Şehir listesinden **ayrı dosyadadır** (`@WeatherCacheDataStore`,
  * `hava_weather_cache`): aynı dosya paylaşılsaydı her önbellek yazma
  * `cities()` akışını yeniden yayımlatır ve tur-yaz-tur sonsuz döngüsü
  * oluşurdu. Bozuk içerik `null`'a düşer (önbellek-yok gibi davranılır).
+ * Eski tek-blob `cached_weathers` anahtarı ilk okumada bir kez temizlenir.
  */
 // NOT: `@Inject` YOKTUR — aynı tip için `WeatherDataModule`'de `@Provides`
 // vardır; ikisi birden Dagger çift-bağlama hatası üretir.
