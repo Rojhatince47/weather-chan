@@ -74,7 +74,7 @@ internal fun CityDto.toCity(): City = City(
     isLocation = isLocation
 )
 
-private fun CurrentWeather.toDto(): CurrentWeatherDto = CurrentWeatherDto(
+internal fun CurrentWeather.toDto(): CurrentWeatherDto = CurrentWeatherDto(
     temperatureCelsius = temperatureCelsius,
     condition = condition.name,
     windSpeedKmh = windSpeedKmh,
