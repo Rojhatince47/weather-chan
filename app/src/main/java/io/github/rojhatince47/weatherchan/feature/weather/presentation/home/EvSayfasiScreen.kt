@@ -41,6 +41,7 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.displayTitle
 
 /**
  * Kaydırmalı ev sayfası: sabit üst çubuk + yatay pager.
@@ -166,7 +167,8 @@ private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Un
     val safeIndex = currentPage.coerceIn(0, (cities.size - 1).coerceAtLeast(0))
     val current = cities.getOrNull(safeIndex)
     // Ad boş olabilir (konum çözülemediyse); presentation dile göre çözer.
-    val title = current?.name.orEmpty().ifBlank { stringResource(R.string.location_default_name) }
+    val title = displayTitle(current?.name, current?.region, current?.isLocation ?: false)
+        .ifBlank { stringResource(R.string.location_default_name) }
     // contentDescription birleştirilerek duyurulur: yalnız "listeyi aç"
     // deseği mevcut şehrin adını maskelerdi.
     val titleDescription = if (current != null) "$title, $openListText" else openListText
