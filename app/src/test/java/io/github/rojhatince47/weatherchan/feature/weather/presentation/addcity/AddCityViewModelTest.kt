@@ -18,6 +18,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchC
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -55,6 +56,7 @@ class AddCityViewModelTest {
         cities: FakeCityRepository = FakeCityRepository(initial = emptyList()),
         suggestions: SuggestionData? = SuggestionData(listOf(seed, seed2), emptyList()),
         coordinates: Coordinates? = null,
+        location: LocationProvider = LocationProvider { coordinates },
         countryCode: String? = "TR",
         nearby: FakeNearbyCitySuggestionProvider = FakeNearbyCitySuggestionProvider(),
         searchResult: AppResult<List<City>> = AppResult.Success(listOf(kocaeli))
@@ -65,7 +67,7 @@ class AddCityViewModelTest {
             suggestCities = SuggestCitiesUseCase(
                 suggestionProvider = CitySuggestionProvider { suggestions },
                 nearbyProvider = nearby,
-                locationProvider = LocationProvider { coordinates },
+                locationProvider = location,
                 deviceCountryProvider = DeviceCountryProvider { countryCode }
             ),
             cityRepository = cities
@@ -150,11 +152,13 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `tazeleme beklerken eklenen sehir sonuc cikinca da listede kalir`() = runTest(dispatcher) {
+    fun `tazeleme beklerken eklenen sehir sonuc cikinca da dusuk kalir`() = runTest(dispatcher) {
         // Yarış: Aşama C (canlı tazeleme) askıdayken kullanıcı şehir ekler;
-        // tazeleme sonucu geldiğinde grup aynen kalır, yalnız bayrak tazelenir.
+        // tazeleme sonucu geldiğinde filtre yeniden uygulanır — satır geri gelmez.
+        // Fixture bilinçli farklı: Aşama C yeni grup yayımlasın ki filtrenin
+        // yeniden uygulanması gerçekten sınansın.
         val fake = FakeNearbyCitySuggestionProvider(
-            result = listOf(seed, seed2),
+            result = listOf(seed2),
             refreshResult = listOf(seed, seed2),
             refreshDelayMs = 10
         )
@@ -165,9 +169,7 @@ class AddCityViewModelTest {
         runCurrent()
 
         assertEquals(1, fake.refreshCalls)
-        val state = vm.uiState.value
-        assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
-        assertEquals(setOf(kocaeli.id), state.existingIds)
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
     }
 
     @Test
@@ -248,15 +250,39 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `sehir eklenince oneri satiri kalir ve bayrak yukselir`() = runTest(dispatcher) {
+    fun `sehir eklenince oneri satiri aninda duser`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = emptyList())
         val vm = viewModel(cities = cities)
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
-            val state = expectMostRecentItem()
-            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
-            assertEquals(setOf(kocaeli.id), state.existingIds)
+            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+        }
+    }
+
+    @Test
+    fun `asama b beklerken eklenen sehir aninda duser`() = runTest(dispatcher) {
+        // Gecikme hatası (regresyon): konum çözümü askıdayken ekleme yayımı
+        // toplayıcıyı BEKLEMEMELİ — satır anında düşer. Eski kodda toplayıcı
+        // Aşama B'nin 12 sn GPS bekleme noktasında askıda kalıyordu.
+        val vm = viewModel(
+            location = LocationProvider { delay(10_000); seed.coordinates }
+        )
+        vm.onAddCity(kocaeli)
+
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+    }
+
+    @Test
+    fun `silinen sehir oneri olarak geri gelir`() = runTest(dispatcher) {
+        val cities = FakeCityRepository(initial = emptyList())
+        val vm = viewModel(cities = cities)
+        vm.uiState.test {
+            awaitItem()
+            vm.onAddCity(kocaeli)
+            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+            cities.remove(kocaeli.id)
+            assertEquals(listOf("Kocaeli", "Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
         }
     }
 
@@ -283,16 +309,14 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `tum oneriler eklenince bolum tamami tikli kalir`() = runTest(dispatcher) {
+    fun `tum oneriler eklenince bolum cizilmez`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = emptyList())
         val vm = viewModel(cities = cities)
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
             vm.onAddCity(seed2.toCity())
-            val state = expectMostRecentItem()
-            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
-            assertEquals(setOf(kocaeli.id, seed2.toCity().id), state.existingIds)
+            assertEquals(null, expectMostRecentItem().suggestions)
         }
     }
 
@@ -315,20 +339,35 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `zaten listedeki sehir oneride tam ve tikli gelir`() = runTest(dispatcher) {
+    fun `zaten listedeki sehir onerilmez`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = listOf(kocaeli))
         viewModel(cities = cities).uiState.test {
-            val state = awaitItem()
-            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
-            assertEquals(setOf(kocaeli.id), state.existingIds)
+            assertEquals(listOf("Bursa"), awaitItem().suggestions?.suggestions?.map { it.city.name })
         }
     }
 
     @Test
     fun `listedeki sehir arama sonucunda tikli gelir`() = runTest(dispatcher) {
         // Sonuç-varışında bayrak türetimi (`searchLive`): şehir zaten
-        // depodayken arama sonucu tikli açılır.
+        // depodayken arama sonucu tikli açılır (aynı kimlik durumu).
         val vm = viewModel(cities = FakeCityRepository(initial = listOf(kocaeli)))
+        vm.uiState.test {
+            awaitItem()
+            vm.onQueryChange("Koc")
+            advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+            runCurrent()
+            val search = expectMostRecentItem().searchState
+            assertTrue(search is SearchUiState.Success)
+            assertTrue((search as SearchUiState.Success).results.single().isInList)
+        }
+    }
+
+    @Test
+    fun `arama sonucu yakinlikla tiklenir`() = runTest(dispatcher) {
+        // Depodaki kayıt GPS kaynaklı (~80 m sapma, farklı id); arama sonucu
+        // geocoding kaynaklı — kimlikler farklı, tik yakınlıkla gelir.
+        val gpsKocaeli = kocaeli.copy(coordinates = Coordinates(40.7660, 29.9410))
+        val vm = viewModel(cities = FakeCityRepository(initial = listOf(gpsKocaeli)))
         vm.uiState.test {
             awaitItem()
             vm.onQueryChange("Koc")

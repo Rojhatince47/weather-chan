@@ -95,7 +95,6 @@ fun AddCityScreen(
                 uiState.suggestions?.let { group ->
                     SuggestionSection(
                         group = group,
-                        existingIds = uiState.existingIds,
                         onAddCity = onAddCity,
                         // Kaydırılabilir: klavye açıkken ya da büyük fontta sekiz
                         // kart ekrandan taşar; `MainScreen`'deki listenin
@@ -142,10 +141,9 @@ fun AddCityScreen(
  *
  * Başlık dalı anlatır ("Yakınında" / "Ülkende" / "Dünyada"): aynı listedeki
  * satırların neden önerildiğini tek bakışta söyler.
- * [existingIds]: depodaki kimlikler — satır tik/ekleme bayrağını ondan çizer.
  */
 @Composable
-private fun SuggestionSection(group: SuggestionGroup, existingIds: Set<Long>, onAddCity: (City) -> Unit, modifier: Modifier = Modifier) {
+private fun SuggestionSection(group: SuggestionGroup, onAddCity: (City) -> Unit, modifier: Modifier = Modifier) {
     val title = stringResource(
         when (group.kind) {
             SuggestionKind.Nearby -> R.string.suggestion_nearby
@@ -164,7 +162,7 @@ private fun SuggestionSection(group: SuggestionGroup, existingIds: Set<Long>, on
         )
         group.suggestions.forEach { suggestion: CitySuggestion ->
             SearchResultRow(
-                result = SearchResultUiModel(suggestion.city, isInList = suggestion.city.id in existingIds),
+                result = SearchResultUiModel(suggestion.city, isInList = false),
                 onAddClick = { onAddCity(suggestion.city) },
                 onOpenClick = null,
                 distanceKm = suggestion.distanceKm

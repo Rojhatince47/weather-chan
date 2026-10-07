@@ -30,9 +30,8 @@ class AddCityScreenTest {
     private fun state(
         suggestions: SuggestionGroup? = SuggestionGroup(SuggestionKind.Nearby, listOf(CitySuggestion(kocaeli, 42))),
         searchState: SearchUiState = SearchUiState.Idle,
-        query: String = "",
-        existingIds: Set<Long> = emptySet()
-    ) = AddCityUiState(query = query, suggestions = suggestions, existingIds = existingIds, searchState = searchState)
+        query: String = ""
+    ) = AddCityUiState(query = query, suggestions = suggestions, searchState = searchState)
 
     private fun setScreen(state: AddCityUiState, onAddCity: (City) -> Unit = {}, onBack: () -> Unit = {}) {
         composeRule.setContent {
@@ -85,26 +84,25 @@ class AddCityScreenTest {
     }
 
     @Test
-    fun oneriEkleninceSatirKalirVeTikOlur() {
-        // UI: satır silinmez, + yerine tik çizilir (VM kalıcılığı
-        // AddCityViewModelTest'te).
+    fun oneriEkleninceSatirKaybolur() {
+        // UI: eklenen öneri satırı yayımda düşer, bölüm boşalırsa çizilmez
+        // (VM filtresi AddCityViewModelTest'te).
         val uiState = mutableStateOf(state())
         composeRule.setContent {
             HavaTheme {
                 AddCityScreen(
                     uiState = uiState.value,
                     onQueryChange = {},
-                    onAddCity = { uiState.value = uiState.value.copy(existingIds = setOf(kocaeli.id)) },
+                    onAddCity = { uiState.value = uiState.value.copy(suggestions = null) },
                     onOpenCity = {},
                     onBack = {}
                 )
             }
         }
-        composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertIsDisplayed()
-        composeRule.onNodeWithText("Kocaeli").performClick()
         composeRule.onNodeWithText("Kocaeli").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Listede").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertDoesNotExist()
+        composeRule.onNodeWithText("Kocaeli").performClick()
+        composeRule.onNodeWithText("Kocaeli").assertDoesNotExist()
+        composeRule.onNodeWithText("Yakınında").assertDoesNotExist()
     }
 
     @Test

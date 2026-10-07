@@ -8,6 +8,7 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.Suggest
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionGroup
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityProximity
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -39,46 +40,27 @@ class AddCityViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     /**
-     * Öneri grubu **bir kez** hesaplanır; sonraki depo yayımlarında yalnızca
-     * bayraklar (`existingIds`, arama sonuçları) tazelenir. Grup hiç elenmez.
+     * Öneri grubu **bir kez** hesaplanır; yayım anında depo listesiyle
+     * süzülür (eklenen şehir öneride kalmaz, `CityProximity`).
      *
      * Her yayımda yeniden hesaplamak konumu (GPS okuması) tekrar tekrar
      * okuturdu; ekranda hiçbir şey değişmemişken yapılan bir işlemdir.
      */
     private var baseSuggestions: SuggestionGroup? = null
 
-    /** Depodaki güncel kimlikler; satır "ekli mi" bayrağı (arama sonuçları + öneri satırları) için. */
-    private var existingIds: Set<Long> = emptySet()
+    /** Depodaki güncel liste; satır "ekli mi" kararı yakınlıkla bunun üzerinden verilir. */
+    private var existingCities: List<City> = emptyList()
 
     init {
         viewModelScope.launch {
             var computed = false
             cityRepository.cities.collect { stored ->
-                existingIds = stored.mapTo(mutableSetOf()) { it.id }
+                existingCities = stored
                 if (!computed) {
                     computed = true
-                    // Aşama A — dosya: konum/ağ beklemeden anında yayım (Ö2).
-                    baseSuggestions = suggestCities(nearbyEnabled = false)
-                    publishSuggestions()
-                    // Aşama B — Yakınında: konum + önbellek/ağ sonucu.
-                    val withNearby = suggestCities()
-                    if (withNearby != null && withNearby != baseSuggestions) {
-                        baseSuggestions = withNearby
-                        publishSuggestions()
-                    }
-                    // Aşama C — canlı tazeleme: önbellekten geldiyse arkada
-                    // Overpass sorgusu; sonuç farklıysa güncellenmiş yayım
-                    // (spec §5). Aynı anda ikinci ağ turu, provider'ın
-                    // anti-çift-istek kısa devresiyle engellenir (O1).
-                    if (baseSuggestions?.kind == SuggestionKind.Nearby || baseSuggestions == null) {
-                        viewModelScope.launch {
-                            val fresh = suggestCities(refresh = true)
-                            if (fresh != null && fresh != baseSuggestions) {
-                                baseSuggestions = fresh
-                                publishSuggestions()
-                            }
-                        }
-                    }
+                    // Aşamalar ayrı coroutine'de: toplayıcı asla bloklanmaz,
+                    // ekleme yayımı anında işlenir (gecikme hatası).
+                    viewModelScope.launch { computeSuggestions() }
                 }
                 // Eklenen şehir arama sonuçlarında da "listede" bayrağını
                 // alır; bayrak bayat kalırsa kullanıcı aynı şehri iki kez
@@ -90,14 +72,50 @@ class AddCityViewModel @Inject constructor(
     }
 
     /**
-     * Grup aynen yayımlanır; "ekli" bilgisi [AddCityUiState.existingIds]
-     * üzerinden satır bayrağına dönüşür (spec: tik donutu).
+     * Aşama A → B → C, **bir kez** çalışır. Ayrı coroutine'dedir: depo
+     * toplayıcısı konum (12 sn GPS) ve Overpass ağ turlarını beklemez.
+     */
+    private suspend fun computeSuggestions() {
+        // Aşama A — dosya: konum/ağ beklemeden anında yayım (Ö2).
+        baseSuggestions = suggestCities(nearbyEnabled = false)
+        publishSuggestions()
+        // Aşama B — Yakınında: konum + önbellek/ağ sonucu.
+        val withNearby = suggestCities()
+        if (withNearby != null && withNearby != baseSuggestions) {
+            baseSuggestions = withNearby
+            publishSuggestions()
+        }
+        // Aşama C — canlı tazeleme: önbellekten geldiyse arkada Overpass
+        // sorgusu; sonuç farklıysa güncellenmiş yayım (spec §5). Aynı anda
+        // ikinci ağ turu, provider'ın anti-çift-istek kısa devresiyle
+        // engellenir (O1).
+        if (baseSuggestions?.kind == SuggestionKind.Nearby || baseSuggestions == null) {
+            val fresh = suggestCities(refresh = true)
+            if (fresh != null && fresh != baseSuggestions) {
+                baseSuggestions = fresh
+                publishSuggestions()
+            }
+        }
+    }
+
+    /**
+     * Grup, depodaki güncel listeyle süzülerek yayımlanır: eklenen şehir
+     * öneride kalmaz. Bölüm tümüyle süzüldüyse hiç çizilmez (use case boş
+     * grup döndürmez; bu normalleştirme sonraki depo yayımlarında da aynı
+     * sözleşmeyi korur).
      */
     private fun publishSuggestions() {
         _uiState.update {
             it.copy(
-                suggestions = baseSuggestions,
-                existingIds = existingIds
+                suggestions = baseSuggestions
+                    ?.let { group ->
+                        group.copy(
+                            suggestions = group.suggestions.filterNot { suggestion ->
+                                existingCities.any { CityProximity.isSamePlace(suggestion.city, it) }
+                            }
+                        )
+                    }
+                    ?.takeIf { group -> group.suggestions.isNotEmpty() }
             )
         }
     }
@@ -109,7 +127,7 @@ class AddCityViewModel @Inject constructor(
                 it.copy(
                     searchState = state.copy(
                         results = state.results.map { result ->
-                            result.copy(isInList = result.city.id in existingIds)
+                            result.copy(isInList = existingCities.any { CityProximity.isSamePlace(result.city, it) })
                         }
                     )
                 )
@@ -146,7 +164,7 @@ class AddCityViewModel @Inject constructor(
                 is AppResult.Success -> _uiState.update {
                     it.copy(
                         searchState = SearchUiState.Success(
-                            result.data.map { city -> SearchResultUiModel(city, city.id in existingIds) }
+                            result.data.map { city -> SearchResultUiModel(city, existingCities.any { CityProximity.isSamePlace(city, it) }) }
                         )
                     )
                 }
