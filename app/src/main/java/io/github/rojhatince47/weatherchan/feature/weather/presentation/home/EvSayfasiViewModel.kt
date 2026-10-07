@@ -8,8 +8,10 @@ import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
@@ -17,6 +19,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.Loca
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
@@ -30,7 +34,9 @@ import kotlinx.coroutines.launch
 class EvSayfasiViewModel @Inject constructor(
     private val cityRepository: CityRepository,
     private val getForecast: GetForecastUseCase,
+    private val getCachedForecasts: GetCachedForecastsUseCase,
     private val unitRepository: TemperatureUnitRepository,
+    private val clock: Clock = Clock.systemDefaultZone(),
     private val uiMapper: WeatherUiMapper,
     private val getLocationCity: GetLocationCityUseCase? = null,
     private val cityPermissions: CityPermissions? = null
@@ -41,6 +47,9 @@ class EvSayfasiViewModel @Inject constructor(
 
     /** Birim değişince yeniden eşleme yapmak için son başarılı tahminler. */
     private val forecastCache = mutableMapOf<Long, Forecast>()
+
+    /** Tohum girişlerinin damgaları; tazelik kararı buradan verilir. */
+    private val seedFetchedAt = mutableMapOf<Long, Instant>()
     private var locationJob: Job? = null
 
     /**
@@ -55,6 +64,12 @@ class EvSayfasiViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Tohum, toplayıcı başlamadan önce okunur (sıralama şarttır):
+            // sayfalar yayımlanınca tohum anında ekrana basılabilir.
+            getCachedForecasts().orEmpty().forEach { (key, cached) ->
+                forecastCache[key] = cached.forecast
+                seedFetchedAt[key] = cached.fetchedAt
+            }
             cityRepository.cities.collect { cities ->
                 val pages = buildPages(cities)
                 _uiState.update { state ->
@@ -132,7 +147,12 @@ class EvSayfasiViewModel @Inject constructor(
     private fun loadForecast(cityId: Long, force: Boolean, isRefresh: Boolean = false) {
         val city = _uiState.value.pages.find { it.id == cityId } ?: return
         if (cityId in forecastJobs) return
-        if (!force && forecastCache.containsKey(cityId)) return
+        if (!force) {
+            // Bayat da olsa tohum içeriği önce ekrana basılır; yalnız taze
+            // kayıt ağ turunu tamamen atlar.
+            publishSeed(city)
+            if (seedFresh(city)) return
+        }
         forecastJobs[cityId] = viewModelScope.launch {
             try {
                 _uiState.update { state ->
@@ -149,7 +169,9 @@ class EvSayfasiViewModel @Inject constructor(
                 }
                 when (val result = getForecast(city)) {
                     is AppResult.Success -> {
-                        forecastCache[cityId] = result.data
+                        val key = seedKeyFor(city)
+                        forecastCache[key] = result.data
+                        seedFetchedAt[key] = clock.instant()
                         _uiState.update { state ->
                             val ui = uiMapper.toForecastDetailUiModel(
                                 forecast = result.data,
@@ -192,13 +214,37 @@ class EvSayfasiViewModel @Inject constructor(
         }
     }
 
+    /** Tohum tazeliği: diskten okunan kayıt 30 dk altındaysa ağa çıkılmaz. */
+    private fun seedFresh(city: City): Boolean {
+        val fetchedAt = seedFetchedAt[seedKeyFor(city)] ?: return false
+        return !CachedForecast.isStale(fetchedAt, clock.instant())
+    }
+
+    /**
+     * Disk tohumunu ekrana yazar: kayıt UI modeline eşlenir, içerik
+     * `Success` olarak yayımlanır. Tohum yoksa sessizce döner — çağıran
+     * tur atmaya devam eder.
+     */
+    private fun publishSeed(city: City) {
+        val forecast = forecastCache[seedKeyFor(city)] ?: return
+        val ui = uiMapper.toForecastDetailUiModel(forecast = forecast, unit = unitRepository.unit.value)
+        _uiState.update { state ->
+            state.copy(
+                forecasts = state.forecasts + (city.id to DetailUiState(content = UiState.Success(ui)))
+            )
+        }
+    }
+
+    /** Önbellek anahtarı: konum sabit anahtarda, diğerleri kimlikte. */
+    private fun seedKeyFor(city: City): Long = if (city.isLocation) CachedForecast.LOCATION_KEY else city.id
+
     /** Birim değişimi ağa çıkmaz; önbellekteki tahmin yeniden eşlenir. */
     private fun remapCachedForecasts() {
         val unit = unitRepository.unit.value
         _uiState.update { state ->
             state.copy(
                 forecasts = state.forecasts.mapValues { (cityId, detail) ->
-                    val cached = forecastCache[cityId]
+                    val cached = state.pages.find { it.id == cityId }?.let { forecastCache[seedKeyFor(it)] }
                     val content = detail.content
                     if (cached != null && content is UiState.Success) {
                         DetailUiState(
