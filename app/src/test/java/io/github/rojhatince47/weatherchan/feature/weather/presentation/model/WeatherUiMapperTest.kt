@@ -125,6 +125,17 @@ class WeatherUiMapperTest {
     }
 
     @Test
+    fun `konum karti birlesik tam ad tasir`() {
+        val derik = City("Derik", "Mardin", "Türkiye", Coordinates(37.36, 40.26), isLocation = true)
+
+        val ui = mapper.toCityWeatherUiModel(cityWeather().copy(city = derik))
+
+        assertEquals("Derik, Mardin", ui.name)
+        assertEquals("Türkiye", ui.country)
+        assertTrue(ui.isLocation)
+    }
+
+    @Test
     fun `converts temperatures to fahrenheit`() {
         val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(

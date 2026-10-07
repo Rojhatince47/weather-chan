@@ -172,8 +172,8 @@ private fun CityWeatherCardContent(
                     color = contentColor
                 )
                 Text(
-                    // Konum kartında ad zaten bölge olduğundan alt satırda
-                    // bölge tekrarlanmaz (spec §7).
+                    // Konum kartında başlık birleşik tam adı gösterebileceği
+                    // için alt satırda bölge tekrarlanmaz (spec: konum tam adı).
                     text = listOfNotNull(
                         if (cityWeather.isLocation) null else cityWeather.region,
                         cityWeather.country

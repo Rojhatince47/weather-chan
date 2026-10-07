@@ -18,6 +18,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCach
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.displayTitle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
@@ -269,7 +270,7 @@ class MainViewModel @Inject constructor(
         val message = if (deleted.isLocation && deleted.name.isBlank()) {
             UiText.Resource(R.string.location_deleted)
         } else {
-            UiText.Resource(R.string.city_deleted, deleted.name)
+            UiText.Resource(R.string.city_deleted, displayTitle(deleted.name, deleted.region, deleted.isLocation))
         }
         _events.trySend(
             MainEvent.ShowSnackbar(

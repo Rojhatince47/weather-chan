@@ -14,7 +14,7 @@ class WeatherUiMapper @Inject constructor() {
     fun toCityWeatherUiModel(cityWeather: CityWeather, unit: TemperatureUnit = TemperatureUnit.CELSIUS): CityWeatherUiModel =
         CityWeatherUiModel(
             cityId = cityWeather.city.id,
-            name = cityWeather.city.name,
+            name = displayTitle(cityWeather.city.name, cityWeather.city.region, cityWeather.city.isLocation),
             region = cityWeather.city.region,
             country = cityWeather.city.country,
             weather = CardWeather.Loaded(
@@ -34,7 +34,7 @@ class WeatherUiMapper @Inject constructor() {
      */
     fun toUnavailable(city: City): CityWeatherUiModel = CityWeatherUiModel(
         cityId = city.id,
-        name = city.name,
+        name = displayTitle(city.name, city.region, city.isLocation),
         region = city.region,
         country = city.country,
         weather = CardWeather.Unavailable,
@@ -44,7 +44,7 @@ class WeatherUiMapper @Inject constructor() {
         ForecastDetailUiModel(
             city = CityUiModel(
                 id = forecast.city.id,
-                name = forecast.city.name,
+                name = displayTitle(forecast.city.name, forecast.city.region, forecast.city.isLocation),
                 region = forecast.city.region,
                 country = forecast.city.country,
                 latitude = forecast.city.coordinates.latitude,
