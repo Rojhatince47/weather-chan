@@ -1,7 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.city.domain.suggestion
 
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -19,7 +18,6 @@ class SuggestCitiesUseCaseTest {
 
     private suspend fun useCase(
         seeds: List<CitySeed>? = listOf(istanbul, kocaeli, mardin, london, newYork),
-        existing: List<City> = emptyList(),
         coordinates: Coordinates? = null,
         countryCode: String? = "TR",
         nearbySeeds: List<CitySeed>? = seeds,
@@ -32,7 +30,7 @@ class SuggestCitiesUseCaseTest {
             nearbyProvider = FakeNearbyCitySuggestionProvider(nearbySeeds),
             locationProvider = LocationProvider { coordinates },
             deviceCountryProvider = DeviceCountryProvider { countryCode }
-        )(existing, refresh = refresh)
+        )(refresh = refresh)
     }
 
     @Test
@@ -63,14 +61,6 @@ class SuggestCitiesUseCaseTest {
         val group = useCase(coordinates = istanbul.coordinates)!!
         val kocaeliDistance = group.suggestions.first { it.city.name == "Kocaeli" }.distanceKm!!
         assertTrue("İstanbul–Kocaeli ~85 km olmalı, geldi: $kocaeliDistance", kocaeliDistance in 80..90)
-    }
-
-    @Test
-    fun `konum varsa listedeki sehir yine de yakinlik sirasiyla gelir`() = runTest {
-        val group = useCase(existing = listOf(istanbul.toCity()), coordinates = istanbul.coordinates)!!
-        assertEquals(SuggestionKind.Nearby, group.kind)
-        assertEquals("Kocaeli", group.suggestions.first().city.name)
-        assertTrue(group.suggestions.none { it.city.name == "İstanbul" })
     }
 
     @Test
@@ -145,14 +135,6 @@ class SuggestCitiesUseCaseTest {
     @Test
     fun `liste bos ulke kodu dunya yedegine duser`() = runTest {
         assertEquals(SuggestionKind.World, useCase(countryCode = "")!!.kind)
-    }
-
-    @Test
-    fun `ulke listesinin tamami elenince grup dondurulmez`() = runTest {
-        // TR dalı tamamen elenir (Country boş kalır), dünya yedeği de elenir;
-        // kullanıcıya hiçbir şey göstermek yerine öneri bölümü hiç çizilmez.
-        val existing = listOf(istanbul, kocaeli, mardin, london, newYork).map { it.toCity() }
-        assertNull(useCase(existing = existing, countryCode = "TR"))
     }
 
     @Test

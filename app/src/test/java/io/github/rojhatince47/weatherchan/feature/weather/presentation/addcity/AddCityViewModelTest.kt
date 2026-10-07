@@ -152,7 +152,7 @@ class AddCityViewModelTest {
     @Test
     fun `tazeleme beklerken eklenen sehir sonuc cikinca da listede kalir`() = runTest(dispatcher) {
         // Yarış: Aşama C (canlı tazeleme) askıdayken kullanıcı şehir ekler;
-        // tazeleme sonucu geldiğinde yayım güncel `existingIds` ile dışlar.
+        // tazeleme sonucu geldiğinde grup aynen kalır, yalnız bayrak tazelenir.
         val fake = FakeNearbyCitySuggestionProvider(
             result = listOf(seed, seed2),
             refreshResult = listOf(seed, seed2),
@@ -165,8 +165,9 @@ class AddCityViewModelTest {
         runCurrent()
 
         assertEquals(1, fake.refreshCalls)
-        val names = vm.uiState.value.suggestions?.suggestions?.map { it.city.name }
-        assertEquals(listOf("Bursa"), names)
+        val state = vm.uiState.value
+        assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+        assertEquals(setOf(kocaeli.id), state.existingIds)
     }
 
     @Test
@@ -247,13 +248,15 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `sehir eklenince oneri listesinden duser`() = runTest(dispatcher) {
+    fun `sehir eklenince oneri satiri kalir ve bayrak yukselir`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = emptyList())
         val vm = viewModel(cities = cities)
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
-            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+            val state = expectMostRecentItem()
+            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+            assertEquals(setOf(kocaeli.id), state.existingIds)
         }
     }
 
@@ -280,14 +283,16 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `tum oneriler eklenince bolum cizilmez`() = runTest(dispatcher) {
+    fun `tum oneriler eklenince bolum tamami tikli kalir`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = emptyList())
         val vm = viewModel(cities = cities)
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
             vm.onAddCity(seed2.toCity())
-            assertEquals(null, expectMostRecentItem().suggestions)
+            val state = expectMostRecentItem()
+            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+            assertEquals(setOf(kocaeli.id, seed2.toCity().id), state.existingIds)
         }
     }
 
@@ -310,10 +315,12 @@ class AddCityViewModelTest {
     }
 
     @Test
-    fun `zaten listede olan sehir oneri olarak gelmez`() = runTest(dispatcher) {
+    fun `zaten listedeki sehir oneride tam ve tikli gelir`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = listOf(kocaeli))
         viewModel(cities = cities).uiState.test {
-            assertEquals(listOf("Bursa"), awaitItem().suggestions?.suggestions?.map { it.city.name })
+            val state = awaitItem()
+            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+            assertEquals(setOf(kocaeli.id), state.existingIds)
         }
     }
 }

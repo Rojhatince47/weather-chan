@@ -1,7 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.city.domain.suggestion
 
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
-import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import javax.inject.Inject
 import kotlin.math.asin
@@ -25,6 +24,8 @@ import kotlin.math.sqrt
  *
  * **Konum izni asla bu akışta istenmez.** [LocationProvider] izni okumaz,
  * yalnız okumayı dener; izin yoksa `null` döner ve akış ülkeye düşer.
+ *
+ * Eleme yapılmaz: "ekli" işareti VM/UI katmanındadır (spec: tik donutu).
  */
 class SuggestCitiesUseCase @Inject constructor(
     private val suggestionProvider: CitySuggestionProvider,
@@ -33,12 +34,7 @@ class SuggestCitiesUseCase @Inject constructor(
     private val deviceCountryProvider: DeviceCountryProvider
 ) {
 
-    suspend operator fun invoke(
-        existing: List<City> = emptyList(),
-        limit: Int = DEFAULT_LIMIT,
-        refresh: Boolean = false,
-        nearbyEnabled: Boolean = true
-    ): SuggestionGroup? {
+    suspend operator fun invoke(limit: Int = DEFAULT_LIMIT, refresh: Boolean = false, nearbyEnabled: Boolean = true): SuggestionGroup? {
         val data = suggestionProvider.load()
         val pool = data?.cities?.filter { it.name.isNotBlank() && it.countryCode.length == 2 }.orEmpty()
         // `nearbyEnabled = false` yalnız dosya aşaması içindir: konum okunmaz
@@ -55,19 +51,16 @@ class SuggestCitiesUseCase @Inject constructor(
                         .map { CitySuggestion(it.toCity(), distanceKm(origin, it.coordinates)) }
                         .sortedBy { it.distanceKm!! }
                         .take(limit)
-                ).excluding(existing.mapTo(mutableSetOf()) { it.id })
-                    .takeIf { it.suggestions.isNotEmpty() }
+                )
             }
         }
 
-        val group = groupForCountryWorld(
+        return groupForCountryWorld(
             countryCode = origin?.let { deviceCountryProvider.countryCode() },
             pool = pool,
             worldFallbackOrder = data?.worldFallbackOrder.orEmpty(),
             limit = limit
         )
-        return group?.excluding(existing.mapTo(mutableSetOf()) { it.id })
-            ?.takeIf { it.suggestions.isNotEmpty() }
     }
 
     private fun groupForCountryWorld(

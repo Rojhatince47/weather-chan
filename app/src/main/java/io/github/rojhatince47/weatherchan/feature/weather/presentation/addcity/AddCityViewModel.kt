@@ -40,7 +40,7 @@ class AddCityViewModel @Inject constructor(
 
     /**
      * Öneri grubu **bir kez** hesaplanır; sonraki depo yayımlarında yalnızca
-     * "listede olanlar" süzülür.
+     * bayraklar (`existingIds`, arama sonuçları) tazelenir. Grup hiç elenmez.
      *
      * Her yayımda yeniden hesaplamak konumu (GPS okuması) tekrar tekrar
      * okuturdu; ekranda hiçbir şey değişmemişken yapılan bir işlemdir.
@@ -58,10 +58,10 @@ class AddCityViewModel @Inject constructor(
                 if (!computed) {
                     computed = true
                     // Aşama A — dosya: konum/ağ beklemeden anında yayım (Ö2).
-                    baseSuggestions = suggestCities(stored, nearbyEnabled = false)
+                    baseSuggestions = suggestCities(nearbyEnabled = false)
                     publishSuggestions()
                     // Aşama B — Yakınında: konum + önbellek/ağ sonucu.
-                    val withNearby = suggestCities(stored)
+                    val withNearby = suggestCities()
                     if (withNearby != null && withNearby != baseSuggestions) {
                         baseSuggestions = withNearby
                         publishSuggestions()
@@ -72,7 +72,7 @@ class AddCityViewModel @Inject constructor(
                     // anti-çift-istek kısa devresiyle engellenir (O1).
                     if (baseSuggestions?.kind == SuggestionKind.Nearby || baseSuggestions == null) {
                         viewModelScope.launch {
-                            val fresh = suggestCities(stored, refresh = true)
+                            val fresh = suggestCities(refresh = true)
                             if (fresh != null && fresh != baseSuggestions) {
                                 baseSuggestions = fresh
                                 publishSuggestions()
@@ -90,15 +90,14 @@ class AddCityViewModel @Inject constructor(
     }
 
     /**
-     * Grup tümüyle elendiyse bölümü boş çizmek yerine hiç çizme: use case
-     * boş grup döndürmez, bu normalleştirme aynı sözleşmeyi sonraki depo
-     * yayımlarında da korur.
+     * Grup aynen yayımlanır; "ekli" bilgisi [AddCityUiState.existingIds]
+     * üzerinden satır bayrağına dönüşür (spec: tik donutu).
      */
     private fun publishSuggestions() {
         _uiState.update {
             it.copy(
-                suggestions = baseSuggestions?.excluding(existingIds)
-                    ?.takeIf { group -> group.suggestions.isNotEmpty() }
+                suggestions = baseSuggestions,
+                existingIds = existingIds
             )
         }
     }

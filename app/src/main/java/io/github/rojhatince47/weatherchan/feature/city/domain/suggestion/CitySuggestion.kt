@@ -27,14 +27,4 @@ enum class SuggestionKind {
 data class SuggestionGroup(
     val kind: SuggestionKind,
     val suggestions: List<CitySuggestion>
-) {
-    /**
-     * Kullanıcının listesinde zaten olan şehirleri düşürür.
-     *
-     * Kural **tek yerde** yazılıdır ve iki çağıran tarafından paylaşılır:
-     * use case ilk hesapta, ViewModel sonraki depo yayımlarında.
-     */
-    fun excluding(existingIds: Set<Long>): SuggestionGroup = copy(
-        suggestions = suggestions.filterNot { it.city.id in existingIds }
-    )
-}
+)
