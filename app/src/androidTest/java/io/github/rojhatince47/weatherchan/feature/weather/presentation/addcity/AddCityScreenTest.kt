@@ -86,14 +86,15 @@ class AddCityScreenTest {
 
     @Test
     fun oneriEkleninceSatirKalirVeTikOlur() {
-        // Spec: eklenen satır kaybolmaz, + yerine tik çizilir.
+        // UI: satır silinmez, + yerine tik çizilir (VM kalıcılığı
+        // AddCityViewModelTest'te).
         val uiState = mutableStateOf(state())
         composeRule.setContent {
             HavaTheme {
                 AddCityScreen(
                     uiState = uiState.value,
                     onQueryChange = {},
-                    onAddCity = { uiState.value = state(existingIds = setOf(kocaeli.id)) },
+                    onAddCity = { uiState.value = uiState.value.copy(existingIds = setOf(kocaeli.id)) },
                     onOpenCity = {},
                     onBack = {}
                 )
@@ -101,7 +102,6 @@ class AddCityScreenTest {
         }
         composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertIsDisplayed()
         composeRule.onNodeWithText("Kocaeli").performClick()
-        composeRule.waitForIdle()
         composeRule.onNodeWithText("Kocaeli").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Listede").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Şehri listeye ekle").assertDoesNotExist()
@@ -109,8 +109,8 @@ class AddCityScreenTest {
 
     @Test
     fun aramaSonucundaEklenmisSehirTikOlur() {
-        // Arama tarafı aynı bayrağı paylaşır (mevcut SearchResultRow davranışı,
-        // bu test kilitler).
+        // SearchResultRow tik/ekleme davranışı kilitlenir; bayrak türetimi
+        // VM katmanında (AddCityViewModelTest).
         setScreen(
             state(
                 query = "Koc",

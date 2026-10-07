@@ -323,4 +323,20 @@ class AddCityViewModelTest {
             assertEquals(setOf(kocaeli.id), state.existingIds)
         }
     }
+
+    @Test
+    fun `listedeki sehir arama sonucunda tikli gelir`() = runTest(dispatcher) {
+        // Sonuç-varışında bayrak türetimi (`searchLive`): şehir zaten
+        // depodayken arama sonucu tikli açılır.
+        val vm = viewModel(cities = FakeCityRepository(initial = listOf(kocaeli)))
+        vm.uiState.test {
+            awaitItem()
+            vm.onQueryChange("Koc")
+            advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+            runCurrent()
+            val search = expectMostRecentItem().searchState
+            assertTrue(search is SearchUiState.Success)
+            assertTrue((search as SearchUiState.Success).results.single().isInList)
+        }
+    }
 }

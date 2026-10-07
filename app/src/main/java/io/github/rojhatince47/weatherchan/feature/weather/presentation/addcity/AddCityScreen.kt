@@ -142,14 +142,10 @@ fun AddCityScreen(
  *
  * Başlık dalı anlatır ("Yakınında" / "Ülkende" / "Dünyada"): aynı listedeki
  * satırların neden önerildiğini tek bakışta söyler.
+ * [existingIds]: depodaki kimlikler — satır tik/ekleme bayrağını ondan çizer.
  */
 @Composable
-private fun SuggestionSection(
-    group: SuggestionGroup,
-    existingIds: Set<Long>,
-    onAddCity: (City) -> Unit,
-    modifier: Modifier = Modifier
-) {
+private fun SuggestionSection(group: SuggestionGroup, existingIds: Set<Long>, onAddCity: (City) -> Unit, modifier: Modifier = Modifier) {
     val title = stringResource(
         when (group.kind) {
             SuggestionKind.Nearby -> R.string.suggestion_nearby
