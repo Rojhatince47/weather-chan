@@ -2,8 +2,9 @@ package io.github.rojhatince47.weatherchan.feature.city.data.remote.overpass
 
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySeed
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import javax.inject.Inject
 
-internal class OverpassSuggestionMapper {
+internal class OverpassSuggestionMapper @Inject constructor() {
     fun toSeeds(elements: List<OverpassElementDto>, preferEnglish: Boolean): List<CitySeed> = elements.mapNotNull { element ->
         val local = element.tags["name"]?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
         val name = if (preferEnglish) {

@@ -18,20 +18,27 @@ class SuggestCitiesUseCaseTest {
     private val newYork = CitySeed("New York", "US", "Amerika Birleşik Devletleri", Coordinates(40.7128, -74.006))
 
     private suspend fun useCase(
-        seeds: List<CitySeed> = listOf(istanbul, kocaeli, mardin, london, newYork),
+        seeds: List<CitySeed>? = listOf(istanbul, kocaeli, mardin, london, newYork),
         existing: List<City> = emptyList(),
         coordinates: Coordinates? = null,
-        countryCode: String? = "TR"
-    ): SuggestionGroup? = SuggestCitiesUseCase(
-        suggestionProvider = CitySuggestionProvider { SuggestionData(seeds, listOf("GB", "US")) },
-        locationProvider = LocationProvider { coordinates },
-        deviceCountryProvider = DeviceCountryProvider { countryCode }
-    )(existing)
+        countryCode: String? = "TR",
+        nearbySeeds: List<CitySeed>? = seeds,
+        refresh: Boolean = false
+    ): SuggestionGroup? {
+        val provider: CitySuggestionProvider =
+            CitySuggestionProvider { seeds?.let { SuggestionData(it, listOf("GB", "US")) } }
+        return SuggestCitiesUseCase(
+            suggestionProvider = provider,
+            nearbyProvider = FakeNearbyCitySuggestionProvider(nearbySeeds),
+            locationProvider = LocationProvider { coordinates },
+            deviceCountryProvider = DeviceCountryProvider { countryCode }
+        )(existing, refresh = refresh)
+    }
 
     @Test
     fun `konum varsa yakinlik sirasi kullanilir`() = runTest {
-        // Menşe noktası seed'in **tam** koordinatıdır: mesafe 0 olmalıdır.
-        // (Yaklaşık bir nokta seçilirse "0 km" iddiası yanlış olur.)
+        // Yakınında dalı artık Overpass sağlayıcısından gelir; menşe noktası
+        // seed'in **tam** koordinatıdır, mesafe 0 olmalıdır.
         val group = useCase(coordinates = istanbul.coordinates)!!
         assertEquals(SuggestionKind.Nearby, group.kind)
         assertEquals("İstanbul", group.suggestions.first().city.name)
@@ -41,10 +48,10 @@ class SuggestCitiesUseCaseTest {
     }
 
     @Test
-    fun `yakinlik sirasi dosya sirasindan bagimsizdir`() = runTest {
-        // Havuz sırası mesafeye TERS verilir: sıralama olmasaydı ilk öneri
+    fun `yakinlik sirasi saglayici sirasindan bagimsizdir`() = runTest {
+        // Sağlayıcı havuzu mesafeye TERS verilir: sıralama olmasaydı ilk öneri
         // Mardin olurdu. (`sortedBy` silinirse bu test kırılır.)
-        val group = useCase(seeds = listOf(mardin, kocaeli, istanbul), coordinates = istanbul.coordinates)!!
+        val group = useCase(nearbySeeds = listOf(mardin, kocaeli, istanbul), coordinates = istanbul.coordinates)!!
         assertEquals(SuggestionKind.Nearby, group.kind)
         assertEquals(listOf("İstanbul", "Kocaeli", "Mardin"), group.suggestions.map { it.city.name })
     }
@@ -64,6 +71,60 @@ class SuggestCitiesUseCaseTest {
         assertEquals(SuggestionKind.Nearby, group.kind)
         assertEquals("Kocaeli", group.suggestions.first().city.name)
         assertTrue(group.suggestions.none { it.city.name == "İstanbul" })
+    }
+
+    @Test
+    fun `yakin saglayici bosken ulke dalina duser`() = runTest {
+        // Kritik ayrım: dosya havuzu Yakınında için kullanılmaz; sağlayıcı
+        // boşsa öncelik zinciri doğrudan Ülkende'ye düşer (dosya sırasıyla).
+        val group = useCase(nearbySeeds = null, coordinates = istanbul.coordinates)!!
+        assertEquals(SuggestionKind.Country, group.kind)
+        assertEquals(listOf("İstanbul", "Kocaeli", "Mardin"), group.suggestions.map { it.city.name })
+        assertTrue(group.suggestions.all { it.distanceKm == null })
+    }
+
+    @Test
+    fun `yakin saglayici bos ulke de yoksa dunya yedegine duser`() = runTest {
+        val group = useCase(nearbySeeds = null, coordinates = istanbul.coordinates, countryCode = "ZZ")!!
+        assertEquals(SuggestionKind.World, group.kind)
+    }
+
+    @Test
+    fun `dosya yokken bile yakininda gelir`() = runTest {
+        // Dosya (asset) okunamasa bile konum + Overpass öneriyi sürdürür.
+        val group = useCase(seeds = null, nearbySeeds = listOf(istanbul), coordinates = istanbul.coordinates)!!
+        assertEquals(SuggestionKind.Nearby, group.kind)
+        assertEquals("İstanbul", group.suggestions.first().city.name)
+    }
+
+    @Test
+    fun `refresh canli sorguyu tetikler`() = runTest {
+        val fake = FakeNearbyCitySuggestionProvider(result = listOf(istanbul))
+        val useCase = SuggestCitiesUseCase(
+            suggestionProvider = CitySuggestionProvider { null },
+            nearbyProvider = fake,
+            locationProvider = LocationProvider { istanbul.coordinates },
+            deviceCountryProvider = DeviceCountryProvider { "TR" }
+        )
+        useCase(refresh = false)
+        assertEquals(0, fake.refreshCalls)
+        useCase(refresh = true)
+        assertEquals(1, fake.refreshCalls)
+        assertTrue(fake.origins.isNotEmpty())
+    }
+
+    @Test
+    fun `konum yoksa saglayici hic cagrilmaz`() = runTest {
+        val fake = FakeNearbyCitySuggestionProvider(result = listOf(istanbul))
+        val useCase = SuggestCitiesUseCase(
+            suggestionProvider = CitySuggestionProvider { null },
+            nearbyProvider = fake,
+            locationProvider = LocationProvider { null },
+            deviceCountryProvider = DeviceCountryProvider { "TR" }
+        )
+        useCase()
+        assertTrue(fake.origins.isEmpty())
+        assertEquals(0, fake.refreshCalls)
     }
 
     @Test
@@ -95,9 +156,26 @@ class SuggestCitiesUseCaseTest {
     }
 
     @Test
+    fun `yakininda kapaliyken konum okunmaz ve dosya dalina donulur`() = runTest {
+        // Aşama A (dosya-önce): konum 12 sn GPS beklemez, Yakınında hiç
+        // denenmez — dosya önerisi anında çıkar (Ö2).
+        val fake = FakeNearbyCitySuggestionProvider(result = listOf(istanbul))
+        val useCase = SuggestCitiesUseCase(
+            suggestionProvider = CitySuggestionProvider { SuggestionData(listOf(istanbul, kocaeli), listOf("GB")) },
+            nearbyProvider = fake,
+            locationProvider = LocationProvider { error("Aşama A konum okumamalı") },
+            deviceCountryProvider = DeviceCountryProvider { "TR" }
+        )
+        val group = useCase(nearbyEnabled = false)!!
+        assertEquals(SuggestionKind.Country, group.kind)
+        assertTrue(fake.origins.isEmpty())
+    }
+
+    @Test
     fun `veri yoksa grup yoktur`() = runTest {
         val useCase = SuggestCitiesUseCase(
             suggestionProvider = CitySuggestionProvider { null },
+            nearbyProvider = FakeNearbyCitySuggestionProvider(result = null),
             locationProvider = LocationProvider { null },
             deviceCountryProvider = DeviceCountryProvider { null }
         )

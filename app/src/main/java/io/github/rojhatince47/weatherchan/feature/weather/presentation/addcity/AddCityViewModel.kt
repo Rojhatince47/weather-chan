@@ -6,6 +6,7 @@ import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionGroup
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -56,22 +57,49 @@ class AddCityViewModel @Inject constructor(
                 existingIds = stored.mapTo(mutableSetOf()) { it.id }
                 if (!computed) {
                     computed = true
-                    baseSuggestions = suggestCities(stored)
+                    // Aşama A — dosya: konum/ağ beklemeden anında yayım (Ö2).
+                    baseSuggestions = suggestCities(stored, nearbyEnabled = false)
+                    publishSuggestions()
+                    // Aşama B — Yakınında: konum + önbellek/ağ sonucu.
+                    val withNearby = suggestCities(stored)
+                    if (withNearby != null && withNearby != baseSuggestions) {
+                        baseSuggestions = withNearby
+                        publishSuggestions()
+                    }
+                    // Aşama C — canlı tazeleme: önbellekten geldiyse arkada
+                    // Overpass sorgusu; sonuç farklıysa güncellenmiş yayım
+                    // (spec §5). Aynı anda ikinci ağ turu, provider'ın
+                    // anti-çift-istek kısa devresiyle engellenir (O1).
+                    if (baseSuggestions?.kind == SuggestionKind.Nearby || baseSuggestions == null) {
+                        viewModelScope.launch {
+                            val fresh = suggestCities(stored, refresh = true)
+                            if (fresh != null && fresh != baseSuggestions) {
+                                baseSuggestions = fresh
+                                publishSuggestions()
+                            }
+                        }
+                    }
                 }
                 // Eklenen şehir arama sonuçlarında da "listede" bayrağını
                 // alır; bayrak bayat kalırsa kullanıcı aynı şehri iki kez
                 // eklemeye çalışır (`MainViewModel`'dan taşınan davranış).
                 refreshSearchInListFlags()
-                // Grup tümüyle elendiyse bölümü boş çizmek yerine hiç
-                // çizme: use case boş grup döndürmez, bu normalleştirme
-                // aynı sözleşmeyi sonraki depo yayımlarında korur.
-                _uiState.update {
-                    it.copy(
-                        suggestions = baseSuggestions?.excluding(existingIds)
-                            ?.takeIf { group -> group.suggestions.isNotEmpty() }
-                    )
-                }
+                publishSuggestions()
             }
+        }
+    }
+
+    /**
+     * Grup tümüyle elendiyse bölümü boş çizmek yerine hiç çizme: use case
+     * boş grup döndürmez, bu normalleştirme aynı sözleşmeyi sonraki depo
+     * yayımlarında da korur.
+     */
+    private fun publishSuggestions() {
+        _uiState.update {
+            it.copy(
+                suggestions = baseSuggestions?.excluding(existingIds)
+                    ?.takeIf { group -> group.suggestions.isNotEmpty() }
+            )
         }
     }
 

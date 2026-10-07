@@ -106,4 +106,20 @@ class SuggestionDataIntegrityTest {
             .filter { code -> data.cities.count { it.code == code } < 8 }
         assertTrue("En az 8 şehir gerekli olan ülkelerde eksik var: $insufficient", insufficient.isEmpty())
     }
+
+    @Test
+    fun `ingilizce cevriler tamdir`() {
+        // Spec §6: nameEn/countryEn opsiyonel ama doluluk %100 kilitlidir —
+        // eksik çeviri testi düşürür, sessizce Türkçe'ye dönerken gizli kalmaz.
+        val data = parse()
+        val missingName = data.cities.filter { it.nameEn.isNullOrBlank() }.map { it.name }
+        assertTrue("nameEn eksik/boş: $missingName", missingName.isEmpty())
+        val missingCountry = data.cities.filter { it.countryEn.isNullOrBlank() }.map { "${it.code}/${it.country}" }
+        assertTrue("countryEn eksik/boş: $missingCountry", missingCountry.isEmpty())
+        // Aynı ülke kodu için countryEn tekil olmalı: biri çevrilmiş, diğeri
+        // unutulmuş kayıtlar aynı satırda iki farklı ülke adı gösterirdi.
+        val enByCode = data.cities.groupBy({ it.code }, { it.countryEn })
+        val clashes = enByCode.filterValues { it.distinct().size > 1 }
+        assertTrue("Kod/countryEn çakışması: $clashes", clashes.isEmpty())
+    }
 }

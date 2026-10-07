@@ -62,6 +62,18 @@ object NetworkModule {
     @Singleton
     fun provideWttrInApi(@WttrInRetrofit retrofit: Retrofit): WttrInApi = retrofit.create(WttrInApi::class.java)
 
+    @Provides
+    @Singleton
+    @io.github.rojhatince47.weatherchan.core.network.OverpassRetrofit
+    fun provideOverpassRetrofit(client: OkHttpClient): Retrofit = retrofit(client, "https://overpass-api.de/")
+
+    @Provides
+    @Singleton
+    internal fun provideOverpassApi(
+        @io.github.rojhatince47.weatherchan.core.network.OverpassRetrofit retrofit: Retrofit
+    ): io.github.rojhatince47.weatherchan.feature.city.data.remote.overpass.OverpassApi =
+        retrofit.create(io.github.rojhatince47.weatherchan.feature.city.data.remote.overpass.OverpassApi::class.java)
+
     private fun retrofit(client: OkHttpClient, baseUrl: String): Retrofit = Retrofit.Builder()
         .client(client)
         .baseUrl(baseUrl)

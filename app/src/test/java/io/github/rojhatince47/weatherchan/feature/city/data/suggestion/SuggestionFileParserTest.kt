@@ -74,4 +74,55 @@ class SuggestionFileParserTest {
         val json = valid.replaceFirst("{", "{ \"yeniAlan\": 5,")
         assertEquals(1, SuggestionFileParser.parse(json)!!.cities.size)
     }
+
+    private val bilingual = """
+        {
+          "version": 2,
+          "worldFallbackOrder": ["GB"],
+          "cities": [
+            { "name": "Ankara", "nameEn": "Ankara EN", "code": "TR", "country": "Türkiye", "countryEn": "Turkey", "lat": 39.93, "lon": 32.86 }
+          ]
+        }
+    """.trimIndent()
+
+    @Test
+    fun `ingilizce tercihinde nameEn ve countryEn kullanilir`() {
+        val data = SuggestionFileParser.parse(bilingual, preferEnglish = true)!!
+        assertEquals("Ankara EN", data.cities.single().name)
+        assertEquals("Turkey", data.cities.single().countryName)
+    }
+
+    @Test
+    fun `turkce tercihinde ceviri alanlari yoksayilir`() {
+        val data = SuggestionFileParser.parse(bilingual, preferEnglish = false)!!
+        assertEquals("Ankara", data.cities.single().name)
+        assertEquals("Türkiye", data.cities.single().countryName)
+    }
+
+    @Test
+    fun `varsayilan tercih turkcedir`() {
+        val data = SuggestionFileParser.parse(bilingual)!!
+        assertEquals("Ankara", data.cities.single().name)
+        assertEquals("Türkiye", data.cities.single().countryName)
+    }
+
+    @Test
+    fun `eksik ceviri turkce ada duser`() {
+        // Sessiz yedek (spec §6): eksik nameEn/countryEn kaydı düşürmez,
+        // Türkçe alana döner. Bütünlüktesti doluluğu %100 kilitler.
+        val json = bilingual
+            .replace("\"nameEn\": \"Ankara EN\", ", "")
+            .replace(", \"countryEn\": \"Turkey\"", "")
+        val data = SuggestionFileParser.parse(json, preferEnglish = true)!!
+        assertEquals("Ankara", data.cities.single().name)
+        assertEquals("Türkiye", data.cities.single().countryName)
+    }
+
+    @Test
+    fun `ingilizce tercihinde tek eksik alan birbirinden bagimsiz duser`() {
+        val json = bilingual.replace("\"nameEn\": \"Ankara EN\", ", "")
+        val data = SuggestionFileParser.parse(json, preferEnglish = true)!!
+        assertEquals("Ankara", data.cities.single().name)
+        assertEquals("Turkey", data.cities.single().countryName)
+    }
 }

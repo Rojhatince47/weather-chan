@@ -28,35 +28,55 @@ import kotlin.math.sqrt
  */
 class SuggestCitiesUseCase @Inject constructor(
     private val suggestionProvider: CitySuggestionProvider,
+    private val nearbyProvider: NearbyCitySuggestionProvider,
     private val locationProvider: LocationProvider,
     private val deviceCountryProvider: DeviceCountryProvider
 ) {
 
-    suspend operator fun invoke(existing: List<City> = emptyList(), limit: Int = DEFAULT_LIMIT): SuggestionGroup? {
-        val data = suggestionProvider.load() ?: return null
-        val pool = data.cities.filter { it.name.isNotBlank() && it.countryCode.length == 2 }
-        if (pool.isEmpty()) return null
-        val group = groupFor(
-            origin = locationProvider.currentCoordinates(),
+    suspend operator fun invoke(
+        existing: List<City> = emptyList(),
+        limit: Int = DEFAULT_LIMIT,
+        refresh: Boolean = false,
+        nearbyEnabled: Boolean = true
+    ): SuggestionGroup? {
+        val data = suggestionProvider.load()
+        val pool = data?.cities?.filter { it.name.isNotBlank() && it.countryCode.length == 2 }.orEmpty()
+        // `nearbyEnabled = false` yalnız dosya aşaması içindir: konum okunmaz
+        // (12 sn GPS beklemesi dosya önerisini geciktirmesin), Yakınında
+        // sağlamaya hiç girilmez — Ö2 aşamalı yayım sözleşmesi.
+        val origin = if (nearbyEnabled) locationProvider.currentCoordinates() else null
+
+        if (origin != null) {
+            val nearby = if (refresh) nearbyProvider.refresh(origin) else nearbyProvider.nearby(origin)
+            if (!nearby.isNullOrEmpty()) {
+                return SuggestionGroup(
+                    kind = SuggestionKind.Nearby,
+                    suggestions = nearby
+                        .map { CitySuggestion(it.toCity(), distanceKm(origin, it.coordinates)) }
+                        .sortedBy { it.distanceKm!! }
+                        .take(limit)
+                ).excluding(existing.mapTo(mutableSetOf()) { it.id })
+                    .takeIf { it.suggestions.isNotEmpty() }
+            }
+        }
+
+        val group = groupForCountryWorld(
+            countryCode = origin?.let { deviceCountryProvider.countryCode() },
             pool = pool,
-            worldFallbackOrder = data.worldFallbackOrder,
+            worldFallbackOrder = data?.worldFallbackOrder.orEmpty(),
             limit = limit
-        ) ?: return null
-        return group.excluding(existing.mapTo(mutableSetOf()) { it.id })
-            .takeIf { it.suggestions.isNotEmpty() }
+        )
+        return group?.excluding(existing.mapTo(mutableSetOf()) { it.id })
+            ?.takeIf { it.suggestions.isNotEmpty() }
     }
 
-    private fun groupFor(origin: Coordinates?, pool: List<CitySeed>, worldFallbackOrder: List<String>, limit: Int): SuggestionGroup? {
-        if (origin != null) {
-            return SuggestionGroup(
-                kind = SuggestionKind.Nearby,
-                suggestions = pool
-                    .map { seed -> CitySuggestion(seed.toCity(), distanceKm(origin, seed.coordinates)) }
-                    .sortedBy { it.distanceKm!! }
-                    .take(limit)
-            )
-        }
-        val code = deviceCountryProvider.countryCode()?.takeIf { it.length == 2 }
+    private fun groupForCountryWorld(
+        countryCode: String?,
+        pool: List<CitySeed>,
+        worldFallbackOrder: List<String>,
+        limit: Int
+    ): SuggestionGroup? {
+        val code = countryCode?.takeIf { it.length == 2 } ?: deviceCountryProvider.countryCode()?.takeIf { it.length == 2 }
         if (code != null) {
             val inCountry = pool.filter { it.countryCode.equals(code, ignoreCase = true) }.take(limit)
             if (inCountry.isNotEmpty()) {

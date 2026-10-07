@@ -6,8 +6,10 @@ import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySeed
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestionProvider
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.DeviceCountryProvider
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.FakeNearbyCitySuggestionProvider
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionData
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -54,6 +56,7 @@ class AddCityViewModelTest {
         suggestions: SuggestionData? = SuggestionData(listOf(seed, seed2), emptyList()),
         coordinates: Coordinates? = null,
         countryCode: String? = "TR",
+        nearby: FakeNearbyCitySuggestionProvider = FakeNearbyCitySuggestionProvider(),
         searchResult: AppResult<List<City>> = AppResult.Success(listOf(kocaeli))
     ): AddCityViewModel {
         weather.searchResult = searchResult
@@ -61,11 +64,109 @@ class AddCityViewModelTest {
             searchCities = SearchCitiesUseCase(weather),
             suggestCities = SuggestCitiesUseCase(
                 suggestionProvider = CitySuggestionProvider { suggestions },
+                nearbyProvider = nearby,
                 locationProvider = LocationProvider { coordinates },
                 deviceCountryProvider = DeviceCountryProvider { countryCode }
             ),
             cityRepository = cities
         )
+    }
+
+    @Test
+    fun `konumlu acilista once onbellegi gosterir canli sonucu ikinci yayimla gunceller`() = runTest(dispatcher) {
+        // Faz 1: önbellek (yalnız Bursa) anında görünür.
+        // Faz 2: Overpass canlı sonucu (Kocaeli + Bursa) gecikmeyle gelir.
+        val fake = FakeNearbyCitySuggestionProvider(
+            result = listOf(seed2),
+            refreshResult = listOf(seed2, seed),
+            refreshDelayMs = 10
+        )
+        val vm = viewModel(coordinates = seed.coordinates, suggestions = null, nearby = fake)
+
+        val phase1 = vm.uiState.value.suggestions
+        assertEquals(SuggestionKind.Nearby, phase1?.kind)
+        assertEquals(listOf("Bursa"), phase1?.suggestions?.map { it.city.name })
+
+        advanceTimeBy(11)
+        runCurrent()
+
+        val phase2 = vm.uiState.value.suggestions
+        assertEquals(1, fake.refreshCalls)
+        assertEquals(SuggestionKind.Nearby, phase2?.kind)
+        assertEquals(listOf("Kocaeli", "Bursa"), phase2?.suggestions?.map { it.city.name })
+    }
+
+    @Test
+    fun `konumlu acilikta canli sonuc onbellege esitse ikinci yayim yapilmaz`() = runTest(dispatcher) {
+        val fake = FakeNearbyCitySuggestionProvider(
+            result = listOf(seed2),
+            refreshResult = listOf(seed2)
+        )
+        val vm = viewModel(coordinates = seed.coordinates, suggestions = null, nearby = fake)
+        advanceTimeBy(11)
+        runCurrent()
+        // Aynı içerik: ek yayın tetiklenmez (eşitlik sözlüğü veri sınıfındadır).
+        assertEquals(1, fake.refreshCalls)
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+    }
+
+    @Test
+    fun `yakin saglayici bosken ulke dalina duser`() = runTest(dispatcher) {
+        val fake = FakeNearbyCitySuggestionProvider(result = null)
+        val vm = viewModel(coordinates = seed.coordinates, nearby = fake)
+        advanceTimeBy(11)
+        runCurrent()
+        assertEquals(SuggestionKind.Country, vm.uiState.value.suggestions?.kind)
+        assertEquals(listOf("Kocaeli", "Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+        // Olumsuz dal: Nearby değil ve sonuç boş değil → canlı tazeleme başlamaz.
+        assertEquals(0, fake.refreshCalls)
+    }
+
+    @Test
+    fun `dosya asamasi yakininda gecikmesine ragmen aninda yayimlanir`() = runTest(dispatcher) {
+        // Ö2: dosya önerisi konum+Yakınında turunu BEKLEMEZ — Aşama A anında
+        // Country olarak görünür, Yakınında sonradan gelir.
+        val fake = FakeNearbyCitySuggestionProvider(result = listOf(seed), nearbyDelayMs = 10)
+        val vm = viewModel(coordinates = seed.coordinates, nearby = fake)
+
+        val phaseA = vm.uiState.value.suggestions
+        assertEquals(SuggestionKind.Country, phaseA?.kind)
+        assertEquals(listOf("Kocaeli", "Bursa"), phaseA?.suggestions?.map { it.city.name })
+
+        advanceTimeBy(11)
+        runCurrent()
+        assertEquals(SuggestionKind.Nearby, vm.uiState.value.suggestions?.kind)
+    }
+
+    @Test
+    fun `konumsuz acilikta canli tazeleme cagrilmaz`() = runTest(dispatcher) {
+        val fake = FakeNearbyCitySuggestionProvider(result = listOf(seed))
+        val vm = viewModel(nearby = fake)
+        advanceTimeBy(11)
+        runCurrent()
+        assertTrue(fake.origins.isEmpty())
+        assertEquals(0, fake.refreshCalls)
+        assertEquals(SuggestionKind.Country, vm.uiState.value.suggestions?.kind)
+    }
+
+    @Test
+    fun `tazeleme beklerken eklenen sehir sonuc cikinca da listede kalir`() = runTest(dispatcher) {
+        // Yarış: Aşama C (canlı tazeleme) askıdayken kullanıcı şehir ekler;
+        // tazeleme sonucu geldiğinde yayım güncel `existingIds` ile dışlar.
+        val fake = FakeNearbyCitySuggestionProvider(
+            result = listOf(seed, seed2),
+            refreshResult = listOf(seed, seed2),
+            refreshDelayMs = 10
+        )
+        val vm = viewModel(coordinates = seed.coordinates, suggestions = null, nearby = fake)
+        vm.onAddCity(seed.toCity())
+
+        advanceTimeBy(11)
+        runCurrent()
+
+        assertEquals(1, fake.refreshCalls)
+        val names = vm.uiState.value.suggestions?.suggestions?.map { it.city.name }
+        assertEquals(listOf("Bursa"), names)
     }
 
     @Test

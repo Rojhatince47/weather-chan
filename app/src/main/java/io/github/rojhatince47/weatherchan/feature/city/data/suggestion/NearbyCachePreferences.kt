@@ -34,16 +34,21 @@ internal class NearbyCachePreferences @Inject constructor(
         "%.1f,%.1f".format(Locale.US, floor(origin.latitude * 10.0) / 10.0, floor(origin.longitude * 10.0) / 10.0)
 
     internal suspend fun isFresh(origin: Coordinates, now: Instant): Boolean {
+        val fetched = fetchedAtOrNull(origin) ?: return false
+        return Duration.between(fetched, now) < TTL
+    }
+
+    /** Önbelleğin alınma zamanı; hücre eşleşmiyorsa ya da kayıt yoksa `null`. */
+    internal suspend fun fetchedAtOrNull(origin: Coordinates): Instant? {
         val prefs = try {
             dataStore.data.first()
         } catch (_: Exception) {
-            return false
+            return null
         }
-        val raw = prefs[KEY] ?: return false
-        val cached = runCatching { json.decodeFromString<CachedNearbyDto>(raw) }.getOrNull() ?: return false
-        if (cached.cell != cellKey(origin)) return false
-        val fetched = Instant.ofEpochSecond(cached.fetchedAtEpochSec)
-        return Duration.between(fetched, now) < TTL
+        val raw = prefs[KEY] ?: return null
+        val cached = runCatching { json.decodeFromString<CachedNearbyDto>(raw) }.getOrNull() ?: return null
+        if (cached.cell != cellKey(origin)) return null
+        return Instant.ofEpochSecond(cached.fetchedAtEpochSec)
     }
 
     suspend fun read(origin: Coordinates): List<CitySeed>? = withContext(ioDispatcher) {
