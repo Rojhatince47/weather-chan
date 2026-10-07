@@ -523,6 +523,7 @@ class EvSayfasiViewModelTest {
         )
         runCurrent()
         // Bayat tohum yine de ekrana basılır; başarısız tazeleme onu silmez.
+        assertEquals(1, fakeWeather.forecastRequests.size)
         assertTrue(viewModel.uiState.value.forecasts.getValue(istanbul.id).content is UiState.Success)
     }
 

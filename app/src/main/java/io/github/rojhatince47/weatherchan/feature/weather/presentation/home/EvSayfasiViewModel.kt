@@ -48,7 +48,7 @@ class EvSayfasiViewModel @Inject constructor(
     /** Birim değişince yeniden eşleme yapmak için son başarılı tahminler. */
     private val forecastCache = mutableMapOf<Long, Forecast>()
 
-    /** Tohum girişlerinin damgaları; tazelik kararı buradan verilir. */
+    /** Bilinen son başarılı çekişin damgaları; tazelik kararı buradan verilir. */
     private val seedFetchedAt = mutableMapOf<Long, Instant>()
     private var locationJob: Job? = null
 
@@ -214,7 +214,7 @@ class EvSayfasiViewModel @Inject constructor(
         }
     }
 
-    /** Tohum tazeliği: diskten okunan kayıt 30 dk altındaysa ağa çıkılmaz. */
+    /** Bilinen son başarılı tahminin yaşı 30 dk altındaysa ağa çıkılmaz (kaynak disk tohumu ya da aynı oturumun ağ sonucu olabilir). */
     private fun seedFresh(city: City): Boolean {
         val fetchedAt = seedFetchedAt[seedKeyFor(city)] ?: return false
         return !CachedForecast.isStale(fetchedAt, clock.instant())
