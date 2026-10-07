@@ -47,7 +47,7 @@ class AddCityViewModel @Inject constructor(
      */
     private var baseSuggestions: SuggestionGroup? = null
 
-    /** Depodaki güncel kimlikler; canlı arama sonuçlarının "listede mi" bayrağı için. */
+    /** Depodaki güncel kimlikler; satır "ekli mi" bayrağı (arama sonuçları + öneri satırları) için. */
     private var existingIds: Set<Long> = emptySet()
 
     init {
