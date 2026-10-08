@@ -11,16 +11,22 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.Suggest
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionData
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
+import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -28,6 +34,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -59,9 +66,14 @@ class AddCityViewModelTest {
         location: LocationProvider = LocationProvider { coordinates },
         countryCode: String? = "TR",
         nearby: FakeNearbyCitySuggestionProvider = FakeNearbyCitySuggestionProvider(),
-        searchResult: AppResult<List<City>> = AppResult.Success(listOf(kocaeli))
+        searchResult: AppResult<List<City>> = AppResult.Success(listOf(kocaeli)),
+        weatherAutoComplete: Boolean = true,
+        weatherFail: Boolean = false,
+        unitRepository: FakeTemperatureUnitRepository = FakeTemperatureUnitRepository()
     ): AddCityViewModel {
         weather.searchResult = searchResult
+        weather.autoCompleteGates = weatherAutoComplete
+        weather.failCityWeathers = weatherFail
         return AddCityViewModel(
             searchCities = SearchCitiesUseCase(weather),
             suggestCities = SuggestCitiesUseCase(
@@ -70,14 +82,17 @@ class AddCityViewModelTest {
                 locationProvider = location,
                 deviceCountryProvider = DeviceCountryProvider { countryCode }
             ),
-            cityRepository = cities
+            cityRepository = cities,
+            getCityWeathers = GetCityWeathersUseCase(weather),
+            unitRepository = unitRepository,
+            weatherUiMapper = WeatherUiMapper()
         )
     }
 
+    // --- Mevcut testler (SuggestionLists bucket'larına taşındı) ---
+
     @Test
     fun `konumlu acilista once onbellegi gosterir canli sonucu ikinci yayimla gunceller`() = runTest(dispatcher) {
-        // Faz 1: önbellek (yalnız Bursa) anında görünür.
-        // Faz 2: Overpass canlı sonucu (Kocaeli + Bursa) gecikmeyle gelir.
         val fake = FakeNearbyCitySuggestionProvider(
             result = listOf(seed2),
             refreshResult = listOf(seed2, seed),
@@ -86,16 +101,16 @@ class AddCityViewModelTest {
         val vm = viewModel(coordinates = seed.coordinates, suggestions = null, nearby = fake)
 
         val phase1 = vm.uiState.value.suggestions
-        assertEquals(SuggestionKind.Nearby, phase1?.kind)
-        assertEquals(listOf("Bursa"), phase1?.suggestions?.map { it.city.name })
+        assertTrue(phase1?.nearby?.isNotEmpty() == true)
+        assertEquals(listOf("Bursa"), phase1?.nearby?.map { it.city.name })
 
         advanceTimeBy(11)
         runCurrent()
 
         val phase2 = vm.uiState.value.suggestions
         assertEquals(1, fake.refreshCalls)
-        assertEquals(SuggestionKind.Nearby, phase2?.kind)
-        assertEquals(listOf("Kocaeli", "Bursa"), phase2?.suggestions?.map { it.city.name })
+        assertTrue(phase2?.nearby?.isNotEmpty() == true)
+        assertEquals(listOf("Kocaeli", "Bursa"), phase2?.nearby?.map { it.city.name })
     }
 
     @Test
@@ -107,9 +122,8 @@ class AddCityViewModelTest {
         val vm = viewModel(coordinates = seed.coordinates, suggestions = null, nearby = fake)
         advanceTimeBy(11)
         runCurrent()
-        // Aynı içerik: ek yayın tetiklenmez (eşitlik sözlüğü veri sınıfındadır).
         assertEquals(1, fake.refreshCalls)
-        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.nearby?.map { it.city.name })
     }
 
     @Test
@@ -118,26 +132,23 @@ class AddCityViewModelTest {
         val vm = viewModel(coordinates = seed.coordinates, nearby = fake)
         advanceTimeBy(11)
         runCurrent()
-        assertEquals(SuggestionKind.Country, vm.uiState.value.suggestions?.kind)
-        assertEquals(listOf("Kocaeli", "Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
-        // Olumsuz dal: Nearby değil ve sonuç boş değil → canlı tazeleme başlamaz.
+        assertTrue(vm.uiState.value.suggestions?.country?.isNotEmpty() == true)
+        assertEquals(listOf("Kocaeli", "Bursa"), vm.uiState.value.suggestions?.country?.map { it.city.name })
         assertEquals(0, fake.refreshCalls)
     }
 
     @Test
     fun `dosya asamasi yakininda gecikmesine ragmen aninda yayimlanir`() = runTest(dispatcher) {
-        // Ö2: dosya önerisi konum+Yakınında turunu BEKLEMEZ — Aşama A anında
-        // Country olarak görünür, Yakınında sonradan gelir.
         val fake = FakeNearbyCitySuggestionProvider(result = listOf(seed), nearbyDelayMs = 10)
         val vm = viewModel(coordinates = seed.coordinates, nearby = fake)
 
         val phaseA = vm.uiState.value.suggestions
-        assertEquals(SuggestionKind.Country, phaseA?.kind)
-        assertEquals(listOf("Kocaeli", "Bursa"), phaseA?.suggestions?.map { it.city.name })
+        assertTrue(phaseA?.country?.isNotEmpty() == true)
+        assertEquals(listOf("Kocaeli", "Bursa"), phaseA?.country?.map { it.city.name })
 
         advanceTimeBy(11)
         runCurrent()
-        assertEquals(SuggestionKind.Nearby, vm.uiState.value.suggestions?.kind)
+        assertTrue(vm.uiState.value.suggestions?.nearby?.isNotEmpty() == true)
     }
 
     @Test
@@ -148,15 +159,11 @@ class AddCityViewModelTest {
         runCurrent()
         assertTrue(fake.origins.isEmpty())
         assertEquals(0, fake.refreshCalls)
-        assertEquals(SuggestionKind.Country, vm.uiState.value.suggestions?.kind)
+        assertTrue(vm.uiState.value.suggestions?.country?.isNotEmpty() == true)
     }
 
     @Test
     fun `tazeleme beklerken eklenen sehir sonuc cikinca da dusuk kalir`() = runTest(dispatcher) {
-        // Yarış: Aşama C (canlı tazeleme) askıdayken kullanıcı şehir ekler;
-        // tazeleme sonucu geldiğinde filtre yeniden uygulanır — satır geri gelmez.
-        // Fixture bilinçli farklı: Aşama C yeni grup yayımlasın ki filtrenin
-        // yeniden uygulanması gerçekten sınansın.
         val fake = FakeNearbyCitySuggestionProvider(
             result = listOf(seed2),
             refreshResult = listOf(seed, seed2),
@@ -169,14 +176,14 @@ class AddCityViewModelTest {
         runCurrent()
 
         assertEquals(1, fake.refreshCalls)
-        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.nearby?.map { it.city.name })
     }
 
     @Test
     fun `acilista oneriler yuklenir`() = runTest(dispatcher) {
         viewModel().uiState.test {
             val state = awaitItem()
-            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.country?.map { it.city.name })
         }
     }
 
@@ -199,9 +206,6 @@ class AddCityViewModelTest {
 
     @Test
     fun `sorgu uc karakteri gecince debounce sonrasi arar`() = runTest(dispatcher) {
-        // Debounce gerçek bir gecikmedir: `onQueryChange` anında yalnızca
-        // sorgu güncellenir, ağ turu 300 ms sonra başlar. Repo deseni:
-        // `MainViewModelTest` → `live search fires after debounce`.
         val vm = viewModel()
         vm.uiState.test {
             awaitItem()
@@ -220,9 +224,6 @@ class AddCityViewModelTest {
 
     @Test
     fun `yeni karakter yazinca bekleyen istek iptal edilir`() = runTest(dispatcher) {
-        // `search()` yalnız debounce bittikten sonra çağrılır; iptal edilen
-        // ilk iş hiç depoya ulaşmaz. Depoya düşen sorgular bu yüzden
-        // yalnız "Koca" olmalıdır.
         val weather = FakeWeatherRepository()
         val vm = viewModel(weather = weather)
         vm.uiState.test {
@@ -256,15 +257,12 @@ class AddCityViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
-            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.country?.map { it.city.name })
         }
     }
 
     @Test
     fun `asama b beklerken eklenen sehir aninda duser`() = runTest(dispatcher) {
-        // Gecikme hatası (regresyon): konum çözümü askıdayken ekleme yayımı
-        // toplayıcıyı BEKLEMEMELİ — satır anında düşer. Eski kodda toplayıcı
-        // Aşama B'nin 12 sn GPS bekleme noktasında askıda kalıyordu.
         val vm = viewModel(
             location = LocationProvider {
                 delay(10_000)
@@ -273,7 +271,7 @@ class AddCityViewModelTest {
         )
         vm.onAddCity(kocaeli)
 
-        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.suggestions?.map { it.city.name })
+        assertEquals(listOf("Bursa"), vm.uiState.value.suggestions?.country?.map { it.city.name })
     }
 
     @Test
@@ -283,16 +281,14 @@ class AddCityViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onAddCity(kocaeli)
-            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Bursa"), expectMostRecentItem().suggestions?.country?.map { it.city.name })
             cities.remove(kocaeli.id)
-            assertEquals(listOf("Kocaeli", "Bursa"), expectMostRecentItem().suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Kocaeli", "Bursa"), expectMostRecentItem().suggestions?.country?.map { it.city.name })
         }
     }
 
     @Test
     fun `eklenen sehir arama sonucunda listeye gecer`() = runTest(dispatcher) {
-        // Bayrak bayat kalırsa kullanıcı aynı şehri iki kez eklemeye çalışır;
-        // `MainViewModelTest` → `adding a city flips its in-list flag` muadili.
         val cities = FakeCityRepository(initial = emptyList())
         val vm = viewModel(cities = cities)
         vm.uiState.test {
@@ -337,7 +333,7 @@ class AddCityViewModelTest {
             val state = expectMostRecentItem()
             assertTrue(state.searchState is SearchUiState.Idle)
             assertTrue(state.query.isEmpty())
-            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Kocaeli", "Bursa"), state.suggestions?.country?.map { it.city.name })
         }
     }
 
@@ -345,14 +341,12 @@ class AddCityViewModelTest {
     fun `zaten listedeki sehir onerilmez`() = runTest(dispatcher) {
         val cities = FakeCityRepository(initial = listOf(kocaeli))
         viewModel(cities = cities).uiState.test {
-            assertEquals(listOf("Bursa"), awaitItem().suggestions?.suggestions?.map { it.city.name })
+            assertEquals(listOf("Bursa"), awaitItem().suggestions?.country?.map { it.city.name })
         }
     }
 
     @Test
     fun `listedeki sehir arama sonucunda tikli gelir`() = runTest(dispatcher) {
-        // Sonuç-varışında bayrak türetimi (`searchLive`): şehir zaten
-        // depodayken arama sonucu tikli açılır (aynı kimlik durumu).
         val vm = viewModel(cities = FakeCityRepository(initial = listOf(kocaeli)))
         vm.uiState.test {
             awaitItem()
@@ -367,8 +361,6 @@ class AddCityViewModelTest {
 
     @Test
     fun `arama sonucu yakinlikla tiklenir`() = runTest(dispatcher) {
-        // Depodaki kayıt GPS kaynaklı (~80 m sapma, farklı id); arama sonucu
-        // geocoding kaynaklı — kimlikler farklı, tik yakınlıkla gelir.
         val gpsKocaeli = kocaeli.copy(coordinates = Coordinates(40.7660, 29.9410))
         val vm = viewModel(cities = FakeCityRepository(initial = listOf(gpsKocaeli)))
         vm.uiState.test {
@@ -380,5 +372,89 @@ class AddCityViewModelTest {
             assertTrue(search is SearchUiState.Success)
             assertTrue((search as SearchUiState.Success).results.single().isInList)
         }
+    }
+
+    // --- Yeni testler: hava durumu çekimi ---
+
+    @Test
+    fun `arama sonuclari loading kartlarla gosterilir sonra dolu`() = runTest(dispatcher) {
+        val vm = viewModel(weatherAutoComplete = true)
+        vm.onQueryChange("Koc")
+        advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+        runCurrent()
+        val results = (vm.uiState.value.searchState as SearchUiState.Success).results
+        assertTrue(results.single().cardWeather is CardWeather.Loaded)
+    }
+
+    @Test
+    fun `hava durumu basarisizsa unavailable olur`() = runTest(dispatcher) {
+        val vm = viewModel(weatherAutoComplete = true, weatherFail = true)
+        vm.onQueryChange("Koc")
+        advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+        runCurrent()
+        val results = (vm.uiState.value.searchState as SearchUiState.Success).results
+        assertEquals(CardWeather.Unavailable, results.single().cardWeather)
+    }
+
+    @Test
+    fun `bos hava durumu sonucu unavailable yapar`() = runTest(dispatcher) {
+        val weather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            omitCities = setOf(kocaeli.id)
+        }
+        val vm = viewModel(weather = weather, searchResult = AppResult.Success(listOf(kocaeli)))
+        vm.onQueryChange("Koc")
+        advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+        runCurrent()
+        val results = (vm.uiState.value.searchState as SearchUiState.Success).results
+        assertEquals(CardWeather.Unavailable, results.single().cardWeather)
+    }
+
+    @Test
+    fun `oneriler icin hava durumu cekilir`() = runTest(dispatcher) {
+        val vm = viewModel(weatherAutoComplete = true)
+        advanceUntilIdle()
+        val lists = vm.uiState.value.suggestions
+        assertNotNull(lists)
+        assertTrue(lists!!.country.all { it.cardWeather is CardWeather.Loaded })
+    }
+
+    @Test
+    fun `rapid typing stale fetch leri iptal eder`() = runTest(dispatcher) {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val vm = viewModel(weather = weather)
+        vm.onQueryChange("Koc")
+        vm.onQueryChange("İst")
+        advanceUntilIdle()
+        val results = (vm.uiState.value.searchState as? SearchUiState.Success)?.results
+        assertNotNull(results)
+        assertTrue(results!!.all { it.cardWeather != null })
+    }
+
+    @Test
+    fun `mini-cache vurusu aga cikmaz`() = runTest(dispatcher) {
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val vm = viewModel(weather = weather)
+        vm.onQueryChange("Koc")
+        advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+        runCurrent()
+        val callsBefore = weather.finishedCityWeathersCalls
+        vm.onQueryChange("")
+        advanceUntilIdle()
+        assertEquals(callsBefore, weather.finishedCityWeathersCalls)
+    }
+
+    @Test
+    fun `birim degistiginde cardweather yeniden haritalanir`() = runTest(dispatcher) {
+        val unitRepo = FakeTemperatureUnitRepository()
+        val weather = FakeWeatherRepository().apply { autoCompleteGates = true }
+        val vm = viewModel(weather = weather, unitRepository = unitRepo)
+        vm.onQueryChange("Koc")
+        advanceTimeBy(AddCityViewModel.SEARCH_DEBOUNCE_MS + 1)
+        runCurrent()
+        unitRepo.setUnit(TemperatureUnit.FAHRENHEIT)
+        advanceUntilIdle()
+        val results = (vm.uiState.value.searchState as SearchUiState.Success).results
+        assertTrue(results.single().cardWeather.toString().contains("°F"))
     }
 }

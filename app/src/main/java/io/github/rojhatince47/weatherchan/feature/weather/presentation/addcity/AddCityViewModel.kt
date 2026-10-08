@@ -7,9 +7,14 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRep
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestCitiesUseCase
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionGroup
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityProximity
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.SearchCitiesUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -26,12 +31,19 @@ import kotlinx.coroutines.launch
  * Canlı arama mantığı `MainViewModel`'dan **taşındı**: ana ekranda sorgu hem
  * arama hem liste süzgeciydi, iki kaynaklı bir durumdu. Artık aramanın tek
  * sahibi bu ekran.
+ *
+ * Hava durumu arka planda çekilir: her sonuç (arama + öneri) için
+ * [GetCityWeathersUseCase] ile paralel fetch başlatılır. Mini-cache +
+ * job-cancellation ile stale-guard sağlanır.
  */
 @HiltViewModel
 class AddCityViewModel @Inject constructor(
     private val searchCities: SearchCitiesUseCase,
     private val suggestCities: SuggestCitiesUseCase,
-    private val cityRepository: CityRepository
+    private val cityRepository: CityRepository,
+    private val getCityWeathers: GetCityWeathersUseCase,
+    private val unitRepository: TemperatureUnitRepository,
+    private val weatherUiMapper: WeatherUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddCityUiState())
@@ -42,14 +54,14 @@ class AddCityViewModel @Inject constructor(
     /**
      * Öneri grubu **bir kez** hesaplanır; yayım anında depo listesiyle
      * süzülür (eklenen şehir öneride kalmaz, `CityProximity`).
-     *
-     * Her yayımda yeniden hesaplamak konumu (GPS okuması) tekrar tekrar
-     * okuturdu; ekranda hiçbir şey değişmemişken yapılan bir işlemdir.
      */
     private var baseSuggestions: SuggestionGroup? = null
 
     /** Depodaki güncel liste; satır "ekli mi" kararı yakınlıkla bunun üzerinden verilir. */
     private var existingCities: List<City> = emptyList()
+
+    private val weatherJobs = mutableListOf<Job>()
+    private val weatherCache = mutableMapOf<Long, CityWeather>()
 
     init {
         viewModelScope.launch {
@@ -58,16 +70,14 @@ class AddCityViewModel @Inject constructor(
                 existingCities = stored
                 if (!computed) {
                     computed = true
-                    // Aşamalar ayrı coroutine'de: toplayıcı asla bloklanmaz,
-                    // ekleme yayımı anında işlenir (gecikme hatası).
                     viewModelScope.launch { computeSuggestions() }
                 }
-                // Eklenen şehir arama sonuçlarında da "listede" bayrağını
-                // alır; bayrak bayat kalırsa kullanıcı aynı şehri iki kez
-                // eklemeye çalışır (`MainViewModel`'dan taşınan davranış).
                 refreshSearchInListFlags()
                 publishSuggestions()
             }
+        }
+        viewModelScope.launch {
+            unitRepository.unit.collect { remapVisibleWeather() }
         }
     }
 
@@ -76,19 +86,13 @@ class AddCityViewModel @Inject constructor(
      * toplayıcısı konum (12 sn GPS) ve Overpass ağ turlarını beklemez.
      */
     private suspend fun computeSuggestions() {
-        // Aşama A — dosya: konum/ağ beklemeden anında yayım (Ö2).
         baseSuggestions = suggestCities(nearbyEnabled = false)
         publishSuggestions()
-        // Aşama B — Yakınında: konum + önbellek/ağ sonucu.
         val withNearby = suggestCities()
         if (withNearby != null && withNearby != baseSuggestions) {
             baseSuggestions = withNearby
             publishSuggestions()
         }
-        // Aşama C — canlı tazeleme: önbellekten geldiyse arkada Overpass
-        // sorgusu; sonuç farklıysa güncellenmiş yayım (spec §5). Aynı anda
-        // ikinci ağ turu, provider'ın anti-çift-istek kısa devresiyle
-        // engellenir (O1).
         if (baseSuggestions?.kind == SuggestionKind.Nearby || baseSuggestions == null) {
             val fresh = suggestCities(refresh = true)
             if (fresh != null && fresh != baseSuggestions) {
@@ -100,24 +104,41 @@ class AddCityViewModel @Inject constructor(
 
     /**
      * Grup, depodaki güncel listeyle süzülerek yayımlanır: eklenen şehir
-     * öneride kalmaz. Bölüm tümüyle süzüldüyse hiç çizilmez (use case boş
-     * grup döndürmez; bu normalleştirme sonraki depo yayımlarında da aynı
-     * sözleşmeyi korur).
+     * öneride kalmaz.
+     *
+     * Sahip-bilgili merge: `kind` = [baseSuggestions]?.kind (filtrelenmiş
+     * değil). Aktif bucket her zaman overwrite edilir (boş dahil); diğer
+     * bucket'lar korunur. `baseSuggestions == null` ise tüm bucket'lar
+     * korunur.
      */
     private fun publishSuggestions() {
-        _uiState.update {
-            it.copy(
-                suggestions = baseSuggestions
-                    ?.let { group ->
-                        group.copy(
-                            suggestions = group.suggestions.filterNot { suggestion ->
-                                existingCities.any { CityProximity.isSamePlace(suggestion.city, it) }
-                            }
-                        )
+        cancelWeatherJobs()
+        val filtered = baseSuggestions
+            ?.let { g ->
+                g.copy(
+                    suggestions = g.suggestions.filterNot { suggestion ->
+                        existingCities.any { CityProximity.isSamePlace(suggestion.city, it) }
                     }
-                    ?.takeIf { group -> group.suggestions.isNotEmpty() }
+                )
+            }
+            ?.takeIf { g -> g.suggestions.isNotEmpty() }
+        val list = filtered?.suggestions.orEmpty().map { s ->
+            SearchResultUiModel(s.city, isInList = false, distanceKm = s.distanceKm)
+        }
+        val kind = baseSuggestions?.kind
+        _uiState.update { prev ->
+            val merged = SuggestionLists(
+                nearby = if (kind == SuggestionKind.Nearby) list else prev.suggestions?.nearby.orEmpty(),
+                country = if (kind == SuggestionKind.Country) list else prev.suggestions?.country.orEmpty(),
+                world = if (kind == SuggestionKind.World) list else prev.suggestions?.world.orEmpty()
+            )
+            prev.copy(
+                suggestions = merged.takeIf { l ->
+                    l.nearby.isNotEmpty() || l.country.isNotEmpty() || l.world.isNotEmpty()
+                }
             )
         }
+        restartPendingFetches()
     }
 
     private fun refreshSearchInListFlags() {
@@ -136,44 +157,115 @@ class AddCityViewModel @Inject constructor(
     }
 
     fun onQueryChange(query: String) {
-        // Sorgu bir kullanıcı girdisidir: yazılan karakter anında görünür,
-        // ağ turu ise debounce sonrasında başlar.
         _uiState.update { it.copy(query = query) }
         searchLive(query)
     }
 
     fun onAddCity(city: City) {
-        // Yazma kasıtlı olarak veri çekmez: `CityRepository.cities` yayımı
-        // öneriyi zaten tazeler, ayrıca `fetch` çağırmak her eklemede iki ağ
-        // turu demek olurdu.
         viewModelScope.launch { cityRepository.add(city) }
     }
 
     /** 3 karakterin altındaki sorgular ağa gitmez; bekleyen istek iptal edilir. */
     private fun searchLive(query: String) {
         searchJob?.cancel()
+        cancelWeatherJobs()
         val trimmed = query.trim()
         if (trimmed.length < MIN_SEARCH_QUERY_LENGTH) {
             _uiState.update { it.copy(searchState = SearchUiState.Idle) }
+            restartPendingFetches()
             return
         }
         searchJob = viewModelScope.launch {
             delay(SEARCH_DEBOUNCE_MS)
             _uiState.update { it.copy(searchState = SearchUiState.Loading) }
             when (val result = searchCities(trimmed)) {
-                is AppResult.Success -> _uiState.update {
-                    it.copy(
-                        searchState = SearchUiState.Success(
-                            result.data.map { city ->
-                                SearchResultUiModel(city, existingCities.any { CityProximity.isSamePlace(city, it) })
-                            }
-                        )
-                    )
+                is AppResult.Success -> {
+                    val results = result.data.map { city ->
+                        SearchResultUiModel(city, existingCities.any { CityProximity.isSamePlace(city, it) })
+                    }
+                    _uiState.update { it.copy(searchState = SearchUiState.Success(results)) }
+                    results.forEach { r ->
+                        if (r.cardWeather == null) {
+                            weatherCache[r.city.id]?.let { c ->
+                                updateResultWeatherByCityId(r.city.id, toCardWeather(c))
+                            } ?: launchWeatherFetch(r.city)
+                        }
+                    }
                 }
                 is AppResult.Failure -> _uiState.update {
                     it.copy(searchState = SearchUiState.Failure(result.error))
                 }
             }
+        }
+    }
+
+    private fun launchWeatherFetch(city: City) {
+        weatherCache[city.id]?.let { cached ->
+            updateResultWeatherByCityId(city.id, toCardWeather(cached))
+            return
+        }
+        val job = viewModelScope.launch {
+            val result = getCityWeathers(listOf(city))
+            val cardWeather = when (result) {
+                is AppResult.Success -> result.data.firstOrNull()?.let {
+                    weatherCache[city.id] = it
+                    toCardWeather(it)
+                } ?: CardWeather.Unavailable
+                is AppResult.Failure -> CardWeather.Unavailable
+            }
+            updateResultWeatherByCityId(city.id, cardWeather)
+        }
+        weatherJobs += job
+    }
+
+    private fun toCardWeather(cityWeather: CityWeather): CardWeather =
+        weatherUiMapper.toCityWeatherUiModel(cityWeather, unit = unitRepository.unit.value).weather
+
+    private fun cancelWeatherJobs() {
+        weatherJobs.forEach { it.cancel() }
+        weatherJobs.clear()
+    }
+
+    /** Mini-cache'ten yeniden haritalama (ağ yok) — birim değişince çağrılır. */
+    private fun remapVisibleWeather() {
+        val unit = unitRepository.unit.value
+        weatherCache.forEach { (id, cw) ->
+            updateResultWeatherByCityId(id, weatherUiMapper.toCityWeatherUiModel(cw, unit = unit).weather)
+        }
+    }
+
+    /**
+     * Benzersiz şehir id'leri için fetch başlat (cross-bucket dedup).
+     * Hem öneri hem arama satırlarını kapsar.
+     */
+    private fun restartPendingFetches() {
+        val visibleIds = mutableSetOf<Long>()
+        (_uiState.value.suggestions?.let { it.nearby + it.country + it.world } ?: emptyList())
+            .forEach { result ->
+                if (result.city.id !in visibleIds) {
+                    visibleIds.add(result.city.id)
+                    if (result.cardWeather == null) {
+                        weatherCache[result.city.id]?.let { c ->
+                            updateResultWeatherByCityId(result.city.id, toCardWeather(c))
+                        } ?: launchWeatherFetch(result.city)
+                    }
+                }
+            }
+    }
+
+    private fun updateResultWeatherByCityId(id: Long, cardWeather: CardWeather) {
+        _uiState.update { state ->
+            val updatedSearch = (state.searchState as? SearchUiState.Success)?.let { s ->
+                s.copy(results = s.results.map { if (it.city.id == id) it.copy(cardWeather = cardWeather) else it })
+            } ?: state.searchState
+            val updatedSuggestions = state.suggestions?.let { lists ->
+                SuggestionLists(
+                    nearby = lists.nearby.map { if (it.city.id == id) it.copy(cardWeather = cardWeather) else it },
+                    country = lists.country.map { if (it.city.id == id) it.copy(cardWeather = cardWeather) else it },
+                    world = lists.world.map { if (it.city.id == id) it.copy(cardWeather = cardWeather) else it }
+                )
+            }
+            state.copy(searchState = updatedSearch, suggestions = updatedSuggestions)
         }
     }
 

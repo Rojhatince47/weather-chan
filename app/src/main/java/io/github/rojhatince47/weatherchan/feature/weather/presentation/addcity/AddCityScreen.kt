@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -29,10 +30,8 @@ import androidx.compose.ui.semantics.semantics
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
-import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestion
-import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionGroup
-import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionKind
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.CityWeatherCardContent
 
 /**
  * Şehir ekleme ekranı: arama kutusu + konum/ülke/dünya önerileri.
@@ -40,6 +39,10 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
  * Sorgu boşken öneri bölümü, doluyken arama sonuçları gösterilir — ikisi aynı
  * anda değil, çünkü ikisi de "nereye gitmek istiyorsun" sorusunun farklı
  * cevaplarıdır ve birlikte ekranı kirlidir.
+ *
+ * Satırlar [CityWeatherCardContent] ile durum renkli kartlarda gösterilir.
+ * Büyüteç (detay aç) kaldırılmıştır; satıra dokunma arama sonuçlarında
+ * detaya gider, önerilerde ekleme yapar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +54,9 @@ fun AddCityScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Kart koşul paleti seçimi de aynı tema kararına bağlı olmalı.
+    val isDarkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -92,21 +98,20 @@ fun AddCityScreen(
             }
 
             if (uiState.query.isBlank()) {
-                uiState.suggestions?.let { group ->
-                    SuggestionSection(
-                        group = group,
-                        onAddCity = onAddCity,
-                        // Kaydırılabilir: klavye açıkken ya da büyük fontta sekiz
-                        // kart ekrandan taşar; `MainScreen`'deki listenin
-                        // çözümüyle aynı (verticalScroll).
+                uiState.suggestions?.let { lists ->
+                    Column(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(rememberScrollState())
-                    )
+                            .padding(horizontal = HavaSpacing.lg)
+                    ) {
+                        val seen = mutableSetOf<Long>()
+                        SuggestionBucket(R.string.suggestion_nearby, lists.nearby, seen, onAddCity, isDarkTheme)
+                        SuggestionBucket(R.string.suggestion_country, lists.country, seen, onAddCity, isDarkTheme)
+                        SuggestionBucket(R.string.suggestion_world, lists.world, seen, onAddCity, isDarkTheme)
+                    }
                 }
             } else if (search is SearchUiState.Success && search.results.isEmpty()) {
-                // Sonuç yoksa hiçbir şey göstermemek, arama çalışmıyor izlenimi
-                // verir. Aynı metin ana ekrandan kaldırıldı; burada yaşıyor.
                 Text(
                     text = stringResource(R.string.state_empty_search),
                     style = MaterialTheme.typography.bodyMedium,
@@ -121,13 +126,22 @@ fun AddCityScreen(
                     contentPadding = PaddingValues(horizontal = HavaSpacing.lg, vertical = HavaSpacing.sm),
                     verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
                 ) {
-                    // Aynı ~110 m hücresinden iki kayıt gelirse LazyColumn'un
-                    // key'i çakışıp çalışma anında çöker; distinctBy sigortadır.
                     items(search.results.distinctBy { it.city.id }, key = { it.city.id }) { result ->
-                        SearchResultRow(
-                            result = result,
+                        CityWeatherCardContent(
+                            name = result.city.name,
+                            region = result.city.region,
+                            country = result.city.country,
+                            isLocation = result.city.isLocation,
+                            cardWeather = result.cardWeather,
+                            isDarkTheme = isDarkTheme,
+                            isLoading = result.cardWeather == null,
+                            onClick = {
+                                onAddCity(result.city)
+                                onOpenCity(result.city)
+                            },
                             onAddClick = { onAddCity(result.city) },
-                            onOpenClick = { onOpenCity(result.city) }
+                            isInList = result.isInList,
+                            enabled = true
                         )
                     }
                 }
@@ -141,32 +155,42 @@ fun AddCityScreen(
  *
  * Başlık dalı anlatır ("Yakınında" / "Ülkende" / "Dünyada"): aynı listedeki
  * satırların neden önerildiğini tek bakışta söyler.
+ *
+ * Çapraz-bucket mükerrerler [seen] ile elenir: ilk görülen kazanır
+ * (nearby → country → world sırasıyla).
  */
 @Composable
-private fun SuggestionSection(group: SuggestionGroup, onAddCity: (City) -> Unit, modifier: Modifier = Modifier) {
-    val title = stringResource(
-        when (group.kind) {
-            SuggestionKind.Nearby -> R.string.suggestion_nearby
-            SuggestionKind.Country -> R.string.suggestion_country
-            SuggestionKind.World -> R.string.suggestion_world
-        }
+private fun SuggestionBucket(
+    title: Int,
+    results: List<SearchResultUiModel>,
+    seen: MutableSet<Long>,
+    onAddCity: (City) -> Unit,
+    isDarkTheme: Boolean
+) {
+    val visible = results.filter { it.city.id !in seen }.onEach { seen.add(it.city.id) }
+    if (visible.isEmpty()) return
+    Text(
+        text = stringResource(title),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .padding(top = HavaSpacing.md, bottom = HavaSpacing.sm)
+            .semantics { heading() }
     )
-    Column(modifier = modifier.padding(horizontal = HavaSpacing.lg)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .padding(top = HavaSpacing.md, bottom = HavaSpacing.sm)
-                .semantics { heading() }
+    visible.forEach { result ->
+        CityWeatherCardContent(
+            name = result.city.name,
+            region = result.city.region,
+            country = result.city.country,
+            isLocation = result.city.isLocation,
+            cardWeather = result.cardWeather,
+            isDarkTheme = isDarkTheme,
+            isLoading = result.cardWeather == null,
+            onClick = { onAddCity(result.city) },
+            onAddClick = { onAddCity(result.city) },
+            isInList = result.isInList,
+            distanceKm = result.distanceKm,
+            enabled = !result.isInList
         )
-        group.suggestions.forEach { suggestion: CitySuggestion ->
-            SearchResultRow(
-                result = SearchResultUiModel(suggestion.city, isInList = false),
-                onAddClick = { onAddCity(suggestion.city) },
-                onOpenClick = null,
-                distanceKm = suggestion.distanceKm
-            )
-        }
     }
 }

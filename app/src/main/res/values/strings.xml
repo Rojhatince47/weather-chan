@@ -10,7 +10,6 @@
     <string name="search_placeholder">Search city</string>
     <string name="search_clear">Clear search</string>
     <string name="action_add_city">Add city to list</string>
-    <string name="action_open_detail">Open details</string>
     <string name="search_result_in_list">In list</string>
 
     <string name="detail_title">Weather</string>
