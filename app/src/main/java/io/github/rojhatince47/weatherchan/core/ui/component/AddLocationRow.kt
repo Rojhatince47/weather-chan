@@ -11,11 +11,11 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 
 /**
- * Liste doluyken gösterilen konum geri ekleme satırı.
+ * Konum geri ekleme satırı.
  *
- * Liste boşken eklenen eylem burada da görünür olmalıdır: aksi halde kullanıcı
- * konumu yalnız listeyi boşaltarak geri getirebilirdi. Ana ekranda pager'ın
- * üstünde, ince listede listenin sonunda sabit durur.
+ * Yalnız listenin **boş** olduğu durumda Ev'in boş ekranında görünür
+ * ("Konumumu ekle" / "Tekrar dene"). Liste doluysa eylemin yeri Ayarlar
+ * ekranının en üstündeki Konum bölümüdür; `Loading` göstergesi de oradadır.
  */
 @Composable
 fun AddLocationRow(locationState: LocationState, onAddLocation: () -> Unit, onRetryLocation: () -> Unit, modifier: Modifier = Modifier) {

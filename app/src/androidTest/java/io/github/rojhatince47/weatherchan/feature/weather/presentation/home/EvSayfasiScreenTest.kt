@@ -93,16 +93,15 @@ class EvSayfasiScreenTest {
     }
 
     @Test
-    fun doluListedeKonumsuzkenSatirGorunur() {
-        var clicked = false
-        setScreen(
-            listOf(istanbul),
-            locationState = LocationState.Idle,
-            onAddLocation = { clicked = true }
-        )
-        composeRule.onNodeWithTag("add_location_row").assertIsDisplayed()
-        composeRule.onNodeWithText("Konumumu ekle").performClick()
-        assertTrue(clicked)
+    fun doluListedeKonumSatiriCizilmez() {
+        setScreen(listOf(istanbul), locationState = LocationState.Idle)
+        composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun doluListedeKonumUnavailabledaSatirCizilmez() {
+        setScreen(listOf(istanbul), locationState = LocationState.Unavailable)
+        composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
     }
 
     @Test

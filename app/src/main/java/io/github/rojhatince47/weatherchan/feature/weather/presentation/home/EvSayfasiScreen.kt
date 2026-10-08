@@ -147,21 +147,6 @@ fun EvSayfasiScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                // Konum kaydı yoksa geri ekleme satırı pager'ın üstünde
-                // sabit durur: sayfalar arasında kaybolan bir eylem,
-                // konumu yalnız boş listeye indirerek geri getirtirdi.
-                // Görünürlük `locationState`'in kendisine bakılarak değil
-                // veriyle karar verilir: konum sayfası ekrandaysa satırın
-                // gösterileceği bir durum yoktur.
-                val hasLocationPage = cities.any { it.isLocation }
-                if (!hasLocationPage && locationState !is LocationState.Resolved) {
-                    AddLocationRow(
-                        locationState = locationState,
-                        onAddLocation = onAddLocation,
-                        onRetryLocation = onRetryLocation,
-                        modifier = Modifier.padding(horizontal = HavaSpacing.lg)
-                    )
-                }
                 HomePager(
                     cities = cities,
                     currentPage = currentPage,
