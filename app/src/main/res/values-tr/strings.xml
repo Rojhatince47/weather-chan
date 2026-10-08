@@ -21,6 +21,7 @@
     <string name="settings_unit_section">Birim</string>
     <string name="settings_theme_section">Tema</string>
     <string name="settings_language_section">Dil</string>
+    <string name="settings_location_section">Konum</string>
     <string name="language_system">Sistem</string>
     <string name="language_turkish">Türkçe</string>
     <string name="language_english">English</string>

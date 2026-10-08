@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
@@ -33,6 +36,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.Temperat
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 
 /**
  * Birim ve tema ayarları.
@@ -47,6 +51,10 @@ fun SettingsScreen(
     unit: TemperatureUnitUiModel,
     themeMode: ThemeMode,
     appLanguage: AppLanguage,
+    locationState: LocationState = LocationState.Idle,
+    locationAdded: Boolean = false,
+    onAddLocation: () -> Unit = {},
+    onRetryLocation: () -> Unit = {},
     onUnitSelected: (TemperatureUnit) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
     onAppLanguageSelected: (AppLanguage) -> Unit,
@@ -73,9 +81,24 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = HavaSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
         ) {
+            if (!locationAdded && locationState !is LocationState.Resolved) {
+                SectionTitle(stringResource(R.string.settings_location_section))
+                when (locationState) {
+                    LocationState.Loading -> Text(
+                        text = stringResource(R.string.location_loading),
+                        modifier = Modifier.testTag("location_loading")
+                    )
+                    else -> AddLocationRow(
+                        locationState = locationState,
+                        onAddLocation = onAddLocation,
+                        onRetryLocation = onRetryLocation
+                    )
+                }
+            }
             SectionTitle(stringResource(R.string.settings_unit_section))
             Row(horizontalArrangement = Arrangement.spacedBy(HavaSpacing.sm)) {
                 TemperatureUnit.entries.forEach { option ->
