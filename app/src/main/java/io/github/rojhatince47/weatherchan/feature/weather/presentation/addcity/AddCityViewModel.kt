@@ -241,6 +241,7 @@ class AddCityViewModel @Inject constructor(
     private fun restartPendingFetches() {
         val visibleIds = mutableSetOf<Long>()
         (_uiState.value.suggestions?.let { it.nearby + it.country + it.world } ?: emptyList())
+            .plus((_uiState.value.searchState as? SearchUiState.Success)?.results.orEmpty())
             .forEach { result ->
                 if (result.city.id !in visibleIds) {
                     visibleIds.add(result.city.id)

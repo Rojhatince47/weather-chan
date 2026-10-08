@@ -108,6 +108,8 @@ class AddCityScreenTest {
         composeRule.onNodeWithText("Kocaeli").assertDoesNotExist()
         composeRule.onNodeWithText("Yakınında").assertDoesNotExist()
     }
+
+    @Test
     fun aramaSonucundaEklenmisSehirTikOlur() {
         setScreen(
             state(
