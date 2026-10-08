@@ -38,6 +38,7 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 /**
  * Şehir kartı. Yüzey rengi koşula göre değişir; bu, listedeki kartları
@@ -53,7 +54,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Car
  */
 @Composable
 fun CityWeatherCard(
-    cityWeather: io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel,
+    cityWeather: CityWeatherUiModel,
     isDarkTheme: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
