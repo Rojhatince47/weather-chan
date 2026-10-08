@@ -41,6 +41,16 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets {
+        // Paylaşılan test sahteleri: hem unit test (debug+release) hem
+        // androidTest aynı dizini derler; uygulama APK'sına girmez.
+        getByName("test") {
+            java.srcDir("src/testingShared/java")
+        }
+        getByName("androidTest") {
+            java.srcDir("src/testingShared/java")
+        }
+    }
 }
 
 ksp {

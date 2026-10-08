@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPermissions
+import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
@@ -19,6 +20,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLoca
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
+import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeLocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import java.time.Clock
 import java.time.Instant
@@ -562,29 +564,6 @@ class EvSayfasiViewModelTest {
     // --- konum testleri için sahteler -----------------------------------------
 
     private val locationCoordinates = Coordinates(41.01, 28.98)
-
-    /** Sabit konum döndüren sahte; `null` verirsen konum okunamaz. */
-    private class FakeLocationProvider(
-        private val coordinates: Coordinates?,
-        private val gate: CompletableDeferred<Coordinates?>? = null
-    ) : LocationProvider {
-        var callCount: Int = 0
-            private set
-
-        override suspend fun currentCoordinates(): Coordinates? {
-            callCount++
-            return gate?.await() ?: coordinates
-        }
-    }
-
-    /** Kalıcı "diyalog gösterildi" bayrağının sahtesi. */
-    private class FakeCityPermissions(private var asked: Boolean = false) : CityPermissions {
-        override suspend fun wasAsked(): Boolean = asked
-
-        override suspend fun markAsked() {
-            asked = true
-        }
-    }
 
     /** Bayrak okumasını istenen ana kadar bekleten sahte. */
     private class GatedCityPermissions(private val gate: CompletableDeferred<Boolean>) : CityPermissions {
