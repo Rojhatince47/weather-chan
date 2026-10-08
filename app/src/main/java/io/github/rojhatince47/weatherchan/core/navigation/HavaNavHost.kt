@@ -9,10 +9,16 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.Settings
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.AddCityRoute
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiRoute
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.MainRoute
 
 @Composable
-fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsViewModel, modifier: Modifier = Modifier) {
+fun HavaNavHost(
+    navController: NavHostController,
+    settingsViewModel: SettingsViewModel,
+    evViewModel: EvSayfasiViewModel,
+    modifier: Modifier = Modifier
+) {
     NavHost(
         navController = navController,
         startDestination = EvSayfasiDestination,
@@ -23,6 +29,7 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
                 onAddCityClick = { navController.navigate(AddCityDestination) },
                 onSettingsClick = { navController.navigate(SettingsDestination) },
                 onOpenList = { navController.navigate(ListDestination) },
+                viewModel = evViewModel,
                 settingsViewModel = settingsViewModel,
                 savedStateHandle = entry.savedStateHandle
             )
@@ -57,6 +64,7 @@ fun HavaNavHost(navController: NavHostController, settingsViewModel: SettingsVie
             // tema değişikliği anında tüm ekranlara yayılır.
             SettingsRoute(
                 onBack = { navController.popBackStack() },
+                evViewModel = evViewModel,
                 settingsViewModel = settingsViewModel
             )
         }

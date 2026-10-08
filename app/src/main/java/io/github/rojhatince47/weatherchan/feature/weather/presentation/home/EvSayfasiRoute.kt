@@ -26,7 +26,9 @@ fun EvSayfasiRoute(
     onSettingsClick: () -> Unit,
     onOpenList: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EvSayfasiViewModel = hiltViewModel(),
+    // NavHost üstünde alınan ortak örnek: Ev ile Ayarlar aynı state machine'i
+    // paylaşır (tek örnek); default yok — çağrı noktası açıkça verir.
+    viewModel: EvSayfasiViewModel,
     // NavHost üstünde alınan ortak örnek; giriş başına ayrı örnek oluşmaz.
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     // Pager'ın kendi back stack girdisi: liste/ekleme dönüşünde seçilen

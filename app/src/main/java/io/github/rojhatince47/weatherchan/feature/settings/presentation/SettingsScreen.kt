@@ -36,6 +36,8 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.Temperat
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.rememberLocationAction
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 
 /**
@@ -51,10 +53,10 @@ fun SettingsScreen(
     unit: TemperatureUnitUiModel,
     themeMode: ThemeMode,
     appLanguage: AppLanguage,
-    locationState: LocationState = LocationState.Idle,
-    locationAdded: Boolean = false,
-    onAddLocation: () -> Unit = {},
-    onRetryLocation: () -> Unit = {},
+    locationState: LocationState,
+    locationAdded: Boolean,
+    onAddLocation: () -> Unit,
+    onRetryLocation: () -> Unit,
     onUnitSelected: (TemperatureUnit) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
     onAppLanguageSelected: (AppLanguage) -> Unit,
@@ -177,12 +179,24 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit, modifier: Modifier = Modifier, settingsViewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    evViewModel: EvSayfasiViewModel,
+    modifier: Modifier = Modifier,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
     val unitState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val appLanguage by settingsViewModel.appLanguage.collectAsStateWithLifecycle()
+    val evUiState by evViewModel.uiState.collectAsStateWithLifecycle()
     // Ekran her açılışında seçim dış kaynakla (sistem ayarları) tazelenir.
     LaunchedEffect(Unit) { settingsViewModel.refreshAppLanguage() }
+    // Konum eylemi Ev route'uyla aynı state machine'e bağlıdır (tek örnek).
+    val onLocationAction = rememberLocationAction(
+        permissionState = evUiState.permissionState,
+        onPermissionResult = evViewModel::onPermissionResult,
+        onReadLocation = evViewModel::refreshLocation
+    )
     // `UiState` yalnız yükleme sırasında farklı olabilir; ölümcül değil, bu
     // ekranda güvenli varsayılan gösterilir (MainRoute ile aynı desen).
     val unit = (unitState as? UiState.Success)?.data ?: TemperatureUnit.CELSIUS.toUiModel()
@@ -190,6 +204,10 @@ fun SettingsRoute(onBack: () -> Unit, modifier: Modifier = Modifier, settingsVie
         unit = unit,
         themeMode = themeMode,
         appLanguage = appLanguage,
+        locationState = evUiState.locationState,
+        locationAdded = evUiState.pages.any { it.isLocation },
+        onAddLocation = onLocationAction,
+        onRetryLocation = onLocationAction,
         onUnitSelected = settingsViewModel::onUnitSelected,
         onThemeModeSelected = settingsViewModel::onThemeModeSelected,
         onAppLanguageSelected = settingsViewModel::onAppLanguageSelected,
