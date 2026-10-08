@@ -111,4 +111,37 @@ class EvSayfasiScreenTest {
         setScreen(listOf(konum))
         composeRule.onNodeWithText("Konum").assertIsDisplayed()
     }
+
+    @Test
+    fun bosListedeKonumsuzkenSatirGorunur() {
+        var clicked = false
+        setScreen(
+            emptyList(),
+            locationState = LocationState.Idle,
+            onAddLocation = { clicked = true }
+        )
+        composeRule.onNodeWithTag("add_location_row").assertIsDisplayed()
+        composeRule.onNodeWithText("Konumumu ekle").performClick()
+        assertTrue(clicked)
+    }
+
+    @Test
+    fun bosListedeKonumUnavailabledaTekrarDeneGorunur() {
+        var retried = false
+        setScreen(
+            emptyList(),
+            locationState = LocationState.Unavailable,
+            onRetryLocation = { retried = true }
+        )
+        composeRule.onNodeWithTag("add_location_row").assertIsDisplayed()
+        composeRule.onNodeWithText("Tekrar dene").performClick()
+        assertTrue(retried)
+    }
+
+    @Test
+    fun bosListedeKonumLoadingIkenGostergeGorunur() {
+        setScreen(emptyList(), locationState = LocationState.Loading)
+        composeRule.onNodeWithTag("location_loading").assertIsDisplayed()
+        composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
+    }
 }

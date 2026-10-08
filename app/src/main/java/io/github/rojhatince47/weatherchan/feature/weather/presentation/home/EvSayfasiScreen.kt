@@ -116,6 +116,24 @@ fun EvSayfasiScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(text = stringResource(R.string.home_empty_state))
+                // Konum akışı boş listede de görünür: kullanıcı izni verdikten
+                // sonra ne olduğunu görmeli, başarısızlıkta tekrar deneyebilmeli.
+                when {
+                    locationState is LocationState.Loading -> Text(
+                        text = stringResource(R.string.location_loading),
+                        modifier = Modifier
+                            .padding(top = HavaSpacing.md)
+                            .testTag("location_loading")
+                    )
+                    locationState !is LocationState.Resolved -> AddLocationRow(
+                        locationState = locationState,
+                        onAddLocation = onAddLocation,
+                        onRetryLocation = onRetryLocation,
+                        modifier = Modifier
+                            .padding(top = HavaSpacing.md)
+                            .padding(horizontal = HavaSpacing.lg)
+                    )
+                }
                 Button(
                     onClick = onAddCityClick,
                     modifier = Modifier.padding(top = HavaSpacing.md)
