@@ -1,5 +1,9 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.list
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,16 +11,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -26,7 +38,6 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
 
 /**
  * Şehir kartı. Yüzey rengi koşula göre değişir; bu, listedeki kartları
@@ -42,110 +53,80 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Cit
  */
 @Composable
 fun CityWeatherCard(
-    cityWeather: CityWeatherUiModel,
+    cityWeather: io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel,
     isDarkTheme: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onRetryCity: () -> Unit = {},
     isRetrying: Boolean = false,
+    onRetryCity: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    when (val weather = cityWeather.weather) {
-        is CardWeather.Loaded -> {
-            val palette = ConditionPalette.of(weather.condition, isDark = isDarkTheme, isDay = weather.isDay)
-            CityWeatherCardContent(
-                cityWeather = cityWeather,
-                emoji = weather.conditionEmoji,
-                detailText = weather.temperatureText,
-                containerColor = palette.container,
-                contentColor = palette.onContainer,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                trailing = null,
-                modifier = modifier
-            )
-        }
-        // Yüksüz kart bir hava koşulu temsil etmez; koşul paleti yanıltıcı
-        // olurdu. Nötr yüzey "hata değil, veri yok" demek için yeterli.
-        CardWeather.Unavailable -> CityWeatherCardContent(
-            cityWeather = cityWeather,
-            emoji = "🌐",
-            // Tur sürerken hata metni yanıltıcı olur: işlem bitmedi,
-            // başarısız olmadı. Göstergeyle birlikte nötr metin çıkar.
-            detailText = if (isRetrying) {
-                stringResource(R.string.card_weather_loading)
-            } else {
-                stringResource(R.string.card_weather_unavailable)
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            trailing = {
-                // Deneme sürerken düğme kilitlenir; çift dokunuş ikinci istek
-                // atamaz. Kart yüklenince bu dal tamamen kaybolur.
-                if (isRetrying) {
-                    // Gösterge anlamsız bir Canvas'tır: düğme anlamlar ağacından
-                    // kalkarken TalkBack odakını ve "yeniden deneniyor" bilgisini
-                    // bu etiket devralır. semantics bloğu composable olmadığından
-                    // metin burada önceden çözülür.
-                    val retryingLabel = stringResource(R.string.city_retrying)
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .testTag("city_retry_spinner")
-                            .semantics { contentDescription = retryingLabel },
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    FilledTonalButton(
-                        onClick = onRetryCity,
-                        modifier = Modifier.testTag("city_retry_button")
-                    ) {
-                        Text(text = stringResource(R.string.action_retry))
-                    }
-                }
-            },
-            modifier = modifier
-        )
-    }
+    CityWeatherCardContent(
+        name = cityWeather.name,
+        region = cityWeather.region,
+        country = cityWeather.country,
+        isLocation = cityWeather.isLocation,
+        cardWeather = cityWeather.weather,
+        isDarkTheme = isDarkTheme,
+        isLoading = false,
+        isRetrying = isRetrying,
+        onRetryCity = onRetryCity,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        trailing = trailing,
+        modifier = modifier
+    )
 }
 
 /**
- * İki dalın paylaştığı kart iskeleti. Dal farkı yalnız görsel değerlerde ve
- * sağdaki [trailing] yuvasındadır; iskelet (tıklama, uzun basma, ad/bölge
- * düzeni) ortaktır.
+ * Ortak kart iskeleti — hem [CityWeatherCard] (MainScreen) hem
+ * AddCityScreen arama/öneri satırları tarafından kullanılır.
+ *
+ * Görsel-parametreler (emoji, detay, palet) content içi [cardVisuals]
+ * ile türetilir; çağıran yalnız alan verisi ve durum taşır.
  */
 @Composable
-private fun CityWeatherCardContent(
-    cityWeather: CityWeatherUiModel,
-    emoji: String,
-    detailText: String,
-    containerColor: Color,
-    contentColor: Color,
+fun CityWeatherCardContent(
+    name: String,
+    region: String?,
+    country: String?,
+    isLocation: Boolean,
+    cardWeather: CardWeather?,
+    isDarkTheme: Boolean,
+    isLoading: Boolean,
+    isRetrying: Boolean = false,
+    onRetryCity: (() -> Unit)? = null,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    trailing: (@Composable () -> Unit)?,
+    onLongClick: (() -> Unit)? = null,
+    distanceKm: Int? = null,
+    onAddClick: (() -> Unit)? = null,
+    isInList: Boolean = false,
+    enabled: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val effectiveEnabled = enabled && !isLoading
+    val visuals = cardVisuals(cardWeather, isDarkTheme, isLoading, isRetrying)
     Card(
-        // Tıklama kartın kendisinde: ripple yuvarlak yüzeye kırpılır. İç Row'da
-        // olsaydı ripple dikdörtgen kalır ve yuvarlatılmış köşeleri kapatırdı.
         modifier = modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
+            .then(
+                if (onLongClick != null) {
+                    Modifier.combinedClickable(enabled = effectiveEnabled, onClick = onClick, onLongClick = onLongClick)
+                } else {
+                    Modifier.clickable(enabled = effectiveEnabled, onClick = onClick)
+                }
             ),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        colors = CardDefaults.cardColors(containerColor = visuals.containerColor)
     ) {
         Row(
             modifier = Modifier.padding(HavaSpacing.lg),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = emoji,
+                text = visuals.emoji,
                 style = MaterialTheme.typography.headlineMedium
             )
             Column(
@@ -154,40 +135,162 @@ private fun CityWeatherCardContent(
                     .padding(horizontal = HavaSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(HavaSpacing.xs)
             ) {
-                if (cityWeather.isLocation) {
-                    // Konum kartı normal şehirlerden etiketle ayrışır:
-                    // kullanıcı hangi kartın "bulunduğum yer" olduğunu isim
-                    // okumadan anlamalı. Yedek ad "Konum" ile karışmaması için
-                    // etiket "Konumunuz" der.
+                if (isLocation) {
                     Text(
                         text = "📍 ${stringResource(R.string.location_card_label)}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = contentColor.copy(alpha = 0.8f)
+                        color = visuals.contentColor.copy(alpha = 0.8f)
                     )
                 }
                 Text(
-                    // Konumun adı boş olabilir; dil kaynağından çözülür.
-                    text = cityWeather.name.ifBlank { stringResource(R.string.location_default_name) },
+                    text = name.ifBlank { stringResource(R.string.location_default_name) },
                     style = MaterialTheme.typography.titleMedium,
-                    color = contentColor
+                    color = visuals.contentColor
                 )
+                val subtitle = if (distanceKm != null) {
+                    listOfNotNull(stringResource(R.string.suggestion_distance_km, distanceKm))
+                        .plus(listOfNotNull(region, country))
+                        .joinToString(" · ")
+                } else {
+                    listOfNotNull(
+                        if (isLocation) null else region,
+                        country
+                    ).joinToString(", ")
+                }
                 Text(
-                    // Konum kartında başlık birleşik tam adı gösterebileceği
-                    // için alt satırda bölge tekrarlanmaz (spec: konum tam adı).
-                    text = listOfNotNull(
-                        if (cityWeather.isLocation) null else cityWeather.region,
-                        cityWeather.country
-                    ).joinToString(", "),
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.7f)
+                    color = visuals.contentColor.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = detailText,
+                    text = visuals.detailText,
                     style = MaterialTheme.typography.titleLarge,
-                    color = contentColor
+                    color = visuals.contentColor
+                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = HavaSpacing.sm),
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+            when {
+                isLoading -> Unit
+                trailing != null -> trailing()
+                onAddClick != null -> AddOrCheckSlot(onAddClick, isInList, effectiveEnabled)
+                onRetryCity != null && cardWeather is CardWeather.Unavailable ->
+                    RetrySlot(onRetryCity, isRetrying)
+                else -> Unit
+            }
+        }
+    }
+}
+
+// --- Private helpers ---
+
+private data class CardVisuals(
+    val emoji: String,
+    val detailText: String,
+    val containerColor: Color,
+    val contentColor: Color
+)
+
+/**
+ * Görsel-parametre türetmesi — content içi. Exhaustive `when (weather)`:
+ * yeni [CardWeather] varyantı eklenirse derleme hatası.
+ */
+@Composable
+private fun cardVisuals(weather: CardWeather?, isDark: Boolean, isLoading: Boolean, isRetrying: Boolean): CardVisuals {
+    if (isLoading || weather == null) {
+        return CardVisuals(
+            emoji = "⏳",
+            detailText = stringResource(R.string.card_weather_loading),
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    return when (weather) {
+        is CardWeather.Loaded -> {
+            val p = ConditionPalette.of(weather.condition, isDark = isDark, isDay = weather.isDay)
+            CardVisuals(weather.conditionEmoji, weather.temperatureText, p.container, p.onContainer)
+        }
+        is CardWeather.Unavailable -> {
+            if (isRetrying) {
+                CardVisuals(
+                    emoji = "🌐",
+                    detailText = stringResource(R.string.card_weather_loading),
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                CardVisuals(
+                    emoji = "🌐",
+                    detailText = stringResource(R.string.card_weather_unavailable),
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            trailing?.invoke()
+        }
+    }
+}
+
+@Composable
+private fun AddOrCheckSlot(onAddClick: () -> Unit, isInList: Boolean, enabled: Boolean) {
+    if (isInList) {
+        // Hafif "pop": tik belirirken scale (spring). `Animatable` +
+        // `LaunchedEffect` sayesinde satır ekran açılıştan beri
+        // tikliyken de aynı geçişi oynar.
+        val scale = remember { Animatable(0.75f) }
+        LaunchedEffect(Unit) {
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        }
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = stringResource(R.string.search_result_in_list),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            }
+        )
+    } else {
+        IconButton(onClick = onAddClick, enabled = enabled) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.action_add_city)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RetrySlot(onRetryCity: () -> Unit, isRetrying: Boolean) {
+    if (isRetrying) {
+        // Gösterge anlamsız bir Canvas'tır: düğme anlamlar ağacından
+        // kalkarken TalkBack odakını ve "yeniden deneniyor" bilgisini
+        // bu etiket devralır.
+        val retryingLabel = stringResource(R.string.city_retrying)
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(24.dp)
+                .testTag("city_retry_spinner")
+                .semantics { contentDescription = retryingLabel },
+            strokeWidth = 2.dp
+        )
+    } else {
+        FilledTonalButton(
+            onClick = onRetryCity,
+            modifier = Modifier.testTag("city_retry_button")
+        ) {
+            Text(text = stringResource(R.string.action_retry))
         }
     }
 }
