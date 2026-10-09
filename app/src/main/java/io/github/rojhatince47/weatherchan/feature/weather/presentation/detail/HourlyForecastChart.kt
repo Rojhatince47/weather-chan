@@ -5,7 +5,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -27,13 +29,13 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Hou
 private val ChartBandHeight = 96.dp
 private val ChartYPad = 16.dp
 private val CellWidth = 64.dp
-private val CellBandHeight = 72.dp
 
 /**
  * Saatlik tahmini sıcaklık çizgisi + noktalarla, altında sabit genişlikli
  * hücrelerle sunar. Yatay kaydırılır; hücrenin yatay merkezi o saatin
- * nokta x'i ile birebir hizalıdır. Hücre metrikleri kasıtlı sabittir (hizalama
- * grafiğe bağlıdır); büyük fontScale'de metin sarılabilir/kırpılabilir.
+ * nokta x'i ile birebir hizalıdır. Hücre genişliği sabittir (hizalama
+ * grafiğe bağlıdır); yükseklik içeriğe uyar — hücreler en uzun hücreye
+ * eşitlenir, büyük fontScale'de satırlar sıkışıp kaybolmaz.
  */
 @Composable
 fun HourlyForecastChart(items: List<HourlyForecastUiModel>, modifier: Modifier = Modifier) {
@@ -80,8 +82,8 @@ fun HourlyForecastChart(items: List<HourlyForecastUiModel>, modifier: Modifier =
                         drawCircle(color = dotColor, radius = 4.dp.toPx(), center = Offset(x, y))
                     }
                 }
-                Row {
-                    items.forEach { item -> HourlyChartCell(item) }
+                Row(Modifier.height(IntrinsicSize.Max)) {
+                    items.forEachIndexed { index, item -> HourlyChartCell(item, index) }
                 }
             }
         }
@@ -89,21 +91,27 @@ fun HourlyForecastChart(items: List<HourlyForecastUiModel>, modifier: Modifier =
 }
 
 @Composable
-private fun HourlyChartCell(item: HourlyForecastUiModel) {
+private fun HourlyChartCell(item: HourlyForecastUiModel, index: Int) {
     Column(
         modifier = Modifier
             .width(CellWidth)
-            .height(CellBandHeight),
+            .fillMaxHeight()
+            .testTag("hourly_cell_$index"),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = item.timeText, style = MaterialTheme.typography.labelSmall)
-        Text(text = item.conditionEmoji)
-        Text(text = item.temperatureText)
+        Text(
+            text = item.timeText,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.testTag("hourly_time_$index")
+        )
+        Text(text = item.conditionEmoji, modifier = Modifier.testTag("hourly_icon_$index"))
+        Text(text = item.temperatureText, modifier = Modifier.testTag("hourly_temp_$index"))
         Text(
             text = item.precipitationProbabilityText,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag("hourly_precip_$index")
         )
     }
 }

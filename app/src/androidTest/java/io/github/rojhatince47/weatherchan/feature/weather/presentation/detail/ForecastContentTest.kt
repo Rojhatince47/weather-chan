@@ -2,7 +2,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
@@ -23,6 +26,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.For
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -62,12 +66,32 @@ class ForecastContentTest {
         }
     )
 
+    /**
+     * Düz içerik — grafik/hücre görünürlük testleri için. İlk hücre doğal
+     * olarak görünürde çizilir.
+     */
     private fun setForecastContent(hourlyCount: Int = 24) {
         composeRule.setContent {
             HavaTheme {
-                // LazyColumn sanallaştırması görünmeyen öğeleri compose etmez;
-                // "her düğüm doğrulanır" şartı için yükseklik serbest bırakılır
-                // (genişlik kısıtı ekranla aynı kalır). İçerik ~2600dp; 4000dp yeter.
+                ForecastContent(
+                    uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
+                    onRetry = {},
+                    onRefresh = {},
+                    isDark = false
+                )
+            }
+        }
+    }
+
+    /**
+     * Yüksekliği sabit sarmalayıcı — LazyColumn sanallaştırması tüm 34 öğeyi
+     * compose etsin diye (genişlik ölçümü için). Kök içerik pencereden büyük
+     * olduğu için dikeyde ortalanır; bu yalnız ölçüm testi içindir, görünürlük
+     * assertion'ı kurulamaz (bkz. grafik testi).
+     */
+    private fun setForecastContentWrapped(hourlyCount: Int = 24) {
+        composeRule.setContent {
+            HavaTheme {
                 Box(Modifier.requiredHeight(4000.dp)) {
                     ForecastContent(
                         uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
@@ -75,6 +99,24 @@ class ForecastContentTest {
                         onRefresh = {},
                         isDark = false
                     )
+                }
+            }
+        }
+    }
+
+    private fun setForecastContentScaled(hourlyCount: Int, fontScale: Float) {
+        composeRule.setContent {
+            val base = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                HavaTheme {
+                    Box(Modifier.requiredHeight(4000.dp)) {
+                        ForecastContent(
+                            uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
+                            onRetry = {},
+                            onRefresh = {},
+                            isDark = false
+                        )
+                    }
                 }
             }
         }
@@ -92,7 +134,7 @@ class ForecastContentTest {
 
     @Test
     fun evKartlariTamGenislikCizilir() {
-        setForecastContent()
+        setForecastContentWrapped()
         val expectedWidth = widthDp("pull_refresh") - 32f
 
         assertEquals(expectedWidth, widthDp("current_weather_card"), 1f)
@@ -117,5 +159,29 @@ class ForecastContentTest {
         setForecastContent(hourlyCount = 0)
         composeRule.onNodeWithTag("hourly_chart").assertDoesNotExist()
         composeRule.onNodeWithText("Saatlik Tahmin").assertExists()
+    }
+
+    @Test
+    fun hucreIcerigiKirpmiyorYuksekFontOlceginde() {
+        setForecastContentScaled(hourlyCount = 4, fontScale = 1.5f)
+
+        fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
+        fun height(tag: String): Float {
+            val b = bounds(tag)
+            return (b.bottom - b.top).value
+        }
+
+        repeat(4) { i ->
+            val cellBottom = bounds("hourly_cell_$i").bottom.value
+            listOf("hourly_time_$i", "hourly_icon_$i", "hourly_temp_$i", "hourly_precip_$i").forEach { tag ->
+                // Sıkışma tespiti: sabit hücre yüksekliği bütçeyi bitirince alt
+                // satırlar sıfır yüksekliğe düşer (yüzde "gözükmüyor" semptomu).
+                assertTrue("$tag sikistirilmis (h=${height(tag)})", height(tag) >= 4f)
+                assertTrue("$tag hucre alt sinirini asiyor", bounds(tag).bottom.value <= cellBottom + 0.5f)
+            }
+        }
+        val first = height("hourly_cell_0")
+        repeat(4) { i -> assertEquals(first, height("hourly_cell_$i"), 1f) }
     }
 }
