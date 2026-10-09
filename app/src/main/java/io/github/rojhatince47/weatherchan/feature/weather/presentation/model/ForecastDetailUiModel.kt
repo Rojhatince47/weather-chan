@@ -32,6 +32,7 @@ data class CurrentWeatherUiModel(
 data class HourlyForecastUiModel(
     val timeText: String,
     val temperatureText: String,
+    val temperatureValue: Int,
     val conditionEmoji: String,
     val precipitationProbabilityText: String
 )

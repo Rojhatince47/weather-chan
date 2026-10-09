@@ -63,8 +63,10 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                     item {
                         SectionHeader(text = stringResource(R.string.section_hourly))
                     }
-                    items(content.data.hourlyForecast, key = { it.timeText }) { hourly ->
-                        HourlyForecastItem(hourly)
+                    if (content.data.hourlyForecast.isNotEmpty()) {
+                        item(key = "hourly_chart") {
+                            HourlyForecastChart(items = content.data.hourlyForecast)
+                        }
                     }
                     item {
                         SectionHeader(text = stringResource(R.string.section_daily))
@@ -173,25 +175,6 @@ private fun SectionHeader(text: String) {
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-}
-
-@Composable
-private fun HourlyForecastItem(item: HourlyForecastUiModel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("hourly_forecast_item"),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Column(modifier = Modifier.padding(HavaSpacing.md)) {
-            Text(text = item.timeText)
-            Text(text = "${item.conditionEmoji} ${item.temperatureText}")
-            Text(text = item.precipitationProbabilityText)
-        }
-    }
 }
 
 @Composable

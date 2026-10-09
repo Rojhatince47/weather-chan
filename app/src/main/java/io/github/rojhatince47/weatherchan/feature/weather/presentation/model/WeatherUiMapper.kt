@@ -68,6 +68,7 @@ class WeatherUiMapper @Inject constructor() {
             HourlyForecastUiModel(
                 timeText = formatHour(hourly.hourOfDay),
                 temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
+                temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
                 conditionEmoji = emojiFor(hourly.condition),
                 precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
             )
@@ -88,9 +89,14 @@ class WeatherUiMapper @Inject constructor() {
         }
     )
 
+    private fun temperatureValue(celsius: Int, unit: TemperatureUnit): Int = when (unit) {
+        TemperatureUnit.CELSIUS -> celsius
+        TemperatureUnit.FAHRENHEIT -> celsius * 9 / 5 + 32
+    }
+
     private fun formatTemperature(celsius: Int, unit: TemperatureUnit): String = when (unit) {
-        TemperatureUnit.CELSIUS -> "$celsius°C"
-        TemperatureUnit.FAHRENHEIT -> "${celsius * 9 / 5 + 32}°F"
+        TemperatureUnit.CELSIUS -> "${temperatureValue(celsius, unit)}°C"
+        TemperatureUnit.FAHRENHEIT -> "${temperatureValue(celsius, unit)}°F"
     }
 
     private fun formatHour(hour: Int): String = "%02d:00".format(hour)

@@ -3,10 +3,13 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
@@ -42,6 +45,7 @@ class ForecastContentTest {
             HourlyForecastUiModel(
                 timeText = "%02d:00".format(hour),
                 temperatureText = "2${hour % 10}°C",
+                temperatureValue = 20 + hour % 10,
                 conditionEmoji = "🌤️",
                 precipitationProbabilityText = "%10"
             )
@@ -92,11 +96,26 @@ class ForecastContentTest {
         val expectedWidth = widthDp("pull_refresh") - 32f
 
         assertEquals(expectedWidth, widthDp("current_weather_card"), 1f)
-        repeat(24) { index ->
-            assertEquals(expectedWidth, widthDp(index, "hourly_forecast_item"), 1f)
-        }
+        assertEquals(expectedWidth, widthDp("hourly_chart"), 1f)
         repeat(7) { index ->
             assertEquals(expectedWidth, widthDp(index, "daily_card"), 1f)
         }
+    }
+
+    @Test
+    fun saatlikGrafikHucreleriKaydirilabilir() {
+        setForecastContent()
+        composeRule.onNodeWithTag("hourly_chart").assertExists()
+        composeRule.onNodeWithText("Saatlik Tahmin").assertExists()
+        composeRule.onNodeWithText("00:00").assertIsDisplayed()
+        composeRule.onNodeWithText("09:00").assertExists() // kırpılmış olsa da semantics'te var
+        composeRule.onNodeWithText("23:00").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun saatlikListeBoskenGrafikCizilmez() {
+        setForecastContent(hourlyCount = 0)
+        composeRule.onNodeWithTag("hourly_chart").assertDoesNotExist()
+        composeRule.onNodeWithText("Saatlik Tahmin").assertExists()
     }
 }

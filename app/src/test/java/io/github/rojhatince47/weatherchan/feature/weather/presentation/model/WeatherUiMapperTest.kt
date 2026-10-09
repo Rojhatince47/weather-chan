@@ -151,6 +151,16 @@ class WeatherUiMapperTest {
         assertTrue(ui.dailyForecast.all { it.conditionEmoji == "☁️" })
     }
 
+    @Test
+    fun `saatlik sicaklik degeri gorunen birime gore sayisal uretilir`() {
+        val celsius = mapper.toForecastDetailUiModel(forecast())
+        val fahrenheit = mapper.toForecastDetailUiModel(forecast(), unit = TemperatureUnit.FAHRENHEIT)
+
+        assertEquals(15, celsius.hourlyForecast.first().temperatureValue)
+        assertEquals(59, fahrenheit.hourlyForecast.first().temperatureValue) // 15*9/5+32 = 59 (taban bolme)
+        assertEquals("59°F", fahrenheit.hourlyForecast.first().temperatureText)
+    }
+
     /**
      * Konum kartı görsel olarak ayrışmalı: kart "Konumunuz" etiketi taşır.
      * Bu bir görüntüleme kaygısı olduğu için bayrak UI modeline taşınır —
