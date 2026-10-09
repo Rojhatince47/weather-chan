@@ -27,13 +27,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 
 @Composable
-fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -> Unit, modifier: Modifier = Modifier) {
+fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -> Unit, isDark: Boolean, modifier: Modifier = Modifier) {
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
@@ -52,7 +54,10 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                             conditionEmoji = content.data.currentWeather.conditionEmoji,
                             conditionLabel = content.data.currentWeather.conditionLabel.asString(),
                             windSpeedText = content.data.currentWeather.windSpeedText,
-                            humidityText = content.data.currentWeather.humidityText
+                            humidityText = content.data.currentWeather.humidityText,
+                            condition = content.data.currentWeather.condition,
+                            isDay = content.data.currentWeather.isDay,
+                            isDark = isDark
                         )
                     }
                     item {
@@ -67,7 +72,7 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                     // key Bundle'da saklanabilir olmalı; UiText saklanamaz,
                     // bu yüzden dayOffset (Int) kullanılır.
                     items(content.data.dailyForecast, key = { it.dayOffset }) { daily ->
-                        DailyForecastItem(daily)
+                        DailyForecastItem(daily, isDark = isDark)
                     }
                 }
                 // Liste yokken (yükleme/boş/hata) kaydırılabilir bir yüzey gerekir:
@@ -111,15 +116,20 @@ private fun CurrentWeatherCard(
     conditionEmoji: String,
     conditionLabel: String,
     windSpeedText: String,
-    humidityText: String
+    humidityText: String,
+    condition: WeatherCondition,
+    isDay: Boolean,
+    isDark: Boolean
 ) {
+    val palette = ConditionPalette.of(condition, isDark = isDark, isDay = isDay)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("current_weather_card"),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = palette.container,
+            contentColor = palette.onContainer
         )
     ) {
         Column(
@@ -128,8 +138,7 @@ private fun CurrentWeatherCard(
         ) {
             Text(
                 text = stringResource(R.string.section_current),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelSmall
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = conditionEmoji, style = MaterialTheme.typography.displayLarge)
@@ -141,19 +150,16 @@ private fun CurrentWeatherCard(
             }
             Text(
                 text = conditionLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.titleMedium
             )
             Row(horizontalArrangement = Arrangement.spacedBy(HavaSpacing.lg)) {
                 Text(
                     text = windSpeedText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
                     text = humidityText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -189,14 +195,16 @@ private fun HourlyForecastItem(item: HourlyForecastUiModel) {
 }
 
 @Composable
-private fun DailyForecastItem(item: DailyForecastUiModel) {
+private fun DailyForecastItem(item: DailyForecastUiModel, isDark: Boolean) {
+    val palette = ConditionPalette.of(item.condition, isDark = isDark, isDay = true)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("daily_card"),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = palette.container,
+            contentColor = palette.onContainer
         )
     ) {
         Column(modifier = Modifier.padding(HavaSpacing.md)) {
@@ -216,7 +224,8 @@ private fun ForecastContentPreview() {
         ForecastContent(
             uiState = DetailUiState(content = UiState.Loading),
             onRetry = {},
-            onRefresh = {}
+            onRefresh = {},
+            isDark = false
         )
     }
 }

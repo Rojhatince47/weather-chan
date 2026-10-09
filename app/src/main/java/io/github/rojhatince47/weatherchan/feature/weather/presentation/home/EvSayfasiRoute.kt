@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.core.navigation.SELECTED_CITY_ID
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.ForecastContent
@@ -69,7 +70,8 @@ fun EvSayfasiRoute(
             ForecastContent(
                 uiState = detail,
                 onRetry = { viewModel.onRetry(city.id) },
-                onRefresh = { viewModel.onRefresh(city.id) }
+                onRefresh = { viewModel.onRefresh(city.id) },
+                isDark = themeMode.resolveIsDark()
             )
         },
         themeMode = themeMode,

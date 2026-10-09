@@ -57,10 +57,12 @@ class WeatherUiMapper @Inject constructor() {
         ),
         currentWeather = CurrentWeatherUiModel(
             temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
-            conditionEmoji = emojiFor(forecast.currentWeather.condition),
+            conditionEmoji = emojiFor(forecast.currentWeather.condition, forecast.currentWeather.isDay),
             conditionLabel = labelFor(forecast.currentWeather.condition),
             windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
-            humidityText = "%${forecast.currentWeather.humidityPercent}"
+            humidityText = "%${forecast.currentWeather.humidityPercent}",
+            condition = forecast.currentWeather.condition,
+            isDay = forecast.currentWeather.isDay
         ),
         hourlyForecast = forecast.hourlyForecast.map { hourly ->
             HourlyForecastUiModel(
@@ -80,7 +82,8 @@ class WeatherUiMapper @Inject constructor() {
                 },
                 minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
                 maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
-                conditionEmoji = emojiFor(daily.condition)
+                conditionEmoji = emojiFor(daily.condition),
+                condition = daily.condition
             )
         }
     )

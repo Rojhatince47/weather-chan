@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 
 data class ForecastDetailUiModel(
     val city: CityUiModel,
@@ -23,7 +24,9 @@ data class CurrentWeatherUiModel(
     val conditionEmoji: String,
     val conditionLabel: UiText,
     val windSpeedText: String,
-    val humidityText: String
+    val humidityText: String,
+    val condition: WeatherCondition,
+    val isDay: Boolean
 )
 
 data class HourlyForecastUiModel(
@@ -40,5 +43,6 @@ data class DailyForecastUiModel(
     val dateText: UiText,
     val minTemperatureText: String,
     val maxTemperatureText: String,
-    val conditionEmoji: String
+    val conditionEmoji: String,
+    val condition: WeatherCondition
 )

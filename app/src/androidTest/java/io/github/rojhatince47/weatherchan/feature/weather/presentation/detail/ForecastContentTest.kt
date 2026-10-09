@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
@@ -33,7 +34,9 @@ class ForecastContentTest {
             conditionEmoji = "☀️",
             conditionLabel = UiText.Resource(R.string.condition_clear),
             windSpeedText = "8 km/s",
-            humidityText = "%50"
+            humidityText = "%50",
+            condition = WeatherCondition.CLEAR,
+            isDay = true
         ),
         hourlyForecast = List(hourlyCount) { hour ->
             HourlyForecastUiModel(
@@ -49,7 +52,8 @@ class ForecastContentTest {
                 dateText = UiText.Resource(R.string.forecast_today),
                 minTemperatureText = "10°C",
                 maxTemperatureText = "20°C",
-                conditionEmoji = "☁️"
+                conditionEmoji = "☁️",
+                condition = WeatherCondition.CLOUDY
             )
         }
     )
@@ -64,7 +68,8 @@ class ForecastContentTest {
                     ForecastContent(
                         uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
                         onRetry = {},
-                        onRefresh = {}
+                        onRefresh = {},
+                        isDark = false
                     )
                 }
             }

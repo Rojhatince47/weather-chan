@@ -129,6 +129,28 @@ class WeatherUiMapperTest {
         }
     }
 
+    @Test
+    fun `anlik kart kosul ve gunduz bilgisini tasir ve gece emojisini uretir`() {
+        val base = forecast()
+        val nightClear = base.copy(
+            currentWeather = base.currentWeather.copy(condition = WeatherCondition.CLEAR, isDay = false)
+        )
+
+        val ui = mapper.toForecastDetailUiModel(nightClear)
+
+        assertEquals(WeatherCondition.CLEAR, ui.currentWeather.condition)
+        assertFalse(ui.currentWeather.isDay)
+        assertEquals("🌙", ui.currentWeather.conditionEmoji)
+    }
+
+    @Test
+    fun `gunluk satirlar kendi kosullarini tasir`() {
+        val ui = mapper.toForecastDetailUiModel(forecast())
+
+        assertTrue(ui.dailyForecast.all { it.condition == WeatherCondition.CLOUDY })
+        assertTrue(ui.dailyForecast.all { it.conditionEmoji == "☁️" })
+    }
+
     /**
      * Konum kartı görsel olarak ayrışmalı: kart "Konumunuz" etiketi taşır.
      * Bu bir görüntüleme kaygısı olduğu için bayrak UI modeline taşınır —
