@@ -32,5 +32,7 @@ data class OpenMeteoDailyDto(
     @SerialName("time") val time: List<String> = emptyList(),
     @SerialName("weather_code") val weatherCode: List<Int> = emptyList(),
     @SerialName("temperature_2m_max") val temperatureMax: List<Double> = emptyList(),
-    @SerialName("temperature_2m_min") val temperatureMin: List<Double> = emptyList()
+    @SerialName("temperature_2m_min") val temperatureMin: List<Double> = emptyList(),
+    @SerialName("sunrise") val sunrise: List<String> = emptyList(),
+    @SerialName("sunset") val sunset: List<String> = emptyList()
 )

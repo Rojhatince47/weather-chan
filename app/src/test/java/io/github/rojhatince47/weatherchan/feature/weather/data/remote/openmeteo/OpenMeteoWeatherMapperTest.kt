@@ -59,4 +59,39 @@ class OpenMeteoWeatherMapperTest {
             )
         }
     }
+
+    private fun forecastDto(times: List<String>) = OpenMeteoForecastDto(
+        current = OpenMeteoCurrentDto(),
+        hourly = OpenMeteoHourlyDto(
+            time = times,
+            temperature = List(times.size) { 20.0 },
+            weatherCode = List(times.size) { 0 },
+            precipitationProbability = List(times.size) { 10 }
+        ),
+        daily = OpenMeteoDailyDto(
+            time = listOf("2026-10-08"),
+            sunrise = listOf("2026-10-08T06:32"),
+            sunset = listOf("2026-10-08T19:45")
+        )
+    )
+
+    @Test
+    fun `saatlik girisler gun dogus batis penceresine gore isDay tasir`() {
+        val forecast = mapper.toForecast(city, forecastDto(listOf("2026-10-08T12:00", "2026-10-08T20:00")))
+
+        assertTrue(forecast.hourlyForecast[0].isDay)
+        assertFalse(forecast.hourlyForecast[1].isDay)
+    }
+
+    @Test
+    fun `gun verisi yoksa 06 18 kurali gecer`() {
+        val dto = forecastDto(listOf("2026-10-08T09:00", "2026-10-08T23:00")).copy(
+            daily = OpenMeteoDailyDto()
+        )
+
+        val forecast = mapper.toForecast(city, dto)
+
+        assertTrue(forecast.hourlyForecast[0].isDay)
+        assertFalse(forecast.hourlyForecast[1].isDay)
+    }
 }

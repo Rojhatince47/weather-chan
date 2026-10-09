@@ -33,7 +33,14 @@ data class WttrInDayDto(
     @SerialName("date") val date: String = "",
     @SerialName("maxtempC") val maxTempC: String = "0",
     @SerialName("mintempC") val minTempC: String = "0",
+    @SerialName("astronomy") val astronomy: List<WttrInAstronomyDto> = emptyList(),
     @SerialName("hourly") val hourly: List<WttrInHourlyDto> = emptyList()
+)
+
+@Serializable
+data class WttrInAstronomyDto(
+    @SerialName("sunrise") val sunrise: String = "",
+    @SerialName("sunset") val sunset: String = ""
 )
 
 @Serializable

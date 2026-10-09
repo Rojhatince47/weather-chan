@@ -283,4 +283,24 @@ class WeatherUiMapperTest {
             }
         }
     }
+
+    @Test
+    fun `saatlik girisler kendi isDay bayragiyla simgelenir`() {
+        val base = forecast()
+        val nightHour = base.copy(
+            hourlyForecast = listOf(
+                HourlyForecast(
+                    hourOfDay = 20,
+                    temperatureCelsius = 15,
+                    condition = WeatherCondition.CLEAR,
+                    precipitationProbabilityPercent = 5,
+                    isDay = false
+                )
+            )
+        )
+
+        val ui = mapper.toForecastDetailUiModel(nightHour)
+
+        assertEquals(WeatherIcon.Glyph("🌙"), ui.hourlyForecast.single().icon)
+    }
 }

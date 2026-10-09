@@ -5,9 +5,14 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeath
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CurrentWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyForecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Daylight
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DaylightWindow
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -31,6 +36,11 @@ class WttrInWeatherMapper @Inject constructor() {
     fun toForecast(city: City, dto: WttrInDto): Forecast {
         val current = dto.currentCondition.firstOrNull() ?: WttrInCurrentDto()
         val days = dto.weather
+        val daylightWindow = days.firstOrNull()?.astronomy?.firstOrNull()?.let { astro ->
+            val rise = parseClock(astro.sunrise) ?: return@let null
+            val set = parseClock(astro.sunset) ?: return@let null
+            if (rise >= set) null else DaylightWindow(rise, set)
+        }
         return Forecast(
             city = city,
             currentWeather = CurrentWeather(
@@ -42,11 +52,13 @@ class WttrInWeatherMapper @Inject constructor() {
                 isDay = true
             ),
             hourlyForecast = days.firstOrNull()?.hourly?.take(8)?.map { hourly ->
+                val hour = hourly.time.toIntOrNull()?.div(100) ?: 0
                 HourlyForecast(
-                    hourOfDay = hourly.time.toIntOrNull()?.div(100) ?: 0,
+                    hourOfDay = hour,
                     temperatureCelsius = hourly.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
                     condition = toCondition(hourly.weatherCode.toIntOrNull()),
-                    precipitationProbabilityPercent = hourly.chanceOfRain.toIntOrNull() ?: 0
+                    precipitationProbabilityPercent = hourly.chanceOfRain.toIntOrNull() ?: 0,
+                    isDay = Daylight.isDay(hour, daylightWindow)
                 )
             }.orEmpty(),
             dailyForecast = days.mapIndexed { index, day ->
@@ -87,4 +99,9 @@ class WttrInWeatherMapper @Inject constructor() {
         200, 386, 389, 392, 395 -> WeatherCondition.THUNDERSTORM
         else -> WeatherCondition.CLOUDY
     }
+
+    private val clockFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+
+    private fun parseClock(raw: String): LocalTime? =
+        runCatching { LocalTime.parse(raw.trim().uppercase(Locale.ENGLISH), clockFormat) }.getOrNull()
 }

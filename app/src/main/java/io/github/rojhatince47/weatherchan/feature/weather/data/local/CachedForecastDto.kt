@@ -29,7 +29,9 @@ internal data class HourlyForecastDto(
     @SerialName("hourOfDay") val hourOfDay: Int,
     @SerialName("temperatureCelsius") val temperatureCelsius: Int,
     @SerialName("condition") val condition: String,
-    @SerialName("precipitationProbabilityPercent") val precipitationProbabilityPercent: Int
+    @SerialName("precipitationProbabilityPercent") val precipitationProbabilityPercent: Int,
+    // Sonda kalmalı: WeatherCachePreferencesTest pozisyonel kurar.
+    @SerialName("isDay") val isDay: Boolean = true
 )
 
 @Serializable
@@ -76,14 +78,16 @@ private fun HourlyForecast.toDto(): HourlyForecastDto = HourlyForecastDto(
     hourOfDay = hourOfDay,
     temperatureCelsius = temperatureCelsius,
     condition = condition.name,
-    precipitationProbabilityPercent = precipitationProbabilityPercent
+    precipitationProbabilityPercent = precipitationProbabilityPercent,
+    isDay = isDay
 )
 
 private fun HourlyForecastDto.toDomain(): HourlyForecast = HourlyForecast(
     hourOfDay = hourOfDay,
     temperatureCelsius = temperatureCelsius,
     condition = WeatherCondition.valueOf(condition),
-    precipitationProbabilityPercent = precipitationProbabilityPercent
+    precipitationProbabilityPercent = precipitationProbabilityPercent,
+    isDay = isDay
 )
 
 private fun DailyForecast.toDto(): DailyForecastDto = DailyForecastDto(

@@ -69,7 +69,7 @@ class WeatherUiMapper @Inject constructor() {
                 timeText = formatHour(hourly.hourOfDay),
                 temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
                 temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
-                icon = iconFor(hourly.condition),
+                icon = iconFor(hourly.condition, hourly.isDay),
                 precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
             )
         },

@@ -4,6 +4,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,5 +31,46 @@ class WttrInWeatherMapperTest {
             WeatherCondition.LIGHT_SHOWERS,
             mapper.toCityWeather(city, dto).currentWeather.condition
         )
+    }
+
+    @Test
+    fun `saatlik girisler astronomi penceresine gore isDay tasir`() {
+        val city = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+        val dto = WttrInDto(
+            weather = listOf(
+                WttrInDayDto(
+                    astronomy = listOf(WttrInAstronomyDto(sunrise = "05:43 AM", sunset = "06:31 PM")),
+                    hourly = listOf(
+                        WttrInHourlyDto(time = "1200", tempC = "20", weatherCode = "113", chanceOfRain = "10"),
+                        WttrInHourlyDto(time = "2000", tempC = "15", weatherCode = "113", chanceOfRain = "10")
+                    )
+                )
+            )
+        )
+
+        val forecast = WttrInWeatherMapper().toForecast(city, dto)
+
+        assertTrue(forecast.hourlyForecast[0].isDay)
+        assertFalse(forecast.hourlyForecast[1].isDay)
+    }
+
+    @Test
+    fun `astronomi yoksa 06 18 kurali gecer`() {
+        val city = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
+        val dto = WttrInDto(
+            weather = listOf(
+                WttrInDayDto(
+                    hourly = listOf(
+                        WttrInHourlyDto(time = "0900", tempC = "20", weatherCode = "113", chanceOfRain = "0"),
+                        WttrInHourlyDto(time = "2300", tempC = "15", weatherCode = "113", chanceOfRain = "0")
+                    )
+                )
+            )
+        )
+
+        val forecast = WttrInWeatherMapper().toForecast(city, dto)
+
+        assertTrue(forecast.hourlyForecast[0].isDay)
+        assertFalse(forecast.hourlyForecast[1].isDay)
     }
 }
