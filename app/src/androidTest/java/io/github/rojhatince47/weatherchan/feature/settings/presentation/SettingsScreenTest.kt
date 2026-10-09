@@ -1,8 +1,10 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -11,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
@@ -33,7 +36,8 @@ class SettingsScreenTest {
         locationState: () -> LocationState = { LocationState.Idle },
         locationAdded: Boolean = false,
         onAddLocation: () -> Unit = {},
-        onRetryLocation: () -> Unit = {}
+        onRetryLocation: () -> Unit = {},
+        onOpenCityList: () -> Unit = {}
     ) {
         composeRule.setContent {
             HavaTheme {
@@ -48,6 +52,7 @@ class SettingsScreenTest {
                     onUnitSelected = {},
                     onThemeModeSelected = {},
                     onAppLanguageSelected = {},
+                    onOpenCityList = onOpenCityList,
                     onBack = {}
                 )
             }
@@ -120,6 +125,7 @@ class SettingsScreenTest {
                     onAppLanguageSelected = {},
                     onUnitSelected = { selected = it },
                     onThemeModeSelected = {},
+                    onOpenCityList = {},
                     onBack = {}
                 )
             }
@@ -147,6 +153,7 @@ class SettingsScreenTest {
                     onUnitSelected = {},
                     onAppLanguageSelected = {},
                     onThemeModeSelected = { selected = it },
+                    onOpenCityList = {},
                     onBack = {}
                 )
             }
@@ -172,6 +179,7 @@ class SettingsScreenTest {
                     onUnitSelected = {},
                     onAppLanguageSelected = {},
                     onThemeModeSelected = {},
+                    onOpenCityList = {},
                     onBack = { back = true }
                 )
             }
@@ -196,6 +204,7 @@ class SettingsScreenTest {
                     onUnitSelected = {},
                     onThemeModeSelected = {},
                     onAppLanguageSelected = { selected = it },
+                    onOpenCityList = {},
                     onBack = {}
                 )
             }
@@ -224,6 +233,7 @@ class SettingsScreenTest {
                         onUnitSelected = {},
                         onThemeModeSelected = {},
                         onAppLanguageSelected = {},
+                        onOpenCityList = {},
                         onBack = {}
                     )
                 }
@@ -233,5 +243,56 @@ class SettingsScreenTest {
         } finally {
             HavaTestActivity.overrideLocaleTag = null
         }
+    }
+
+    @Test
+    fun ayarlarinEnUstundeSehirlerimButonuGorunurVeTiklanircaCagriAlir() {
+        var opened = false
+        setSettingsScreen(onOpenCityList = { opened = true })
+        val button = composeRule.onNodeWithText("Şehirlerim")
+        button.assertIsDisplayed()
+        // AC1 sıra: buton, Konum başlığının üzerindedir (dikey eksen).
+        val buttonY = button.fetchSemanticsNode().positionInRoot.y
+        val konumY = composeRule.onNodeWithText("Konum").fetchSemanticsNode().positionInRoot.y
+        assertTrue(buttonY < konumY)
+        button.performClick()
+        assertTrue(opened)
+    }
+
+    @Test
+    fun ayarlarinEnUstundeSehirlerimButonuBuyukYaziTipindeVar() {
+        // MainScreenTest.mainScreenSurvivesLargeFontScale deseni (fontScale 2.0f).
+        composeRule.setContent {
+            HavaTheme {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        density = LocalDensity.current.density,
+                        fontScale = 2.0f
+                    )
+                ) {
+                    SettingsScreen(
+                        unit = TemperatureUnit.CELSIUS.toUiModel(),
+                        themeMode = ThemeMode.SYSTEM,
+                        appLanguage = AppLanguage.SYSTEM,
+                        locationState = LocationState.Idle,
+                        locationAdded = false,
+                        onAddLocation = {},
+                        onRetryLocation = {},
+                        onUnitSelected = {},
+                        onThemeModeSelected = {},
+                        onAppLanguageSelected = {},
+                        onOpenCityList = {},
+                        onBack = {}
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText("Şehirlerim").assertExists()
+    }
+
+    @Test
+    fun sehirlerimButonuKonumKartiEklendigindeDeGorunur() {
+        setSettingsScreen(locationAdded = true)
+        composeRule.onNodeWithText("Şehirlerim").assertExists()
     }
 }

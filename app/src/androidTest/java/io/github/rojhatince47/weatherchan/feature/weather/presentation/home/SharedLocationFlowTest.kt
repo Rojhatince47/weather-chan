@@ -100,6 +100,7 @@ class SharedLocationFlowTest {
                     // kırpılsa da semantik ağacı korunur).
                     SettingsRoute(
                         onBack = {},
+                        onOpenCityList = {},
                         evViewModel = sharedViewModel,
                         settingsViewModel = settingsViewModel
                     )
@@ -174,6 +175,7 @@ class SharedLocationFlowTest {
                 if (showSettings) {
                     SettingsRoute(
                         onBack = {},
+                        onOpenCityList = {},
                         evViewModel = sharedViewModel,
                         settingsViewModel = settingsViewModel
                     )

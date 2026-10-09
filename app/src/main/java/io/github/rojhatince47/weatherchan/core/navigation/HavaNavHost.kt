@@ -68,6 +68,11 @@ fun HavaNavHost(
             // tema değişikliği anında tüm ekranlara yayılır.
             SettingsRoute(
                 onBack = { navController.popBackStack() },
+                // Şehirlerim'e geçiş; launchSingleTop çift dokunuşta ikinci
+                // Liste yığını açtırmaz (AC3).
+                onOpenCityList = {
+                    navController.navigate(ListDestination) { launchSingleTop = true }
+                },
                 evViewModel = evViewModel,
                 settingsViewModel = settingsViewModel
             )

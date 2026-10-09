@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -60,6 +61,7 @@ fun SettingsScreen(
     onUnitSelected: (TemperatureUnit) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
     onAppLanguageSelected: (AppLanguage) -> Unit,
+    onOpenCityList: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -87,6 +89,12 @@ fun SettingsScreen(
                 .padding(horizontal = HavaSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
         ) {
+            // İçeriğin en üstü; konum/kart durumundan bağımsız görünür. Sabit
+            // (sticky) değildir: kaydırma ile en üste gelince görünür. Buton,
+            // ana/liste akışındaki "Şehirlerim" dilinin Ayarlar karşılığıdır.
+            Button(onClick = onOpenCityList) {
+                Text(stringResource(R.string.settings_open_city_list))
+            }
             if (!locationAdded && locationState !is LocationState.Resolved) {
                 SectionTitle(stringResource(R.string.settings_location_section))
                 when (locationState) {
@@ -181,6 +189,7 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
+    onOpenCityList: () -> Unit,
     evViewModel: EvSayfasiViewModel,
     modifier: Modifier = Modifier,
     settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -211,6 +220,7 @@ fun SettingsRoute(
         onUnitSelected = settingsViewModel::onUnitSelected,
         onThemeModeSelected = settingsViewModel::onThemeModeSelected,
         onAppLanguageSelected = settingsViewModel::onAppLanguageSelected,
+        onOpenCityList = onOpenCityList,
         onBack = onBack,
         modifier = modifier
     )
