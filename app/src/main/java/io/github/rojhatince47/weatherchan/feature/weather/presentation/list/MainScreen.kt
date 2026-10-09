@@ -45,6 +45,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMod
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -284,7 +285,7 @@ private fun sampleMainUiState(): MainUiState = MainUiState(
                 weather = CardWeather.Loaded(
                     temperatureText = "21°C",
                     condition = WeatherCondition.CLEAR,
-                    conditionEmoji = "☀️",
+                    icon = WeatherIcon.Glyph("☀"),
                     conditionLabel = UiText.Dynamic("Açık")
                 )
             )

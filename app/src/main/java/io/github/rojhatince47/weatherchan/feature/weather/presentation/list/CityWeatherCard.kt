@@ -37,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CardWeather
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityWeatherUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 
 /**
  * Şehir kartı. Yüzey rengi koşula göre değişir; bu, listedeki kartları
@@ -126,10 +128,7 @@ fun CityWeatherCardContent(
             modifier = Modifier.padding(HavaSpacing.lg),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = visuals.emoji,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            ConditionIcon(icon = visuals.icon, size = 20.dp)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -192,7 +191,7 @@ fun CityWeatherCardContent(
 // --- Private helpers ---
 
 private data class CardVisuals(
-    val emoji: String,
+    val icon: WeatherIcon,
     val detailText: String,
     val containerColor: Color,
     val contentColor: Color
@@ -206,7 +205,7 @@ private data class CardVisuals(
 private fun cardVisuals(weather: CardWeather?, isDark: Boolean, isLoading: Boolean, isRetrying: Boolean): CardVisuals {
     if (isLoading || weather == null) {
         return CardVisuals(
-            emoji = "⏳",
+            icon = WeatherIcon.Glyph("⏳"),
             detailText = stringResource(R.string.card_weather_loading),
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -215,19 +214,19 @@ private fun cardVisuals(weather: CardWeather?, isDark: Boolean, isLoading: Boole
     return when (weather) {
         is CardWeather.Loaded -> {
             val p = ConditionPalette.of(weather.condition, isDark = isDark, isDay = weather.isDay)
-            CardVisuals(weather.conditionEmoji, weather.temperatureText, p.container, p.onContainer)
+            CardVisuals(weather.icon, weather.temperatureText, p.container, p.onContainer)
         }
         is CardWeather.Unavailable -> {
             if (isRetrying) {
                 CardVisuals(
-                    emoji = "🌐",
+                    icon = WeatherIcon.Glyph("🌐"),
                     detailText = stringResource(R.string.card_weather_loading),
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 CardVisuals(
-                    emoji = "🌐",
+                    icon = WeatherIcon.Glyph("🌐"),
                     detailText = stringResource(R.string.card_weather_unavailable),
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant

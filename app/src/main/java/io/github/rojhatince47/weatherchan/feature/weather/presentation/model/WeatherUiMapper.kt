@@ -22,7 +22,7 @@ class WeatherUiMapper @Inject constructor() {
             weather = CardWeather.Loaded(
                 temperatureText = formatTemperature(cityWeather.currentWeather.temperatureCelsius, unit),
                 condition = cityWeather.currentWeather.condition,
-                conditionEmoji = emojiFor(cityWeather.currentWeather.condition, cityWeather.currentWeather.isDay),
+                icon = iconFor(cityWeather.currentWeather.condition, cityWeather.currentWeather.isDay),
                 conditionLabel = labelFor(cityWeather.currentWeather.condition),
                 isDay = cityWeather.currentWeather.isDay
             ),
@@ -57,7 +57,7 @@ class WeatherUiMapper @Inject constructor() {
         ),
         currentWeather = CurrentWeatherUiModel(
             temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
-            conditionEmoji = emojiFor(forecast.currentWeather.condition, forecast.currentWeather.isDay),
+            icon = iconFor(forecast.currentWeather.condition, forecast.currentWeather.isDay),
             conditionLabel = labelFor(forecast.currentWeather.condition),
             windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
             humidityText = "%${forecast.currentWeather.humidityPercent}",
@@ -69,7 +69,7 @@ class WeatherUiMapper @Inject constructor() {
                 timeText = formatHour(hourly.hourOfDay),
                 temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
                 temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
-                conditionEmoji = emojiFor(hourly.condition),
+                icon = iconFor(hourly.condition),
                 precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
             )
         },
@@ -83,7 +83,7 @@ class WeatherUiMapper @Inject constructor() {
                 },
                 minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
                 maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
-                conditionEmoji = emojiFor(daily.condition),
+                icon = iconFor(daily.condition),
                 condition = daily.condition
             )
         }
@@ -112,17 +112,17 @@ class WeatherUiMapper @Inject constructor() {
     }
 
     /**
-     * Koşul + gün bilgisine göre simge. `isDay` default'u kapsam-dışı (detay:
-     * tahmin/saatlik/günlük) çağrılar içindir; liste yolu gerçek değeri açıkça geçirir.
+     * Koşul + gün bilgisine göre simge. Tablo tek kod noktalıdır (K4);
+     * PARTLY_CLOUDY gece = çizim (Unicode'ta "ay bulut ardında" emojisi yok).
      */
-    private fun emojiFor(condition: WeatherCondition, isDay: Boolean = true): String = when (condition) {
-        WeatherCondition.CLEAR -> if (isDay) "☀️" else "🌙"
-        WeatherCondition.PARTLY_CLOUDY -> if (isDay) "🌤️" else "🌙☁️"
-        WeatherCondition.LIGHT_SHOWERS -> if (isDay) "🌦️" else "🌙🌧️"
-        WeatherCondition.CLOUDY -> "☁️"
-        WeatherCondition.RAIN -> "🌧️"
-        WeatherCondition.SNOW -> "❄️"
-        WeatherCondition.THUNDERSTORM -> "⛈️"
+    internal fun iconFor(condition: WeatherCondition, isDay: Boolean = true): WeatherIcon = when (condition) {
+        WeatherCondition.CLEAR -> WeatherIcon.Glyph(if (isDay) "☀" else "🌙")
+        WeatherCondition.PARTLY_CLOUDY -> if (isDay) WeatherIcon.Glyph("⛅") else WeatherIcon.MoonBehindCloud
+        WeatherCondition.LIGHT_SHOWERS -> WeatherIcon.Glyph(if (isDay) "🌦" else "☔")
+        WeatherCondition.CLOUDY -> WeatherIcon.Glyph("☁")
+        WeatherCondition.RAIN -> WeatherIcon.Glyph("🌧")
+        WeatherCondition.SNOW -> WeatherIcon.Glyph("❄")
+        WeatherCondition.THUNDERSTORM -> WeatherIcon.Glyph("⛈")
     }
 
     private fun labelFor(condition: WeatherCondition): UiText = when (condition) {

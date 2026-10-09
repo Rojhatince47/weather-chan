@@ -21,7 +21,7 @@ data class CityUiModel(
 
 data class CurrentWeatherUiModel(
     val temperatureText: String,
-    val conditionEmoji: String,
+    val icon: WeatherIcon,
     val conditionLabel: UiText,
     val windSpeedText: String,
     val humidityText: String,
@@ -33,7 +33,7 @@ data class HourlyForecastUiModel(
     val timeText: String,
     val temperatureText: String,
     val temperatureValue: Int,
-    val conditionEmoji: String,
+    val icon: WeatherIcon,
     val precipitationProbabilityText: String
 )
 
@@ -44,6 +44,6 @@ data class DailyForecastUiModel(
     val dateText: UiText,
     val minTemperatureText: String,
     val maxTemperatureText: String,
-    val conditionEmoji: String,
+    val icon: WeatherIcon,
     val condition: WeatherCondition
 )

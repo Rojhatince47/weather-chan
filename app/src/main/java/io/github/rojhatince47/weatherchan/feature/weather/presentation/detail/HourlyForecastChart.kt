@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
@@ -24,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 
 private val ChartBandHeight = 96.dp
@@ -105,7 +107,14 @@ private fun HourlyChartCell(item: HourlyForecastUiModel, index: Int) {
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.testTag("hourly_time_$index")
         )
-        Text(text = item.conditionEmoji, modifier = Modifier.testTag("hourly_icon_$index"))
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .testTag("hourly_icon_$index"),
+            contentAlignment = Alignment.Center
+        ) {
+            ConditionIcon(icon = item.icon, size = 20.dp)
+        }
         Text(text = item.temperatureText, modifier = Modifier.testTag("hourly_temp_$index"))
         Text(
             text = item.precipitationProbabilityText,

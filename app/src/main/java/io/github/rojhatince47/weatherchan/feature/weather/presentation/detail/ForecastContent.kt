@@ -25,14 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 
 @Composable
 fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -> Unit, isDark: Boolean, modifier: Modifier = Modifier) {
@@ -51,7 +54,7 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                     item {
                         CurrentWeatherCard(
                             temperatureText = content.data.currentWeather.temperatureText,
-                            conditionEmoji = content.data.currentWeather.conditionEmoji,
+                            icon = content.data.currentWeather.icon,
                             conditionLabel = content.data.currentWeather.conditionLabel.asString(),
                             windSpeedText = content.data.currentWeather.windSpeedText,
                             humidityText = content.data.currentWeather.humidityText,
@@ -115,7 +118,7 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
 @Composable
 private fun CurrentWeatherCard(
     temperatureText: String,
-    conditionEmoji: String,
+    icon: WeatherIcon,
     conditionLabel: String,
     windSpeedText: String,
     humidityText: String,
@@ -143,7 +146,7 @@ private fun CurrentWeatherCard(
                 style = MaterialTheme.typography.labelSmall
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = conditionEmoji, style = MaterialTheme.typography.displayLarge)
+                ConditionIcon(icon = icon, size = 40.dp)
                 Text(
                     text = temperatureText,
                     style = MaterialTheme.typography.displayLarge,
@@ -192,10 +195,13 @@ private fun DailyForecastItem(item: DailyForecastUiModel, isDark: Boolean) {
     ) {
         Column(modifier = Modifier.padding(HavaSpacing.md)) {
             Text(text = item.dateText.asString())
-            Text(
-                text = "${item.conditionEmoji} " +
-                    "${item.minTemperatureText} / ${item.maxTemperatureText}"
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ConditionIcon(icon = item.icon, size = 20.dp)
+                Text(
+                    text = "${item.minTemperatureText} / ${item.maxTemperatureText}",
+                    modifier = Modifier.padding(start = HavaSpacing.sm)
+                )
+            }
         }
     }
 }

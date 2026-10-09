@@ -27,7 +27,7 @@ sealed interface CardWeather {
     data class Loaded(
         val temperatureText: String,
         val condition: WeatherCondition,
-        val conditionEmoji: String,
+        val icon: WeatherIcon,
         val conditionLabel: UiText,
         /** Kartın gün bilgisi; palet seçiminde kullanılır. Default = mevcut çağrılar değişmez. */
         val isDay: Boolean = true

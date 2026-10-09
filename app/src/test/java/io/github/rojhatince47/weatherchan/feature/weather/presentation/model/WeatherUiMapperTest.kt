@@ -140,7 +140,7 @@ class WeatherUiMapperTest {
 
         assertEquals(WeatherCondition.CLEAR, ui.currentWeather.condition)
         assertFalse(ui.currentWeather.isDay)
-        assertEquals("🌙", ui.currentWeather.conditionEmoji)
+        assertEquals(WeatherIcon.Glyph("🌙"), ui.currentWeather.icon)
     }
 
     @Test
@@ -148,7 +148,7 @@ class WeatherUiMapperTest {
         val ui = mapper.toForecastDetailUiModel(forecast())
 
         assertTrue(ui.dailyForecast.all { it.condition == WeatherCondition.CLOUDY })
-        assertTrue(ui.dailyForecast.all { it.conditionEmoji == "☁️" })
+        assertTrue(ui.dailyForecast.all { it.icon == WeatherIcon.Glyph("☁") })
     }
 
     @Test
@@ -209,18 +209,18 @@ class WeatherUiMapperTest {
             )
         )
         val weather = uiModel.weather as CardWeather.Loaded
-        assertEquals("\uD83C\uDF19", weather.conditionEmoji)
+        assertEquals(WeatherIcon.Glyph("🌙"), weather.icon)
     }
 
     @Test
-    fun `gece parcasi bulutlu ay-bulut simgesiyle gosterilir`() {
+    fun `gece parcasi bulutlu cizim simgesiyle gosterilir`() {
         val uiModel = mapper.toCityWeatherUiModel(
             cityWeather = cityWeather().copy(
                 currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.PARTLY_CLOUDY, isDay = false)
             )
         )
         val weather = uiModel.weather as CardWeather.Loaded
-        assertEquals("\uD83C\uDF19\u2601\uFE0F", weather.conditionEmoji)
+        assertEquals(WeatherIcon.MoonBehindCloud, weather.icon)
     }
 
     @Test
@@ -242,8 +242,8 @@ class WeatherUiMapperTest {
                 )
             )
             assertEquals(
-                (day.weather as CardWeather.Loaded).conditionEmoji,
-                (night.weather as CardWeather.Loaded).conditionEmoji
+                (day.weather as CardWeather.Loaded).icon,
+                (night.weather as CardWeather.Loaded).icon
             )
         }
     }
@@ -256,18 +256,31 @@ class WeatherUiMapperTest {
             )
         )
         val weather = uiModel.weather as CardWeather.Loaded
-        assertEquals("🌦️", weather.conditionEmoji)
+        assertEquals(WeatherIcon.Glyph("🌦"), weather.icon)
         assertEquals(UiText.Resource(R.string.condition_light_showers), weather.conditionLabel)
     }
 
     @Test
-    fun `hafif saganak gece ay-yagmur simgesiyle gosterilir`() {
+    fun `hafif saganak gece semsiye simgesiyle gosterilir`() {
         val uiModel = mapper.toCityWeatherUiModel(
             cityWeather = cityWeather().copy(
                 currentWeather = cityWeather().currentWeather.copy(condition = WeatherCondition.LIGHT_SHOWERS, isDay = false)
             )
         )
         val weather = uiModel.weather as CardWeather.Loaded
-        assertEquals("🌙🌧️", weather.conditionEmoji)
+        assertEquals(WeatherIcon.Glyph("☔"), weather.icon)
+    }
+
+    @Test
+    fun `tum semboller tek kod nokta ve varyasyon isaretsizdir`() {
+        WeatherCondition.values().forEach { condition ->
+            listOf(true, false).forEach { isDay ->
+                val icon = mapper.iconFor(condition, isDay)
+                if (icon is WeatherIcon.Glyph) {
+                    assertEquals(1, icon.value.codePointCount(0, icon.value.length))
+                    assertFalse(icon.value.contains('\uFE0F'))
+                }
+            }
+        }
     }
 }

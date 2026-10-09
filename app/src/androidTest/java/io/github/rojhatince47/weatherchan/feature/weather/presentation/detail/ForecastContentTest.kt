@@ -24,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Cur
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,7 +39,7 @@ class ForecastContentTest {
         city = CityUiModel(1, "İstanbul", "Marmara", "Türkiye", 41.01, 28.98),
         currentWeather = CurrentWeatherUiModel(
             temperatureText = "18°C",
-            conditionEmoji = "☀️",
+            icon = WeatherIcon.Glyph("☀"),
             conditionLabel = UiText.Resource(R.string.condition_clear),
             windSpeedText = "8 km/s",
             humidityText = "%50",
@@ -50,7 +51,7 @@ class ForecastContentTest {
                 timeText = "%02d:00".format(hour),
                 temperatureText = "2${hour % 10}°C",
                 temperatureValue = 20 + hour % 10,
-                conditionEmoji = "🌤️",
+                icon = WeatherIcon.Glyph("⛅"),
                 precipitationProbabilityText = "%10"
             )
         },
@@ -60,7 +61,7 @@ class ForecastContentTest {
                 dateText = UiText.Resource(R.string.forecast_today),
                 minTemperatureText = "10°C",
                 maxTemperatureText = "20°C",
-                conditionEmoji = "☁️",
+                icon = WeatherIcon.Glyph("☁"),
                 condition = WeatherCondition.CLOUDY
             )
         }
