@@ -39,8 +39,15 @@ fun HavaNavHost(
                 // Seçim, pager'a SavedStateHandle üzerinden taşınır ve liste
                 // kapanır; pager kendisi ağ turunu pencereyle sınırlandırır.
                 onSelectCity = { cityId ->
-                    navController.previousBackStackEntry?.savedStateHandle?.set(SELECTED_CITY_ID, cityId)
-                    navController.popBackStack()
+                    // Seçim her zaman Ev'in kendi entry'sine yazılır (AddCity
+                    // deseni): liste Ayarlar üzerinden açılmış olsa da Ev okur.
+                    // Pop hedefi Ev'dir; aradaki (Ayarlar) yığın ayıklanır.
+                    navController.getBackStackEntry(EvSayfasiDestination)
+                        .savedStateHandle[SELECTED_CITY_ID] = cityId
+                    // Dönüş değeri: false = Ev yığında yok. Garanti: her akış
+                    // Ev tabanlıdır; false olsa bile seçim yazımı korunur ve
+                    // sonraki Ev açılışında okunur (beklenen durum değil).
+                    navController.popBackStack<EvSayfasiDestination>(inclusive = false)
                 },
                 onBack = { navController.popBackStack() },
                 evViewModel = evViewModel,
