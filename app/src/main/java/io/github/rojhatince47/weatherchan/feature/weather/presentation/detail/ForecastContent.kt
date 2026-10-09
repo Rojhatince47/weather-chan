@@ -114,6 +114,9 @@ private fun CurrentWeatherCard(
     humidityText: String
 ) {
     Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("current_weather_card"),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -169,6 +172,9 @@ private fun SectionHeader(text: String) {
 @Composable
 private fun HourlyForecastItem(item: HourlyForecastUiModel) {
     Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("hourly_forecast_item"),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -185,6 +191,9 @@ private fun HourlyForecastItem(item: HourlyForecastUiModel) {
 @Composable
 private fun DailyForecastItem(item: DailyForecastUiModel) {
     Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("daily_card"),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
