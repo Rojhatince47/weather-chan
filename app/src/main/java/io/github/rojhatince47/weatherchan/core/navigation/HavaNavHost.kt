@@ -43,6 +43,8 @@ fun HavaNavHost(
                     navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() },
+                evViewModel = evViewModel,
+                onAddCityClick = { navController.navigate(AddCityDestination) },
                 settingsViewModel = settingsViewModel
             )
         }

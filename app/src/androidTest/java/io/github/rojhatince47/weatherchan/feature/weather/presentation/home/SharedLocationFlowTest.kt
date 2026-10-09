@@ -1,12 +1,16 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
+import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsRoute
@@ -17,14 +21,18 @@ import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeMode
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetLocationCityUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.MainRoute
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.MainViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeLocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import java.io.FileInputStream
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -119,6 +127,93 @@ class SharedLocationFlowTest {
         // Ev route'u aynı örneği görür: konum sayfası başlıkta.
         composeRule.waitUntil(5_000) { sharedViewModel.uiState.value.pages.any { it.isLocation } }
         composeRule.onNodeWithText("TestKöy").assertExists()
+        assertTrue(fakeCities.current().any { it.isLocation })
+    }
+
+    @Test
+    fun sehirlerimdenEklenenKonumUcRouteTarafindanPaylasilir() {
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(testKoy))
+        }
+        // Boş başlangıç şart: FakeCityRepository() default'u 5 örnek şehir.
+        val fakeCities = FakeCityRepository(initial = emptyList())
+        // Gate: refreshLocation Loading→Resolved'ı tek coroutine'de yazar;
+        // gatesiz akışta Loading asla gözlemlenemez. Gate açık kalır → Loading.
+        val gate = CompletableDeferred<Coordinates?>()
+        val sharedViewModel = EvSayfasiViewModel(
+            cityRepository = fakeCities,
+            getForecast = GetForecastUseCase(fakeWeather),
+            getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
+            unitRepository = FakeTemperatureUnitRepository(),
+            uiMapper = WeatherUiMapper(),
+            getLocationCity = GetLocationCityUseCase(
+                FakeLocationProvider(Coordinates(39.20, 30.10), gate),
+                fakeWeather
+            )
+        )
+        val settingsViewModel = SettingsViewModel(
+            repository = FakeTemperatureUnitRepository(),
+            themeModeRepository = FakeThemeModeRepository(),
+            appLanguageApplier = FakeAppLanguageApplier()
+        )
+        // MainViewModel, AYNI FakeCityRepository örneğine bağlı: kart düşmesi gözlemlenir.
+        val mainViewModel = MainViewModel(
+            getCityWeathers = GetCityWeathersUseCase(fakeWeather),
+            getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
+            uiMapper = WeatherUiMapper(),
+            unitRepository = FakeTemperatureUnitRepository(),
+            cityRepository = fakeCities
+        )
+
+        var showSettings by mutableStateOf(false)
+        composeRule.setContent {
+            HavaTheme {
+                // Route'lar aynı anda MOUNT EDİLMEZ: aynı düğümler AmbiguousNodes
+                // fırlatırdı. Tıklanacak olan açıktır.
+                if (showSettings) {
+                    SettingsRoute(
+                        onBack = {},
+                        evViewModel = sharedViewModel,
+                        settingsViewModel = settingsViewModel
+                    )
+                } else {
+                    MainRoute(
+                        onSelectCity = {},
+                        onBack = {},
+                        evViewModel = sharedViewModel,
+                        onAddCityClick = {},
+                        viewModel = mainViewModel,
+                        settingsViewModel = settingsViewModel
+                    )
+                }
+            }
+        }
+
+        // İçerik Loading→Empty'ye iki asenkron hop ile geçer.
+        composeRule.waitUntil(5_000) { mainViewModel.uiState.value.content is UiState.Empty }
+        composeRule.onNodeWithText("Konumumu ekle").assertIsDisplayed()
+        composeRule.onNodeWithText("Konumumu ekle").performClick()
+        composeRule.waitUntil(5_000) {
+            sharedViewModel.uiState.value.locationState == LocationState.Loading
+        }
+
+        composeRule.runOnUiThread { showSettings = true }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Konum").assertIsDisplayed()
+        composeRule.onNodeWithText("Konum okunuyor…").assertIsDisplayed()
+        composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
+
+        gate.complete(Coordinates(39.20, 30.10))
+        composeRule.waitUntil(5_000) {
+            sharedViewModel.uiState.value.locationState == LocationState.Resolved
+        }
+        composeRule.onNodeWithText("Konum").assertDoesNotExist()
+
+        composeRule.runOnUiThread { showSettings = false }
+        composeRule.waitForIdle()
+        composeRule.waitUntil(5_000) { mainViewModel.uiState.value.content is UiState.Success }
+        composeRule.onNodeWithText("TestKöy").assertIsDisplayed()
         assertTrue(fakeCities.current().any { it.isLocation })
     }
 }

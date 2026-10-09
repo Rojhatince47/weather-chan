@@ -26,6 +26,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCo
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCityWeathersUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetForecastUseCase
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import kotlinx.coroutines.flow.Flow
@@ -62,12 +64,23 @@ class MainRouteTest {
             cityRepository = fakeCities
         )
         val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
+        val evViewModel = EvSayfasiViewModel(
+            cityRepository = fakeCities,
+            getForecast = GetForecastUseCase(weather),
+            getCachedForecasts = GetCachedForecastsUseCase(weather),
+            unitRepository = unitRepository,
+            uiMapper = WeatherUiMapper(),
+            getLocationCity = null,
+            cityPermissions = null
+        )
 
         composeRule.setContent {
             HavaTheme {
                 MainRoute(
                     onSelectCity = {},
                     onBack = {},
+                    evViewModel = evViewModel,
+                    onAddCityClick = {},
                     viewModel = viewModel,
                     settingsViewModel = settingsViewModel
                 )
@@ -118,12 +131,23 @@ class MainRouteTest {
             cityRepository = fakeCities
         )
         val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
+        val evViewModel = EvSayfasiViewModel(
+            cityRepository = fakeCities,
+            getForecast = GetForecastUseCase(weather),
+            getCachedForecasts = GetCachedForecastsUseCase(weather),
+            unitRepository = unitRepository,
+            uiMapper = WeatherUiMapper(),
+            getLocationCity = null,
+            cityPermissions = null
+        )
 
         composeRule.setContent {
             HavaTheme {
                 MainRoute(
                     onSelectCity = {},
                     onBack = {},
+                    evViewModel = evViewModel,
+                    onAddCityClick = {},
                     viewModel = viewModel,
                     settingsViewModel = settingsViewModel
                 )

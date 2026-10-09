@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
@@ -56,6 +57,10 @@ fun MainScreen(
     onRetryCity: (Long) -> Unit = {},
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
+    locationState: LocationState,
+    onAddLocation: () -> Unit,
+    onRetryLocation: () -> Unit,
+    onAddCityClick: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
@@ -141,10 +146,37 @@ fun MainScreen(
                             is UiState.Loading -> CircularProgressIndicator(
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
-                            is UiState.Empty -> Text(
-                                text = stringResource(R.string.home_empty_state),
-                                modifier = Modifier.padding(HavaSpacing.xl)
-                            )
+                            is UiState.Empty -> {
+                                Text(
+                                    text = stringResource(R.string.home_empty_state),
+                                    modifier = Modifier.padding(HavaSpacing.xl)
+                                )
+                                // Konum akışı boş listede de görünür: kullanıcı izni
+                                // verdikten sonra ne olduğunu görmeli, başarısızlıkta
+                                // tekrar deneyebilmeli.
+                                when {
+                                    locationState is LocationState.Loading -> Text(
+                                        text = stringResource(R.string.location_loading),
+                                        modifier = Modifier
+                                            .padding(top = HavaSpacing.md)
+                                            .testTag("location_loading")
+                                    )
+                                    locationState !is LocationState.Resolved -> AddLocationRow(
+                                        locationState = locationState,
+                                        onAddLocation = onAddLocation,
+                                        onRetryLocation = onRetryLocation,
+                                        modifier = Modifier
+                                            .padding(top = HavaSpacing.md)
+                                            .padding(horizontal = HavaSpacing.lg)
+                                    )
+                                }
+                                Button(
+                                    onClick = onAddCityClick,
+                                    modifier = Modifier.padding(top = HavaSpacing.md)
+                                ) {
+                                    Text(text = stringResource(R.string.action_open_add_city))
+                                }
+                            }
                             is UiState.Error -> {
                                 Text(
                                     text = content.message.asString(),
@@ -185,6 +217,10 @@ private fun MainScreenCompactPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
+            locationState = LocationState.Idle,
+            onAddLocation = {},
+            onRetryLocation = {},
+            onAddCityClick = {},
             onCityClick = {},
             onBack = {},
             onDeleteCity = {},
@@ -202,6 +238,10 @@ private fun MainScreenMediumPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
+            locationState = LocationState.Idle,
+            onAddLocation = {},
+            onRetryLocation = {},
+            onAddCityClick = {},
             onCityClick = {},
             onBack = {},
             onDeleteCity = {},
@@ -219,6 +259,10 @@ private fun MainScreenExpandedPreview() {
         MainScreen(
             uiState = sampleMainUiState(),
             themeMode = ThemeMode.SYSTEM,
+            locationState = LocationState.Idle,
+            onAddLocation = {},
+            onRetryLocation = {},
+            onAddCityClick = {},
             onCityClick = {},
             onBack = {},
             onDeleteCity = {},

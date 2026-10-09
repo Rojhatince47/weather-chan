@@ -14,6 +14,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.rememberLocationAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -21,12 +23,16 @@ import kotlinx.coroutines.launch
 fun MainRoute(
     onSelectCity: (Long) -> Unit,
     onBack: () -> Unit,
+    // Tek örnek: Ev + Ayarlar ile aynı EvSayfasiViewModel (default'suz).
+    evViewModel: EvSayfasiViewModel,
+    onAddCityClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel(),
     // NavHost üstünde alınan ortak örnek; giriş başına ayrı örnek oluşmaz.
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val evUiState by evViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -60,6 +66,13 @@ fun MainRoute(
         }
     }
 
+    // Konum eylemi Ev/Ayarlar ile aynı state machine'e bağlıdır (tek örnek).
+    val onLocationAction = rememberLocationAction(
+        permissionState = evUiState.permissionState,
+        onPermissionResult = evViewModel::onPermissionResult,
+        onReadLocation = evViewModel::refreshLocation
+    )
+
     MainScreen(
         uiState = uiState,
         themeMode = themeMode,
@@ -69,6 +82,10 @@ fun MainRoute(
         onRetryCity = viewModel::onRetryCity,
         onRetry = viewModel::onRetry,
         onRefresh = viewModel::onRefresh,
+        locationState = evUiState.locationState,
+        onAddLocation = onLocationAction,
+        onRetryLocation = onLocationAction,
+        onAddCityClick = onAddCityClick,
         modifier = modifier,
         snackbarHostState = snackbarHostState
     )
