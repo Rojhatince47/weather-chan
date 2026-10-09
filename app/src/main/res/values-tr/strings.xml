@@ -68,7 +68,13 @@
     <string name="unit_fahrenheit">°F</string>
 
     <string name="forecast_today">Bugün</string>
-    <string name="forecast_day_offset">+%1$d gün</string>
+    <string name="day_monday">Pazartesi</string>
+    <string name="day_tuesday">Salı</string>
+    <string name="day_wednesday">Çarşamba</string>
+    <string name="day_thursday">Perşembe</string>
+    <string name="day_friday">Cuma</string>
+    <string name="day_saturday">Cumartesi</string>
+    <string name="day_sunday">Pazar</string>
 
     <string name="theme_mode_system">Sistem</string>
     <string name="theme_mode_light">Açık</string>

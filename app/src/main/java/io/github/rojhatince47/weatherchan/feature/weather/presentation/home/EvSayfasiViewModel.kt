@@ -21,6 +21,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Wea
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
@@ -170,12 +172,14 @@ class EvSayfasiViewModel @Inject constructor(
                 when (val result = getForecast(city)) {
                     is AppResult.Success -> {
                         val key = seedKeyFor(city)
+                        val fetchedAt = clock.instant()
                         forecastCache[key] = result.data
-                        seedFetchedAt[key] = clock.instant()
+                        seedFetchedAt[key] = fetchedAt
                         _uiState.update { state ->
                             val ui = uiMapper.toForecastDetailUiModel(
                                 forecast = result.data,
-                                unit = unitRepository.unit.value
+                                unit = unitRepository.unit.value,
+                                today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
                             )
                             state.copy(
                                 forecasts = state.forecasts + (
@@ -227,7 +231,12 @@ class EvSayfasiViewModel @Inject constructor(
      */
     private fun publishSeed(city: City) {
         val forecast = forecastCache[seedKeyFor(city)] ?: return
-        val ui = uiMapper.toForecastDetailUiModel(forecast = forecast, unit = unitRepository.unit.value)
+        val fetchedAt = seedFetchedAt[seedKeyFor(city)] ?: clock.instant()
+        val ui = uiMapper.toForecastDetailUiModel(
+            forecast = forecast,
+            unit = unitRepository.unit.value,
+            today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
+        )
         _uiState.update { state ->
             state.copy(
                 forecasts = state.forecasts + (city.id to DetailUiState(content = UiState.Success(ui)))
@@ -244,12 +253,18 @@ class EvSayfasiViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 forecasts = state.forecasts.mapValues { (cityId, detail) ->
-                    val cached = state.pages.find { it.id == cityId }?.let { forecastCache[seedKeyFor(it)] }
+                    val pageCity = state.pages.find { it.id == cityId }
+                    val cached = pageCity?.let { forecastCache[seedKeyFor(it)] }
                     val content = detail.content
                     if (cached != null && content is UiState.Success) {
+                        val fetchedAt = pageCity?.let { seedFetchedAt[seedKeyFor(it)] } ?: clock.instant()
                         DetailUiState(
                             content = UiState.Success(
-                                uiMapper.toForecastDetailUiModel(cached, unit = unit)
+                                uiMapper.toForecastDetailUiModel(
+                                    cached,
+                                    unit = unit,
+                                    today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
+                                )
                             ),
                             isRefreshing = detail.isRefreshing
                         )

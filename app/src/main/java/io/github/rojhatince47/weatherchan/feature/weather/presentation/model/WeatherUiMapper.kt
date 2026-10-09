@@ -7,6 +7,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.DayOfWeek
+import java.time.LocalDate
 import javax.inject.Inject
 
 class WeatherUiMapper @Inject constructor() {
@@ -40,45 +42,48 @@ class WeatherUiMapper @Inject constructor() {
         weather = CardWeather.Unavailable,
         isLocation = city.isLocation
     )
-    fun toForecastDetailUiModel(forecast: Forecast, unit: TemperatureUnit = TemperatureUnit.CELSIUS): ForecastDetailUiModel =
-        ForecastDetailUiModel(
-            city = CityUiModel(
-                id = forecast.city.id,
-                name = displayTitle(forecast.city.name, forecast.city.region, forecast.city.isLocation),
-                region = forecast.city.region,
-                country = forecast.city.country,
-                latitude = forecast.city.coordinates.latitude,
-                longitude = forecast.city.coordinates.longitude
-            ),
-            currentWeather = CurrentWeatherUiModel(
-                temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
-                conditionEmoji = emojiFor(forecast.currentWeather.condition),
-                conditionLabel = labelFor(forecast.currentWeather.condition),
-                windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
-                humidityText = "%${forecast.currentWeather.humidityPercent}"
-            ),
-            hourlyForecast = forecast.hourlyForecast.map { hourly ->
-                HourlyForecastUiModel(
-                    timeText = formatHour(hourly.hourOfDay),
-                    temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
-                    conditionEmoji = emojiFor(hourly.condition),
-                    precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
-                )
-            },
-            dailyForecast = forecast.dailyForecast.map { daily ->
-                DailyForecastUiModel(
-                    dayOffset = daily.dayOffset,
-                    dateText = if (daily.dayOffset == 0) {
-                        UiText.Resource(R.string.forecast_today)
-                    } else {
-                        UiText.Resource(R.string.forecast_day_offset, daily.dayOffset)
-                    },
-                    minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
-                    maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
-                    conditionEmoji = emojiFor(daily.condition)
-                )
-            }
-        )
+    fun toForecastDetailUiModel(
+        forecast: Forecast,
+        unit: TemperatureUnit = TemperatureUnit.CELSIUS,
+        today: LocalDate = LocalDate.now()
+    ): ForecastDetailUiModel = ForecastDetailUiModel(
+        city = CityUiModel(
+            id = forecast.city.id,
+            name = displayTitle(forecast.city.name, forecast.city.region, forecast.city.isLocation),
+            region = forecast.city.region,
+            country = forecast.city.country,
+            latitude = forecast.city.coordinates.latitude,
+            longitude = forecast.city.coordinates.longitude
+        ),
+        currentWeather = CurrentWeatherUiModel(
+            temperatureText = formatTemperature(forecast.currentWeather.temperatureCelsius, unit),
+            conditionEmoji = emojiFor(forecast.currentWeather.condition),
+            conditionLabel = labelFor(forecast.currentWeather.condition),
+            windSpeedText = "${forecast.currentWeather.windSpeedKmh} km/s",
+            humidityText = "%${forecast.currentWeather.humidityPercent}"
+        ),
+        hourlyForecast = forecast.hourlyForecast.map { hourly ->
+            HourlyForecastUiModel(
+                timeText = formatHour(hourly.hourOfDay),
+                temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
+                conditionEmoji = emojiFor(hourly.condition),
+                precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
+            )
+        },
+        dailyForecast = forecast.dailyForecast.map { daily ->
+            DailyForecastUiModel(
+                dayOffset = daily.dayOffset,
+                dateText = if (daily.dayOffset == 0) {
+                    UiText.Resource(R.string.forecast_today)
+                } else {
+                    UiText.Resource(dayNameResId(today.plusDays(daily.dayOffset.toLong()).dayOfWeek))
+                },
+                minTemperatureText = formatTemperature(daily.minTemperatureCelsius, unit),
+                maxTemperatureText = formatTemperature(daily.maxTemperatureCelsius, unit),
+                conditionEmoji = emojiFor(daily.condition)
+            )
+        }
+    )
 
     private fun formatTemperature(celsius: Int, unit: TemperatureUnit): String = when (unit) {
         TemperatureUnit.CELSIUS -> "$celsius°C"
@@ -86,6 +91,16 @@ class WeatherUiMapper @Inject constructor() {
     }
 
     private fun formatHour(hour: Int): String = "%02d:00".format(hour)
+
+    private fun dayNameResId(dayOfWeek: DayOfWeek): Int = when (dayOfWeek) {
+        DayOfWeek.MONDAY -> R.string.day_monday
+        DayOfWeek.TUESDAY -> R.string.day_tuesday
+        DayOfWeek.WEDNESDAY -> R.string.day_wednesday
+        DayOfWeek.THURSDAY -> R.string.day_thursday
+        DayOfWeek.FRIDAY -> R.string.day_friday
+        DayOfWeek.SATURDAY -> R.string.day_saturday
+        DayOfWeek.SUNDAY -> R.string.day_sunday
+    }
 
     /**
      * Koşul + gün bilgisine göre simge. `isDay` default'u kapsam-dışı (detay:

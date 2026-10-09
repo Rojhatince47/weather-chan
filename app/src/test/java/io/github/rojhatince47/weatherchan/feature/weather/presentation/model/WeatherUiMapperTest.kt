@@ -11,6 +11,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyFore
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -106,6 +107,26 @@ class WeatherUiMapperTest {
             uiModel.dailyForecast.first().dateText
         )
         assertEquals(0, uiModel.dailyForecast.first().dayOffset)
+    }
+
+    @Test
+    fun `gun adlari cekim gunune gore uretilir ve hafta kirpimini asar`() {
+        val today = LocalDate.of(2026, 10, 8) // Perşembe
+
+        val uiModel = mapper.toForecastDetailUiModel(forecast(), today = today)
+
+        val expected = listOf(
+            R.string.forecast_today,
+            R.string.day_friday,
+            R.string.day_saturday,
+            R.string.day_sunday,
+            R.string.day_monday,
+            R.string.day_tuesday,
+            R.string.day_wednesday
+        )
+        expected.forEachIndexed { index, resId ->
+            assertEquals(UiText.Resource(resId), uiModel.dailyForecast[index].dateText)
+        }
     }
 
     /**
