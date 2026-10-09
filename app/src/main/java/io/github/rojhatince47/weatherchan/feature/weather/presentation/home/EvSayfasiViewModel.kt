@@ -179,7 +179,7 @@ class EvSayfasiViewModel @Inject constructor(
                             val ui = uiMapper.toForecastDetailUiModel(
                                 forecast = result.data,
                                 unit = unitRepository.unit.value,
-                                today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
+                                today = todayOf(fetchedAt)
                             )
                             state.copy(
                                 forecasts = state.forecasts + (
@@ -235,7 +235,7 @@ class EvSayfasiViewModel @Inject constructor(
         val ui = uiMapper.toForecastDetailUiModel(
             forecast = forecast,
             unit = unitRepository.unit.value,
-            today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
+            today = todayOf(fetchedAt)
         )
         _uiState.update { state ->
             state.copy(
@@ -246,6 +246,13 @@ class EvSayfasiViewModel @Inject constructor(
 
     /** Önbellek anahtarı: konum sabit anahtarda, diğerleri kimlikte. */
     private fun seedKeyFor(city: City): Long = if (city.isLocation) CachedForecast.LOCATION_KEY else city.id
+
+    /**
+     * Çekim anının cihaz saat dilimindeki yerel günü. `LocalDate.ofInstant`
+     * bilerek KULLANILMAZ — API 31+; minSdk 26'da `NoSuchMethodError`
+     * fırlatır (düşük API'li cihazda yakalandı). `atZone` API 26'dan beri var.
+     */
+    private fun todayOf(fetchedAt: Instant): LocalDate = fetchedAt.atZone(ZoneId.systemDefault()).toLocalDate()
 
     /** Birim değişimi ağa çıkmaz; önbellekteki tahmin yeniden eşlenir. */
     private fun remapCachedForecasts() {
@@ -263,7 +270,7 @@ class EvSayfasiViewModel @Inject constructor(
                                 uiMapper.toForecastDetailUiModel(
                                     cached,
                                     unit = unit,
-                                    today = LocalDate.ofInstant(fetchedAt, ZoneId.systemDefault())
+                                    today = todayOf(fetchedAt)
                                 )
                             ),
                             isRefreshing = detail.isRefreshing
