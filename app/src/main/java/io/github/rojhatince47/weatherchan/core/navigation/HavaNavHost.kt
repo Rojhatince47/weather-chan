@@ -50,8 +50,10 @@ fun HavaNavHost(
         }
         composable<AddCityDestination> {
             AddCityRoute(
-                // Eklenen şehir detay ekranında değil doğrudan pager'da
-                // açılır: seçim kimliği yazılır ve kullanıcı eve döner.
+                // Eklenen şehir detay ekranında değil doğrudan listeye açılır:
+                // seçim kimliği Ev'in SavedStateHandle'ına yazılır; kullanıcı
+                // önceki ekrana (Ana veya Şehirlerim) döner, eve dönüşte pager'a
+                // aktarılır.
                 onCityClick = { city ->
                     navController.getBackStackEntry(EvSayfasiDestination)
                         .savedStateHandle[SELECTED_CITY_ID] = city.id

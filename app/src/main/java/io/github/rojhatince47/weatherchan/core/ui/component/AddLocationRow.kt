@@ -13,8 +13,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.Loca
 /**
  * Konum geri ekleme satırı.
  *
- * Yalnız listenin **boş** olduğu durumda Ev'in boş ekranında görünür
- * ("Konumumu ekle" / "Tekrar dene"). Liste doluysa eylemin yeri Ayarlar
+ * Boş listenin gösterildiği ekranlarda (Ana ekran, Şehirlerim) görünür:
+ * "Konumumu ekle" / "Tekrar dene". Liste doluysa erişim yolu Ayarlar
  * ekranının en üstündeki Konum bölümüdür; `Loading` göstergesi de oradadır.
  */
 @Composable

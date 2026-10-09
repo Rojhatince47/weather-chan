@@ -81,8 +81,8 @@ fun MainScreen(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            // İnce yönetim ekranı: ekleme ve ayarlar ana ekrandadır; burada
-            // yalnız geri dönüş ve başlık kalır.
+            // İnce yönetim ekranı: ayarlar ana ekrandadır; ekleme boş listede
+            // bu ekranda ve ana ekranda; burada yalnız geri ve başlık kalır.
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 navigationIcon = {

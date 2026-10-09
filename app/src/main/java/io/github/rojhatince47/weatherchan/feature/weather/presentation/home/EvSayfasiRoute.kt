@@ -53,8 +53,8 @@ fun EvSayfasiRoute(
     }
 
     // "Konumumu ekle" ve "Tekrar dene" aynı kök eylemi paylaşır; izin
-    // diyaloğu, otomatik ilk soruş ve karar ortak hook'tadır (Ayarlar da
-    // aynı hook'u kullanır).
+    // diyaloğu, otomatik ilk soruş ve karar ortak hook'tadır (Ayarlar ve
+    // Şehirlerim de aynı hook'u kullanır).
     val onLocationAction = rememberLocationAction(
         permissionState = uiState.permissionState,
         onPermissionResult = viewModel::onPermissionResult,

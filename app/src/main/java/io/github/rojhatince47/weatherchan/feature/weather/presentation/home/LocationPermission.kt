@@ -65,10 +65,11 @@ internal fun locationActionFor(hasPermission: Boolean, canShowRationale: Boolean
 /**
  * İzin diyaloğu + otomatik ilk soruş + eylem kararı için ortak hook.
  *
- * Ev ve Ayarlar route'u bu hook ile aynı state machine'e bağlanır: launcher,
- * `NotAsked` otomatik ateşi ve karar tek yerdedir; state makinesi kalır
- * (tek `EvSayfasiViewModel` örneği). Hook'u çağıran her route mount olduğunda
- * ateşleyebilir — bayrak `Asked` olduktan sonra tekrar tetiklenmez.
+ * Ev, Ayarlar ve Şehirlerim route'u bu hook ile aynı state machine'e
+ * bağlanır: launcher, `NotAsked` otomatik ateşi ve karar tek yerdedir;
+ * state makinesi kalır (tek `EvSayfasiViewModel` örneği). Hook'u çağıran
+ * her route mount olduğunda ateşleyebilir — bayrak `Asked` olduktan sonra
+ * tekrar tetiklenmez.
  *
  * Dönen lambda "Konumumu ekle" ve "Tekrar dene" için tek kök eylemdir.
  */
