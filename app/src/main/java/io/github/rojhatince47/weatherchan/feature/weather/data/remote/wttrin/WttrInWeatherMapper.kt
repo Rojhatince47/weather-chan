@@ -38,13 +38,14 @@ class WttrInWeatherMapper @Inject constructor() {
     fun toForecast(city: City, dto: WttrInDto): Forecast {
         val current = dto.currentCondition.firstOrNull() ?: WttrInCurrentDto()
         val days = dto.weather
-        val firstDay = days.firstOrNull()
-        val dayDate = firstDay?.let { runCatching { LocalDate.parse(it.date) }.getOrNull() }
-        val daylightWindow = days.firstOrNull()?.astronomy?.firstOrNull()?.let { astro ->
-            val rise = parseClock(astro.sunrise) ?: return@let null
-            val set = parseClock(astro.sunset) ?: return@let null
-            if (rise >= set) null else DaylightWindow(rise, set)
-        }
+        val windows: Map<LocalDate, DaylightWindow> = days.mapNotNull { day ->
+            val date = runCatching { LocalDate.parse(day.date) }.getOrNull() ?: return@mapNotNull null
+            val astro = day.astronomy.firstOrNull() ?: return@mapNotNull null
+            val rise = parseClock(astro.sunrise) ?: return@mapNotNull null
+            val set = parseClock(astro.sunset) ?: return@mapNotNull null
+            if (rise >= set) return@mapNotNull null
+            date to DaylightWindow(rise, set)
+        }.toMap()
         return Forecast(
             city = city,
             currentWeather = CurrentWeather(
@@ -55,21 +56,21 @@ class WttrInWeatherMapper @Inject constructor() {
                 // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
                 isDay = true
             ),
-            hourlyForecast = if (dayDate == null) {
-                // Tarihsiz gün damgalanamaz — o günün dilimleri pencereye giremez.
-                emptyList()
-            } else {
-                firstDay?.hourly?.take(8)?.map { hourly ->
-                    val hour = hourly.time.toIntOrNull()?.div(100) ?: 0
+            hourlyForecast = days.flatMap { day ->
+                val date = runCatching { LocalDate.parse(day.date) }.getOrNull() ?: return@flatMap emptyList()
+                day.hourly.mapNotNull { hourly ->
+                    val total = hourly.time?.trim()?.toIntOrNull() ?: return@mapNotNull null
+                    val hour = total / 100
+                    if (total < 0 || hour !in 0..23) return@mapNotNull null
                     HourlyForecast(
-                        localDateTime = LocalDateTime.of(dayDate, LocalTime.of(hour, 0)),
+                        localDateTime = LocalDateTime.of(date, LocalTime.of(hour, 0)),
                         hourOfDay = hour,
                         temperatureCelsius = hourly.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
                         condition = toCondition(hourly.weatherCode.toIntOrNull()),
                         precipitationProbabilityPercent = hourly.chanceOfRain.toIntOrNull() ?: 0,
-                        isDay = Daylight.isDay(hour, daylightWindow)
+                        isDay = Daylight.isDay(hour, windows[date])
                     )
-                }.orEmpty()
+                }
             },
             dailyForecast = days.mapIndexed { index, day ->
                 DailyForecast(

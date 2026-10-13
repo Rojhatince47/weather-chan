@@ -45,7 +45,7 @@ data class WttrInAstronomyDto(
 
 @Serializable
 data class WttrInHourlyDto(
-    @SerialName("time") val time: String = "0",
+    @SerialName("time") val time: String? = null,
     @SerialName("tempC") val tempC: String = "0",
     @SerialName("weatherCode") val weatherCode: String = "113",
     @SerialName("chanceofrain") val chanceOfRain: String = "0"
