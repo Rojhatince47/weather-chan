@@ -39,6 +39,7 @@ class WttrInWeatherMapperTest {
         val dto = WttrInDto(
             weather = listOf(
                 WttrInDayDto(
+                    date = "2026-10-08",
                     astronomy = listOf(WttrInAstronomyDto(sunrise = "05:43 AM", sunset = "06:31 PM")),
                     hourly = listOf(
                         WttrInHourlyDto(time = "1200", tempC = "20", weatherCode = "113", chanceOfRain = "10"),
@@ -60,6 +61,7 @@ class WttrInWeatherMapperTest {
         val dto = WttrInDto(
             weather = listOf(
                 WttrInDayDto(
+                    date = "2026-10-08",
                     hourly = listOf(
                         WttrInHourlyDto(time = "0900", tempC = "20", weatherCode = "113", chanceOfRain = "0"),
                         WttrInHourlyDto(time = "2300", tempC = "15", weatherCode = "113", chanceOfRain = "0")

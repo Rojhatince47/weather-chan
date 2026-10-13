@@ -10,6 +10,8 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DaylightW
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -36,6 +38,8 @@ class WttrInWeatherMapper @Inject constructor() {
     fun toForecast(city: City, dto: WttrInDto): Forecast {
         val current = dto.currentCondition.firstOrNull() ?: WttrInCurrentDto()
         val days = dto.weather
+        val firstDay = days.firstOrNull()
+        val dayDate = firstDay?.let { runCatching { LocalDate.parse(it.date) }.getOrNull() }
         val daylightWindow = days.firstOrNull()?.astronomy?.firstOrNull()?.let { astro ->
             val rise = parseClock(astro.sunrise) ?: return@let null
             val set = parseClock(astro.sunset) ?: return@let null
@@ -51,16 +55,22 @@ class WttrInWeatherMapper @Inject constructor() {
                 // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
                 isDay = true
             ),
-            hourlyForecast = days.firstOrNull()?.hourly?.take(8)?.map { hourly ->
-                val hour = hourly.time.toIntOrNull()?.div(100) ?: 0
-                HourlyForecast(
-                    hourOfDay = hour,
-                    temperatureCelsius = hourly.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
-                    condition = toCondition(hourly.weatherCode.toIntOrNull()),
-                    precipitationProbabilityPercent = hourly.chanceOfRain.toIntOrNull() ?: 0,
-                    isDay = Daylight.isDay(hour, daylightWindow)
-                )
-            }.orEmpty(),
+            hourlyForecast = if (dayDate == null) {
+                // Tarihsiz gün damgalanamaz — o günün dilimleri pencereye giremez.
+                emptyList()
+            } else {
+                firstDay?.hourly?.take(8)?.map { hourly ->
+                    val hour = hourly.time.toIntOrNull()?.div(100) ?: 0
+                    HourlyForecast(
+                        localDateTime = LocalDateTime.of(dayDate, LocalTime.of(hour, 0)),
+                        hourOfDay = hour,
+                        temperatureCelsius = hourly.tempC.toDoubleOrNull()?.roundToInt() ?: 0,
+                        condition = toCondition(hourly.weatherCode.toIntOrNull()),
+                        precipitationProbabilityPercent = hourly.chanceOfRain.toIntOrNull() ?: 0,
+                        isDay = Daylight.isDay(hour, daylightWindow)
+                    )
+                }.orEmpty()
+            },
             dailyForecast = days.mapIndexed { index, day ->
                 DailyForecast(
                     dayOffset = index,

@@ -11,6 +11,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -30,6 +31,7 @@ class OpenMeteoWeatherMapper @Inject constructor() {
             hourlyForecast = dto.hourly.temperature.indices.take(24).map { index ->
                 val isoTime = dto.hourly.time.getOrNull(index)
                 HourlyForecast(
+                    localDateTime = LocalDateTime.parse(requireNotNull(isoTime)),
                     hourOfDay = hourOf(isoTime),
                     temperatureCelsius = dto.hourly.temperature.getOrNull(index)?.roundToInt() ?: 0,
                     condition = toCondition(dto.hourly.weatherCode.getOrNull(index)),

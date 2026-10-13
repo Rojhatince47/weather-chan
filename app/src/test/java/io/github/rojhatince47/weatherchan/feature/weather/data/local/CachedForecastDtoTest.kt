@@ -7,6 +7,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyFore
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.LocalDateTime
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -18,7 +19,7 @@ class CachedForecastDtoTest {
     private val forecast = Forecast(
         city = ankara,
         currentWeather = CurrentWeather(14, WeatherCondition.CLOUDY, 6, 45),
-        hourlyForecast = listOf(HourlyForecast(10, 15, WeatherCondition.CLEAR, 5)),
+        hourlyForecast = listOf(HourlyForecast(LocalDateTime.of(2026, 10, 2, 10, 0), 10, 15, WeatherCondition.CLEAR, 5)),
         dailyForecast = listOf(DailyForecast(0, 8, 16, WeatherCondition.PARTLY_CLOUDY))
     )
 

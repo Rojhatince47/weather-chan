@@ -11,6 +11,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
+import java.time.LocalDateTime
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -131,6 +132,7 @@ class FakeWeatherRepository : WeatherRepository {
         currentWeather = syntheticCurrentWeather(),
         hourlyForecast = (0 until 24).map { hour ->
             HourlyForecast(
+                localDateTime = LocalDateTime.of(2026, 1, 1, hour, 0),
                 hourOfDay = hour,
                 temperatureCelsius = 15 + ((id + hour) % 10).toInt(),
                 condition = WeatherCondition.PARTLY_CLOUDY,

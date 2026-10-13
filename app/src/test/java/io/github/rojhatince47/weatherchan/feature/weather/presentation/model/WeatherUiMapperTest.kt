@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.LocalDate
+import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -47,6 +48,7 @@ class WeatherUiMapperTest {
         ),
         hourlyForecast = List(24) { hour ->
             HourlyForecast(
+                localDateTime = LocalDateTime.of(2026, 10, 8, hour, 0),
                 hourOfDay = hour,
                 temperatureCelsius = 15 + hour % 10,
                 condition = WeatherCondition.PARTLY_CLOUDY,
@@ -290,6 +292,7 @@ class WeatherUiMapperTest {
         val nightHour = base.copy(
             hourlyForecast = listOf(
                 HourlyForecast(
+                    localDateTime = LocalDateTime.of(2026, 10, 8, 20, 0),
                     hourOfDay = 20,
                     temperatureCelsius = 15,
                     condition = WeatherCondition.CLEAR,

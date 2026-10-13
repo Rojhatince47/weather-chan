@@ -7,6 +7,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.Instant
+import java.time.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -31,7 +32,9 @@ internal data class HourlyForecastDto(
     @SerialName("condition") val condition: String,
     @SerialName("precipitationProbabilityPercent") val precipitationProbabilityPercent: Int,
     // Sonda kalmalı: WeatherCachePreferencesTest pozisyonel kurar.
-    @SerialName("isDay") val isDay: Boolean = true
+    @SerialName("isDay") val isDay: Boolean = true,
+    // Sonda kalmalı: damgasız eski kayıt toDomain'de fırlatır (K5).
+    @SerialName("isoDateTime") val isoDateTime: String = ""
 )
 
 @Serializable
@@ -79,10 +82,14 @@ private fun HourlyForecast.toDto(): HourlyForecastDto = HourlyForecastDto(
     temperatureCelsius = temperatureCelsius,
     condition = condition.name,
     precipitationProbabilityPercent = precipitationProbabilityPercent,
-    isDay = isDay
+    isDay = isDay,
+    isoDateTime = localDateTime.toString()
 )
 
 private fun HourlyForecastDto.toDomain(): HourlyForecast = HourlyForecast(
+    // Boş/geçersiz damga burada fırlatır; giriş-başı runCatching o girişi
+    // düşürür (K5). Sessiz eleme YOK.
+    localDateTime = LocalDateTime.parse(isoDateTime),
     hourOfDay = hourOfDay,
     temperatureCelsius = temperatureCelsius,
     condition = WeatherCondition.valueOf(condition),
