@@ -52,4 +52,24 @@ class CachedForecastDtoTest {
         val back = CachedForecastDto(1L, night.toDto()).toDomain()
         assertEquals(false, back.forecast.currentWeather.isDay)
     }
+
+    @Test
+    fun `damgasiz saatlik kayit toDomain'de firlatir`() {
+        // K5 mekanizması: sessiz eleme yok — DateTimeParseException repository'de
+        // giriş-başı runCatching ile yakalanır.
+        val dto = CachedForecastDto(1L, forecast.toDto().copy(hourly = listOf(HourlyForecastDto(10, 15, "CLEAR", 5))))
+        var threw = false
+        try {
+            dto.toDomain()
+        } catch (e: java.time.format.DateTimeParseException) {
+            threw = true
+        }
+        assertEquals(true, threw)
+    }
+
+    @Test
+    fun `damga gidis donuste korunur`() {
+        val back = CachedForecastDto(1L, forecast.toDto()).toDomain()
+        assertEquals(LocalDateTime.of(2026, 10, 2, 10, 0), back.forecast.hourlyForecast.single().localDateTime)
+    }
 }

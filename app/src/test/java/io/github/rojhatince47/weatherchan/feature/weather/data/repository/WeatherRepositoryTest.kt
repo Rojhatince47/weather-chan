@@ -8,6 +8,7 @@ import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.CachedForecastDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.CurrentWeatherDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.ForecastDto
+import io.github.rojhatince47.weatherchan.feature.weather.data.local.HourlyForecastDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.toDto
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
@@ -297,6 +298,39 @@ class WeatherRepositoryTest {
         cachePreferences.writeForecast(
             999L,
             CachedForecastDto(1L, ForecastDto(good.toDto(), CurrentWeatherDto(20, "FIRTINA", 5, 40, true), emptyList(), emptyList()))
+        )
+
+        val cached = repository.cachedForecasts().first()
+
+        assertEquals(setOf(good.id), cached.keys)
+    }
+
+    @Test
+    fun `damgasiz saatlik tek girisi dusurur komsu kalir`() = runTest {
+        val good = dynamicCity()
+        cachePreferences.writeForecast(
+            good.id,
+            CachedForecastDto(
+                1L,
+                ForecastDto(
+                    good.toDto(),
+                    CurrentWeatherDto(20, "CLEAR", 5, 40, true),
+                    listOf(HourlyForecastDto(10, 15, "CLEAR", 5, isoDateTime = "2026-10-02T10:00")),
+                    emptyList()
+                )
+            )
+        )
+        cachePreferences.writeForecast(
+            999L,
+            CachedForecastDto(
+                1L,
+                ForecastDto(
+                    good.toDto(),
+                    CurrentWeatherDto(20, "CLEAR", 5, 40, true),
+                    listOf(HourlyForecastDto(10, 15, "CLEAR", 5)),
+                    emptyList()
+                )
+            )
         )
 
         val cached = repository.cachedForecasts().first()
