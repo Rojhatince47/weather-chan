@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -91,6 +92,37 @@ class OpenMeteoWeatherMapperTest {
 
         val forecast = mapper.toForecast(city, dto)
 
+        assertTrue(forecast.hourlyForecast[0].isDay)
+        assertFalse(forecast.hourlyForecast[1].isDay)
+    }
+
+    @Test
+    fun `tum saatler damgali gecirilir - take24 yok`() {
+        val times = (0..23).map { hour -> "2026-10-08T%02d:00".format(hour) } +
+            (0..23).map { hour -> "2026-10-09T%02d:00".format(hour) }
+        val forecast = mapper.toForecast(city, forecastDto(times))
+        assertEquals(48, forecast.hourlyForecast.size)
+        assertEquals(LocalDateTime.of(2026, 10, 9, 0, 0), forecast.hourlyForecast[24].localDateTime)
+    }
+
+    @Test
+    fun `bozuk iso lu saatlik kayit elenir - saat sifirda tutulmaz`() {
+        val forecast = mapper.toForecast(city, forecastDto(listOf("2026-10-08T12:00", "SAÇMA", "2026-10-08T13:00")))
+        assertEquals(2, forecast.hourlyForecast.size)
+    }
+
+    @Test
+    fun `gunluk penceresi damganin kendi gunune bakar - miss ise 06 18`() {
+        // Yalnız 10-08 penceresi var (06:32–16:00); 10-09T17:00 eski firstOrNull
+        // yedeğiyle false çıkardı — miss artık 06–18 kuralı: 17:00 GÜNDÜZ.
+        val dto = forecastDto(listOf("2026-10-09T17:00", "2026-10-09T05:00")).copy(
+            daily = OpenMeteoDailyDto(
+                time = listOf("2026-10-08"),
+                sunrise = listOf("2026-10-08T06:32"),
+                sunset = listOf("2026-10-08T16:00")
+            )
+        )
+        val forecast = mapper.toForecast(city, dto)
         assertTrue(forecast.hourlyForecast[0].isDay)
         assertFalse(forecast.hourlyForecast[1].isDay)
     }

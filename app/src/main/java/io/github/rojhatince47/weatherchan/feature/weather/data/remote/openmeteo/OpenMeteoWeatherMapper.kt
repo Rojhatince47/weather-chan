@@ -12,7 +12,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyFor
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -28,18 +27,15 @@ class OpenMeteoWeatherMapper @Inject constructor() {
         return Forecast(
             city = city,
             currentWeather = toCurrentWeather(dto.current),
-            hourlyForecast = dto.hourly.temperature.indices.take(24).map { index ->
-                val isoTime = dto.hourly.time.getOrNull(index)
+            hourlyForecast = dto.hourly.temperature.indices.mapNotNull { index ->
+                val stamp = dateTimeOf(dto.hourly.time.getOrNull(index)) ?: return@mapNotNull null
                 HourlyForecast(
-                    localDateTime = LocalDateTime.parse(requireNotNull(isoTime)),
-                    hourOfDay = hourOf(isoTime),
+                    localDateTime = stamp,
+                    hourOfDay = stamp.hour,
                     temperatureCelsius = dto.hourly.temperature.getOrNull(index)?.roundToInt() ?: 0,
                     condition = toCondition(dto.hourly.weatherCode.getOrNull(index)),
                     precipitationProbabilityPercent = dto.hourly.precipitationProbability.getOrNull(index) ?: 0,
-                    isDay = Daylight.isDay(
-                        hourOfDay = hourOf(isoTime),
-                        window = dateOf(isoTime)?.let { windows[it] } ?: windows.values.firstOrNull()
-                    )
+                    isDay = Daylight.isDay(stamp.hour, windows[stamp.toLocalDate()])
                 )
             },
             dailyForecast = dto.daily.time.indices.map { index ->
@@ -71,18 +67,13 @@ class OpenMeteoWeatherMapper @Inject constructor() {
         isDay = dto.isDay?.let { it == 1 } ?: true
     )
 
-    private fun hourOf(isoTime: String?): Int = isoTime?.substringAfter('T', "")?.substringBefore(':')?.toIntOrNull() ?: 0
-
-    private fun dateOf(isoTime: String?): LocalDate? = isoTime?.substringBefore('T', "")?.takeIf { it.isNotBlank() }
-        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-
-    private fun clockOf(isoTime: String?): LocalTime? = isoTime?.substringAfter('T', "")?.takeIf { it.length >= 5 }?.take(5)
-        ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+    /** ISO-8601 yerel damga (`yyyy-MM-ddTHH:mm[:ss]`); bozuksa null — kayıt elenir. */
+    private fun dateTimeOf(isoTime: String?): LocalDateTime? = isoTime?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
 
     private fun sunWindows(dto: OpenMeteoForecastDto): Map<LocalDate, DaylightWindow> = dto.daily.time.indices.mapNotNull { i ->
         val date = runCatching { LocalDate.parse(dto.daily.time[i]) }.getOrNull() ?: return@mapNotNull null
-        val rise = clockOf(dto.daily.sunrise.getOrNull(i)) ?: return@mapNotNull null
-        val set = clockOf(dto.daily.sunset.getOrNull(i)) ?: return@mapNotNull null
+        val rise = dateTimeOf(dto.daily.sunrise.getOrNull(i))?.toLocalTime() ?: return@mapNotNull null
+        val set = dateTimeOf(dto.daily.sunset.getOrNull(i))?.toLocalTime() ?: return@mapNotNull null
         date to DaylightWindow(rise, set)
     }.toMap()
 
