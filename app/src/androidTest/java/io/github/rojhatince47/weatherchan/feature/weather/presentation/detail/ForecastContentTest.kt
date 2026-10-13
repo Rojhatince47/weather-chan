@@ -35,7 +35,7 @@ class ForecastContentTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
-    private fun detailFixture(hourlyCount: Int = 24) = ForecastDetailUiModel(
+    private fun detailFixture(hourlyCount: Int = 25) = ForecastDetailUiModel(
         city = CityUiModel(1, "İstanbul", "Marmara", "Türkiye", 41.01, 28.98),
         currentWeather = CurrentWeatherUiModel(
             temperatureText = "18°C",
@@ -46,11 +46,13 @@ class ForecastContentTest {
             condition = WeatherCondition.CLEAR,
             isDay = true
         ),
-        hourlyForecast = List(hourlyCount) { hour ->
+        hourlyForecast = List(hourlyCount) { i ->
             HourlyForecastUiModel(
-                timeLabel = UiText.Dynamic("%02d:00".format(hour)),
-                temperatureText = "2${hour % 10}°C",
-                temperatureValue = 20 + hour % 10,
+                // 14:00 → yarın 14:00 oluk simülasyonu: ilk hücre "Şimdi",
+                // gerisi saat (pencere mapper'da değil — bu katman yalnız çizim).
+                timeLabel = if (i == 0) UiText.Resource(R.string.hourly_now) else UiText.Dynamic("%02d:00".format((14 + i) % 24)),
+                temperatureText = "2${i % 10}°C",
+                temperatureValue = 20 + i % 10,
                 icon = WeatherIcon.Glyph("⛅"),
                 precipitationProbabilityText = "%10"
             )
@@ -71,7 +73,7 @@ class ForecastContentTest {
      * Düz içerik — grafik/hücre görünürlük testleri için. İlk hücre doğal
      * olarak görünürde çizilir.
      */
-    private fun setForecastContent(hourlyCount: Int = 24) {
+    private fun setForecastContent(hourlyCount: Int = 25) {
         composeRule.setContent {
             HavaTheme {
                 ForecastContent(
@@ -150,9 +152,9 @@ class ForecastContentTest {
         setForecastContent()
         composeRule.onNodeWithTag("hourly_chart").assertExists()
         composeRule.onNodeWithText("Saatlik Tahmin").assertExists()
-        composeRule.onNodeWithText("00:00").assertIsDisplayed()
-        composeRule.onNodeWithText("09:00").assertExists() // kırpılmış olsa da semantics'te var
-        composeRule.onNodeWithText("23:00").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.hourly_now)).assertIsDisplayed()
+        composeRule.onNodeWithText("15:00").assertExists() // kırpılmış olsa da semantics'te var
+        composeRule.onNodeWithText("14:00").performScrollTo().assertIsDisplayed()
     }
 
     @Test
