@@ -30,7 +30,7 @@ data class CurrentWeatherUiModel(
 )
 
 data class HourlyForecastUiModel(
-    val timeText: String,
+    val timeLabel: UiText,
     val temperatureText: String,
     val temperatureValue: Int,
     val icon: WeatherIcon,

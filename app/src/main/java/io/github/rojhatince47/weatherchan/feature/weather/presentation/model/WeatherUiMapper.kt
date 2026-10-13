@@ -7,8 +7,11 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.hourlyWindow
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 class WeatherUiMapper @Inject constructor() {
@@ -44,8 +47,9 @@ class WeatherUiMapper @Inject constructor() {
     )
     fun toForecastDetailUiModel(
         forecast: Forecast,
-        unit: TemperatureUnit = TemperatureUnit.CELSIUS,
-        today: LocalDate = LocalDate.now()
+        windowStart: LocalDateTime,
+        today: LocalDate,
+        unit: TemperatureUnit = TemperatureUnit.CELSIUS
     ): ForecastDetailUiModel = ForecastDetailUiModel(
         city = CityUiModel(
             id = forecast.city.id,
@@ -64,14 +68,21 @@ class WeatherUiMapper @Inject constructor() {
             condition = forecast.currentWeather.condition,
             isDay = forecast.currentWeather.isDay
         ),
-        hourlyForecast = forecast.hourlyForecast.map { hourly ->
-            HourlyForecastUiModel(
-                timeText = formatHour(hourly.hourOfDay),
-                temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
-                temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
-                icon = iconFor(hourly.condition, hourly.isDay),
-                precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
-            )
+        hourlyForecast = hourlyWindow(forecast.hourlyForecast, windowStart).let { window ->
+            val wStart = windowStart.truncatedTo(ChronoUnit.HOURS)
+            window.map { hourly ->
+                HourlyForecastUiModel(
+                    timeLabel = if (hourly == window.first() && hourly.localDateTime.truncatedTo(ChronoUnit.HOURS) == wStart) {
+                        UiText.Resource(R.string.hourly_now)
+                    } else {
+                        UiText.Dynamic(formatHour(hourly.hourOfDay))
+                    },
+                    temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
+                    temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
+                    icon = iconFor(hourly.condition, hourly.isDay),
+                    precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
+                )
+            }
         },
         dailyForecast = forecast.dailyForecast.map { daily ->
             DailyForecastUiModel(

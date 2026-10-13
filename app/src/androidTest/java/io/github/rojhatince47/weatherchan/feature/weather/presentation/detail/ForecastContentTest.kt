@@ -48,7 +48,7 @@ class ForecastContentTest {
         ),
         hourlyForecast = List(hourlyCount) { hour ->
             HourlyForecastUiModel(
-                timeText = "%02d:00".format(hour),
+                timeLabel = UiText.Dynamic("%02d:00".format(hour)),
                 temperatureText = "2${hour % 10}°C",
                 temperatureValue = 20 + hour % 10,
                 icon = WeatherIcon.Glyph("⛅"),

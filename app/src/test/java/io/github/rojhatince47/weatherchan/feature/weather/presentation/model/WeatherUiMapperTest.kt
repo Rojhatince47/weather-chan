@@ -28,6 +28,8 @@ class WeatherUiMapperTest {
         coordinates = Coordinates(latitude = 41.01, longitude = 28.98)
     )
 
+    private val dayZero = LocalDate.of(2026, 10, 8)
+
     private fun cityWeather() = CityWeather(
         city = istanbul,
         currentWeather = CurrentWeather(
@@ -99,7 +101,7 @@ class WeatherUiMapperTest {
     @Test
     fun `maps forecast to detail ui model`() {
         val forecast = forecast()
-        val uiModel = mapper.toForecastDetailUiModel(forecast)
+        val uiModel = mapper.toForecastDetailUiModel(forecast, windowStart = LocalDateTime.of(2026, 10, 8, 0, 0), today = dayZero)
 
         assertEquals(24, uiModel.hourlyForecast.size)
         assertEquals(7, uiModel.dailyForecast.size)
@@ -115,7 +117,7 @@ class WeatherUiMapperTest {
     fun `gun adlari cekim gunune gore uretilir ve hafta kirpimini asar`() {
         val today = LocalDate.of(2026, 10, 8) // Perşembe
 
-        val uiModel = mapper.toForecastDetailUiModel(forecast(), today = today)
+        val uiModel = mapper.toForecastDetailUiModel(forecast(), windowStart = LocalDateTime.of(2026, 10, 8, 0, 0), today = today)
 
         val expected = listOf(
             R.string.forecast_today,
@@ -138,7 +140,7 @@ class WeatherUiMapperTest {
             currentWeather = base.currentWeather.copy(condition = WeatherCondition.CLEAR, isDay = false)
         )
 
-        val ui = mapper.toForecastDetailUiModel(nightClear)
+        val ui = mapper.toForecastDetailUiModel(nightClear, windowStart = LocalDateTime.of(2026, 10, 8, 0, 0), today = dayZero)
 
         assertEquals(WeatherCondition.CLEAR, ui.currentWeather.condition)
         assertFalse(ui.currentWeather.isDay)
@@ -147,7 +149,7 @@ class WeatherUiMapperTest {
 
     @Test
     fun `gunluk satirlar kendi kosullarini tasir`() {
-        val ui = mapper.toForecastDetailUiModel(forecast())
+        val ui = mapper.toForecastDetailUiModel(forecast(), windowStart = LocalDateTime.of(2026, 10, 8, 0, 0), today = dayZero)
 
         assertTrue(ui.dailyForecast.all { it.condition == WeatherCondition.CLOUDY })
         assertTrue(ui.dailyForecast.all { it.icon == WeatherIcon.Glyph("☁") })
@@ -155,8 +157,13 @@ class WeatherUiMapperTest {
 
     @Test
     fun `saatlik sicaklik degeri gorunen birime gore sayisal uretilir`() {
-        val celsius = mapper.toForecastDetailUiModel(forecast())
-        val fahrenheit = mapper.toForecastDetailUiModel(forecast(), unit = TemperatureUnit.FAHRENHEIT)
+        val celsius = mapper.toForecastDetailUiModel(forecast(), windowStart = LocalDateTime.of(2026, 10, 8, 0, 0), today = dayZero)
+        val fahrenheit = mapper.toForecastDetailUiModel(
+            forecast(),
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 0),
+            today = dayZero,
+            unit = TemperatureUnit.FAHRENHEIT
+        )
 
         assertEquals(15, celsius.hourlyForecast.first().temperatureValue)
         assertEquals(59, fahrenheit.hourlyForecast.first().temperatureValue) // 15*9/5+32 = 59 (taban bolme)
@@ -302,8 +309,69 @@ class WeatherUiMapperTest {
             )
         )
 
-        val ui = mapper.toForecastDetailUiModel(nightHour)
+        val ui = mapper.toForecastDetailUiModel(nightHour, windowStart = LocalDateTime.of(2026, 10, 8, 20, 0), today = dayZero)
 
         assertEquals(WeatherIcon.Glyph("🌙"), ui.hourlyForecast.single().icon)
+    }
+
+    @Test
+    fun `pencere disi saatler elenir ve artiyirmidort saatlik oluk kurulur`() {
+        val base = forecast()
+        val spanning = base.copy(
+            hourlyForecast = base.hourlyForecast + (0..15).map { hour ->
+                HourlyForecast(LocalDateTime.of(2026, 10, 9, hour, 0), hour, 12, WeatherCondition.CLEAR, 0)
+            }
+        )
+        val ui = mapper.toForecastDetailUiModel(
+            spanning,
+            windowStart = LocalDateTime.of(2026, 10, 8, 14, 0),
+            today = dayZero
+        )
+        // 14:00(d0) .. 14:00(d1) iki uç dahil = 25 öğe; 15:00(d1) düşer.
+        assertEquals(25, ui.hourlyForecast.size)
+        assertEquals(UiText.Resource(R.string.hourly_now), ui.hourlyForecast.first().timeLabel)
+        assertEquals(UiText.Dynamic("14:00"), ui.hourlyForecast.last().timeLabel)
+    }
+
+    @Test
+    fun `ayni saat iki gunde - pencere ikisini tarihiyle ayirt eder`() {
+        val items = listOf(
+            HourlyForecast(LocalDateTime.of(2026, 10, 8, 14, 0), 14, 15, WeatherCondition.CLEAR, 0),
+            HourlyForecast(LocalDateTime.of(2026, 10, 9, 14, 0), 14, 16, WeatherCondition.CLEAR, 0),
+            HourlyForecast(LocalDateTime.of(2026, 10, 10, 14, 0), 14, 17, WeatherCondition.CLEAR, 0)
+        )
+        val ui = mapper.toForecastDetailUiModel(
+            forecast().copy(hourlyForecast = items),
+            windowStart = LocalDateTime.of(2026, 10, 8, 14, 0),
+            today = dayZero
+        )
+        assertEquals(2, ui.hourlyForecast.size) // d2 düşer
+    }
+
+    @Test
+    fun `veri boslugunda simdi etiketi gosterilmez`() {
+        val late = forecast().copy(
+            hourlyForecast = listOf(HourlyForecast(LocalDateTime.of(2026, 10, 8, 15, 0), 15, 15, WeatherCondition.CLEAR, 0))
+        )
+        val ui = mapper.toForecastDetailUiModel(
+            late,
+            windowStart = LocalDateTime.of(2026, 10, 8, 14, 0),
+            today = dayZero
+        )
+        assertEquals(UiText.Dynamic("15:00"), ui.hourlyForecast.single().timeLabel) // K3 istisnası
+    }
+
+    @Test
+    fun `windowStart saat kesimli kabul edilir`() {
+        val ui = mapper.toForecastDetailUiModel(
+            forecast().copy(
+                hourlyForecast = listOf(
+                    HourlyForecast(LocalDateTime.of(2026, 10, 8, 14, 0), 14, 15, WeatherCondition.CLEAR, 0)
+                )
+            ),
+            windowStart = LocalDateTime.of(2026, 10, 8, 14, 37),
+            today = dayZero
+        )
+        assertEquals(UiText.Resource(R.string.hourly_now), ui.hourlyForecast.single().timeLabel)
     }
 }

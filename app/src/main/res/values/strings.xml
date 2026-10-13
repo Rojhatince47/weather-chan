@@ -68,6 +68,7 @@
     <string name="unit_fahrenheit">°F</string>
 
     <string name="forecast_today">Today</string>
+    <string name="hourly_now">Now</string>
     <string name="day_monday">Monday</string>
     <string name="day_tuesday">Tuesday</string>
     <string name="day_wednesday">Wednesday</string>

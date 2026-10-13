@@ -103,7 +103,7 @@ private fun HourlyChartCell(item: HourlyForecastUiModel, index: Int) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = item.timeText,
+            text = item.timeLabel.asString(),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.testTag("hourly_time_$index")
         )

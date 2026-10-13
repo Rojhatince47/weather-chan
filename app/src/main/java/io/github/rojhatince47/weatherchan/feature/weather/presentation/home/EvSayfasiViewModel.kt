@@ -22,7 +22,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
@@ -178,6 +180,7 @@ class EvSayfasiViewModel @Inject constructor(
                         _uiState.update { state ->
                             val ui = uiMapper.toForecastDetailUiModel(
                                 forecast = result.data,
+                                windowStart = windowStartNow(),
                                 unit = unitRepository.unit.value,
                                 today = todayOf(fetchedAt)
                             )
@@ -234,6 +237,7 @@ class EvSayfasiViewModel @Inject constructor(
         val fetchedAt = seedFetchedAt[seedKeyFor(city)] ?: clock.instant()
         val ui = uiMapper.toForecastDetailUiModel(
             forecast = forecast,
+            windowStart = windowStartNow(),
             unit = unitRepository.unit.value,
             today = todayOf(fetchedAt)
         )
@@ -254,6 +258,9 @@ class EvSayfasiViewModel @Inject constructor(
      */
     private fun todayOf(fetchedAt: Instant): LocalDate = fetchedAt.atZone(ZoneId.systemDefault()).toLocalDate()
 
+    /** Görüntüleme anı saat kesimi — pencere çapası (spec K6). */
+    private fun windowStartNow(): LocalDateTime = LocalDateTime.now(clock).truncatedTo(ChronoUnit.HOURS)
+
     /** Birim değişimi ağa çıkmaz; önbellekteki tahmin yeniden eşlenir. */
     private fun remapCachedForecasts() {
         val unit = unitRepository.unit.value
@@ -269,6 +276,7 @@ class EvSayfasiViewModel @Inject constructor(
                             content = UiState.Success(
                                 uiMapper.toForecastDetailUiModel(
                                     cached,
+                                    windowStart = windowStartNow(),
                                     unit = unit,
                                     today = todayOf(fetchedAt)
                                 )
