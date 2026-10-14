@@ -177,20 +177,23 @@ private fun SuggestionBucket(
             .padding(top = HavaSpacing.md, bottom = HavaSpacing.sm)
             .semantics { heading() }
     )
-    visible.forEach { result ->
-        CityWeatherCardContent(
-            name = result.city.name,
-            region = result.city.region,
-            country = result.city.country,
-            isLocation = result.city.isLocation,
-            cardWeather = result.cardWeather,
-            isDarkTheme = isDarkTheme,
-            isLoading = result.cardWeather == null,
-            onClick = { onAddCity(result.city) },
-            onAddClick = { onAddCity(result.city) },
-            isInList = result.isInList,
-            distanceKm = result.distanceKm,
-            enabled = !result.isInList
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)) {
+        visible.forEach { result ->
+            CityWeatherCardContent(
+                name = result.city.name,
+                region = result.city.region,
+                country = result.city.country,
+                isLocation = result.city.isLocation,
+                cardWeather = result.cardWeather,
+                isDarkTheme = isDarkTheme,
+                isLoading = result.cardWeather == null,
+                onClick = { onAddCity(result.city) },
+                onAddClick = { onAddCity(result.city) },
+                isInList = result.isInList,
+                distanceKm = result.distanceKm,
+                enabled = !result.isInList,
+                modifier = Modifier.testTag("suggestion_card")
+            )
+        }
     }
 }

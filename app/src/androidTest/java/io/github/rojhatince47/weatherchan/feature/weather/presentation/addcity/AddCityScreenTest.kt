@@ -1,7 +1,9 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -64,6 +66,24 @@ class AddCityScreenTest {
     fun oneriSatirindaBuyutecYoktur() {
         setScreen(state())
         composeRule.onNodeWithContentDescription("Detayı aç").assertDoesNotExist()
+    }
+
+    @Test
+    fun oneriKartlariArasindaBoslukVardir() {
+        setScreen(
+            state(
+                suggestions = SuggestionLists(
+                    nearby = listOf(
+                        SearchResultUiModel(kocaeli, isInList = false, distanceKm = 42, cardWeather = CardWeather.Unavailable),
+                        SearchResultUiModel(ankara, isInList = false, distanceKm = 180, cardWeather = CardWeather.Unavailable)
+                    )
+                )
+            )
+        )
+        val first = composeRule.onAllNodesWithTag("suggestion_card")[0].getUnclippedBoundsInRoot()
+        val second = composeRule.onAllNodesWithTag("suggestion_card")[1].getUnclippedBoundsInRoot()
+        val gap = second.top.value - first.bottom.value
+        assertTrue("oneri kartlari arasinda bosluk yok: $gap", gap >= 6f)
     }
 
     @Test
