@@ -68,6 +68,36 @@ class EvSayfasiScreenTest {
     }
 
     @Test
+    fun listeSecimiGecSayfaYankisiylaEzilmez() {
+        // Route davranışının taklidi: Ev yeniden kompoze olurken ilk karede
+        // post-composition "seçim" gelir (liste kapanınca SavedStateHandle
+        // okunması). Pager'ın başlangıç yankısı (eski sayfa) seçimi ezmemeli.
+        val currentPage = androidx.compose.runtime.mutableStateOf(0)
+        composeRule.setContent {
+            HavaTheme {
+                androidx.compose.runtime.LaunchedEffect(Unit) { currentPage.value = 1 }
+                EvSayfasiScreen(
+                    cities = listOf(istanbul, ankara),
+                    currentPage = currentPage.value,
+                    contentFor = { city -> Text(text = city.name) },
+                    themeMode = ThemeMode.SYSTEM,
+                    onPageChanged = { currentPage.value = it },
+                    onAddCityClick = {},
+                    onSettingsClick = {},
+                    onSelectCity = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    locationState = LocationState.Resolved,
+                    onAddLocation = {},
+                    onRetryLocation = {}
+                )
+            }
+        }
+        composeRule.waitUntil(5_000) { currentPage.value == 1 }
+        assertEquals(1, currentPage.value)
+    }
+
+    @Test
     fun settingsActionInvokesCallback() {
         var opened = false
         setScreen(listOf(istanbul), onSettingsClick = { opened = true })

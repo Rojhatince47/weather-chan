@@ -48,6 +48,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.WeatherBackground
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.displayTitle
+import kotlinx.coroutines.flow.drop
 
 /**
  * Kaydırmalı ev sayfası: sabit üst çubuk + yatay pager.
@@ -267,8 +268,10 @@ private fun HomePager(
     }
     // Kararlı (settled) sayfa yayınlanır: `currentPage` kaydırmanın ortasında
     // ara değerler alır ve programatik atlama animasyonunu iptal ederdi.
+    // İlk değer (drop(1)) görünümün kendi eski sayfasının yankısıdır: yayımlanırsa
+    // liste dönüşü seçimini ezar (regresyon kilidi: listeSecimiGecSayfaYankisiylaEzilmez).
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page -> onPageChanged(page) }
+        snapshotFlow { pagerState.settledPage }.drop(1).collect { page -> onPageChanged(page) }
     }
     HorizontalPager(
         state = pagerState,
