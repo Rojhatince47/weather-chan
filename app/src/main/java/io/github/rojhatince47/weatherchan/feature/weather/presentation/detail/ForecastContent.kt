@@ -22,6 +22,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +39,14 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.Hou
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 
 @Composable
-fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -> Unit, isDark: Boolean, modifier: Modifier = Modifier) {
+fun ForecastContent(
+    uiState: DetailUiState,
+    onRetry: () -> Unit,
+    onRefresh: () -> Unit,
+    isDark: Boolean,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
@@ -64,7 +72,7 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                         )
                     }
                     item {
-                        SectionHeader(text = stringResource(R.string.section_hourly))
+                        SectionHeader(text = stringResource(R.string.section_hourly), contentColor = contentColor)
                     }
                     if (content.data.hourlyForecast.isNotEmpty()) {
                         item(key = "hourly_chart") {
@@ -72,7 +80,7 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                         }
                     }
                     item {
-                        SectionHeader(text = stringResource(R.string.section_daily))
+                        SectionHeader(text = stringResource(R.string.section_daily), contentColor = contentColor)
                     }
                     // key Bundle'da saklanabilir olmalı; UiText saklanamaz,
                     // bu yüzden dayOffset (Int) kullanılır.
@@ -96,11 +104,13 @@ fun ForecastContent(uiState: DetailUiState, onRetry: () -> Unit, onRefresh: () -
                         )
                         is UiState.Empty -> Text(
                             text = stringResource(R.string.state_empty_detail),
+                            color = contentColor,
                             modifier = Modifier.padding(HavaSpacing.xl)
                         )
                         is UiState.Error -> {
                             Text(
                                 text = content.message.asString(),
+                                color = contentColor,
                                 modifier = Modifier.padding(HavaSpacing.xl)
                             )
                             Button(onClick = onRetry) {
@@ -171,12 +181,17 @@ private fun CurrentWeatherCard(
     }
 }
 
+/**
+ * Arka plan üzerinde duran bölüm başlığı: tema rengi değil, aktif arka plan
+ * paletinin AA-garantili contentColor'ı kullanılır (açık tema + koyu gece
+ * arka planı kontrast kırılmasın — regresyon kilidi ForecastContentTest'te).
+ */
 @Composable
-private fun SectionHeader(text: String) {
+private fun SectionHeader(text: String, contentColor: Color) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = contentColor
     )
 }
 
@@ -214,7 +229,8 @@ private fun ForecastContentPreview() {
             uiState = DetailUiState(content = UiState.Loading),
             onRetry = {},
             onRefresh = {},
-            isDark = false
+            isDark = false,
+            contentColor = MaterialTheme.colorScheme.onBackground
         )
     }
 }

@@ -1,11 +1,16 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -80,7 +85,8 @@ class ForecastContentTest {
                     uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
                     onRetry = {},
                     onRefresh = {},
-                    isDark = false
+                    isDark = false,
+                    contentColor = Color.Black
                 )
             }
         }
@@ -100,7 +106,8 @@ class ForecastContentTest {
                         uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
                         onRetry = {},
                         onRefresh = {},
-                        isDark = false
+                        isDark = false,
+                        contentColor = Color.Black
                     )
                 }
             }
@@ -117,7 +124,8 @@ class ForecastContentTest {
                             uiState = DetailUiState(content = UiState.Success(detailFixture(hourlyCount))),
                             onRetry = {},
                             onRefresh = {},
-                            isDark = false
+                            isDark = false,
+                            contentColor = Color.Black
                         )
                     }
                 }
@@ -133,6 +141,66 @@ class ForecastContentTest {
     private fun widthDp(index: Int, tag: String): Float {
         val bounds = composeRule.onAllNodesWithTag(tag)[index].getUnclippedBoundsInRoot()
         return (bounds.right - bounds.left).value
+    }
+
+    private fun setForecastContentOnBackground(contentColor: Color, background: Color, uiState: DetailUiState) {
+        composeRule.setContent {
+            HavaTheme {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(background)
+                ) {
+                    ForecastContent(
+                        uiState = uiState,
+                        onRetry = {},
+                        onRefresh = {},
+                        isDark = false,
+                        contentColor = contentColor
+                    )
+                }
+            }
+        }
+    }
+
+    private fun countLightPixels(image: android.graphics.Bitmap): Int {
+        var count = 0
+        for (y in 0 until image.height step 2) {
+            for (x in 0 until image.width step 2) {
+                val p = image.getPixel(x, y)
+                if (android.graphics.Color.red(p) > 240 &&
+                    android.graphics.Color.green(p) > 240 &&
+                    android.graphics.Color.blue(p) > 240
+                ) {
+                    count++
+                }
+            }
+        }
+        return count
+    }
+
+    @Test
+    fun bolumBasliklariVerilenContentColorIleCizilir() {
+        // Açık tema + koyu arka plan (gece paleti) durumu: başlıklar açık renk
+        // olmalı; tema varsayılanı koyu gri kalırsa bu test düşer (regresyon kilidi).
+        setForecastContentOnBackground(
+            contentColor = Color.White,
+            background = Color(0xFF22354E),
+            uiState = DetailUiState(content = UiState.Success(detailFixture(3)))
+        )
+        val image = composeRule.onNodeWithTag("pull_refresh").captureToImage().asAndroidBitmap()
+        assertTrue("bolum basliklari acik renkte cizilmedi", countLightPixels(image) > 50)
+    }
+
+    @Test
+    fun hataMetniVerilenContentColorIleCizilir() {
+        setForecastContentOnBackground(
+            contentColor = Color.White,
+            background = Color(0xFF22354E),
+            uiState = DetailUiState(content = UiState.Error(UiText.Dynamic("Baglanti hatasi")))
+        )
+        val image = composeRule.onNodeWithTag("pull_refresh").captureToImage().asAndroidBitmap()
+        assertTrue("hata metni acik renkte cizilmedi", countLightPixels(image) > 50)
     }
 
     @Test

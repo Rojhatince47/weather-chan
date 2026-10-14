@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.ForecastContent
 
@@ -66,6 +67,22 @@ fun EvSayfasiRoute(
     // resolveIsDark composable'dır; lambda gövdesinden çağrılamaz (bir kez çöz).
     val isDark = themeMode.resolveIsDark()
 
+    // Arka plan paleti ile içerik rengi aynı kaynaktan gelir (DRY): veri
+    // yoksa null → çağıran yerlerde neutral(isDark) karşılığı kullanılır.
+    fun paletteFor(city: City): WeatherBackgroundPalette? {
+        val detail = uiState.forecasts[city.id]
+        val current = (detail?.content as? UiState.Success)?.data?.currentWeather
+        return if (current != null) {
+            WeatherBackgroundPalette.of(
+                condition = current.condition,
+                isDark = isDark,
+                isDay = current.isDay
+            )
+        } else {
+            null
+        }
+    }
+
     EvSayfasiScreen(
         cities = uiState.pages,
         currentPage = uiState.currentPage,
@@ -75,22 +92,11 @@ fun EvSayfasiRoute(
                 uiState = detail,
                 onRetry = { viewModel.onRetry(city.id) },
                 onRefresh = { viewModel.onRefresh(city.id) },
-                isDark = themeMode.resolveIsDark()
+                isDark = isDark,
+                contentColor = (paletteFor(city) ?: WeatherBackgroundPalette.neutral(isDark)).contentColor
             )
         },
-        backgroundPaletteFor = { city ->
-            val detail = uiState.forecasts[city.id]
-            val current = (detail?.content as? UiState.Success)?.data?.currentWeather
-            if (current != null) {
-                WeatherBackgroundPalette.of(
-                    condition = current.condition,
-                    isDark = isDark,
-                    isDay = current.isDay
-                )
-            } else {
-                null
-            }
-        },
+        backgroundPaletteFor = ::paletteFor,
         themeMode = themeMode,
         onPageChanged = viewModel::onPageChanged,
         onAddCityClick = onAddCityClick,
