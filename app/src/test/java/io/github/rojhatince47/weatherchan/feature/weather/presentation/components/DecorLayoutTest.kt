@@ -78,4 +78,25 @@ class DecorLayoutTest {
             }
         }
     }
+
+    @Test
+    fun `dagilim izgara degil ve tekil`() {
+        // Eski ızgara 6 sütunlu idi (12 damlada 6 farklı x). Rastgele dağılımda
+        // her öğenin x'i tektir; kümeleşmeler serbest, nizami ritim yasak.
+        listOf(DecorFamily.RAIN, DecorFamily.THUNDERSTORM, DecorFamily.SNOW).forEach { family ->
+            val streaks = layout(family, isDay = true).streaks
+            assertTrue("$family damlalari tekil degil", streaks.map { it.x }.toSet().size == streaks.size)
+        }
+    }
+
+    @Test
+    fun `dagilim deterministik`() {
+        // Tohumlu rastgele: aynı sahne her zaman aynı dağılımı üretir
+        // (kare başına zıplama yok, ekran görüntüsü tekrarlanabilir).
+        DecorFamily.entries.forEach { family ->
+            listOf(true, false).forEach { isDay ->
+                assertEquals("$family/$isDay dagilimi degisiyor", layout(family, isDay), layout(family, isDay))
+            }
+        }
+    }
 }

@@ -3,6 +3,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.componen
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import io.github.rojhatince47.weatherchan.core.ui.theme.DecorFamily
+import kotlin.random.Random
 
 /**
  * Dekor sahnesinin birim-kare (0..1) konumları. Saf geometridir; çizim ve
@@ -56,10 +57,11 @@ internal fun decorLayout(family: DecorFamily, size: Size, isDay: Boolean): Decor
         DecorFamily.CLEAR, DecorFamily.PARTLY_CLOUDY -> Offset(0.78f, 0.18f)
         else -> null
     }
-    val streaks = List(streakCount) { i ->
-        val col = i % 6
-        val row = i / 6
-        Offset(x = 0.12f + col * 0.15f, y = 0.58f + row * 0.14f)
+    // Damlalar/kar taneleri tohumlu rastgele dağılır: gözle nizamsız
+    // (kümeleşmeler serbest), çizimde kararlı (kare başına zıplama yok).
+    val rng = Random(family.ordinal * 101 + (if (isDay) 1 else 2))
+    val streaks = List(streakCount) {
+        Offset(x = 0.06f + rng.nextFloat() * 0.88f, y = 0.50f + rng.nextFloat() * 0.45f)
     }
     return DecorLayout(
         celestial = celestial,
