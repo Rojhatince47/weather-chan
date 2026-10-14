@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
+import android.animation.ValueAnimator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,11 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -38,8 +41,11 @@ import androidx.compose.ui.semantics.semantics
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
+import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
+import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.WeatherBackground
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.displayTitle
 
@@ -56,6 +62,7 @@ fun EvSayfasiScreen(
     cities: List<City>,
     currentPage: Int,
     contentFor: @Composable (City) -> Unit,
+    backgroundPaletteFor: (City) -> WeatherBackgroundPalette? = { null },
     themeMode: ThemeMode,
     onPageChanged: (Int) -> Unit,
     onAddCityClick: () -> Unit,
@@ -69,91 +76,110 @@ fun EvSayfasiScreen(
     modifier: Modifier = Modifier
 ) {
     val openListText = stringResource(R.string.home_open_list)
+    val isDark = themeMode.resolveIsDark()
+    // Aktif sayfanın paleti; veri yok/boş liste → nötr (K10).
+    val backgroundPalette = cities.getOrNull(currentPage)?.let { backgroundPaletteFor(it) }
+        ?: WeatherBackgroundPalette.neutral(isDark)
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    HomeTitle(
+    Box(modifier = modifier.fillMaxSize()) {
+        WeatherBackground(
+            palette = backgroundPalette,
+            animatorsEnabled = ValueAnimator.areAnimatorsEnabled()
+        )
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        HomeTitle(
+                            cities = cities,
+                            currentPage = currentPage,
+                            onOpenList = { onSelectCity(null) },
+                            openListText = openListText,
+                            indicatorActive = backgroundPalette.indicatorActive,
+                            indicatorInactive = backgroundPalette.indicatorInactive
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                        titleContentColor = backgroundPalette.contentColor,
+                        actionIconContentColor = backgroundPalette.contentColor
+                    ),
+                    actions = {
+                        IconButton(
+                            onClick = onAddCityClick,
+                            modifier = Modifier.testTag("action_add_city")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = stringResource(R.string.action_open_add_city)
+                            )
+                        }
+                        IconButton(
+                            onClick = onSettingsClick,
+                            modifier = Modifier.testTag("action_settings")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = stringResource(R.string.action_open_settings)
+                            )
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            if (cities.isEmpty()) {
+                // Hiç sayfa yoksa pager anlamsızdır; kullanıcıyı ilk şehre
+                // yönlendiren sade bir boş durum gösterilir.
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(text = stringResource(R.string.home_empty_state))
+                    // Konum akışı boş listede de görünür: kullanıcı izni verdikten
+                    // sonra ne olduğunu görmeli, başarısızlıkta tekrar deneyebilmeli.
+                    when {
+                        locationState is LocationState.Loading -> Text(
+                            text = stringResource(R.string.location_loading),
+                            modifier = Modifier
+                                .padding(top = HavaSpacing.md)
+                                .testTag("location_loading")
+                        )
+                        locationState !is LocationState.Resolved -> AddLocationRow(
+                            locationState = locationState,
+                            onAddLocation = onAddLocation,
+                            onRetryLocation = onRetryLocation,
+                            modifier = Modifier
+                                .padding(top = HavaSpacing.md)
+                                .padding(horizontal = HavaSpacing.lg)
+                        )
+                    }
+                    Button(
+                        onClick = onAddCityClick,
+                        modifier = Modifier.padding(top = HavaSpacing.md)
+                    ) {
+                        Text(text = stringResource(R.string.action_open_add_city))
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    HomePager(
                         cities = cities,
                         currentPage = currentPage,
-                        onOpenList = { onSelectCity(null) },
-                        openListText = openListText
-                    )
-                },
-                actions = {
-                    IconButton(
-                        onClick = onAddCityClick,
-                        modifier = Modifier.testTag("action_add_city")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.action_open_add_city)
-                        )
-                    }
-                    IconButton(
-                        onClick = onSettingsClick,
-                        modifier = Modifier.testTag("action_settings")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = stringResource(R.string.action_open_settings)
-                        )
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        if (cities.isEmpty()) {
-            // Hiç sayfa yoksa pager anlamsızdır; kullanıcıyı ilk şehre
-            // yönlendiren sade bir boş durum gösterilir.
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = stringResource(R.string.home_empty_state))
-                // Konum akışı boş listede de görünür: kullanıcı izni verdikten
-                // sonra ne olduğunu görmeli, başarısızlıkta tekrar deneyebilmeli.
-                when {
-                    locationState is LocationState.Loading -> Text(
-                        text = stringResource(R.string.location_loading),
-                        modifier = Modifier
-                            .padding(top = HavaSpacing.md)
-                            .testTag("location_loading")
-                    )
-                    locationState !is LocationState.Resolved -> AddLocationRow(
-                        locationState = locationState,
-                        onAddLocation = onAddLocation,
-                        onRetryLocation = onRetryLocation,
-                        modifier = Modifier
-                            .padding(top = HavaSpacing.md)
-                            .padding(horizontal = HavaSpacing.lg)
+                        onPageChanged = onPageChanged,
+                        contentFor = contentFor,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-                Button(
-                    onClick = onAddCityClick,
-                    modifier = Modifier.padding(top = HavaSpacing.md)
-                ) {
-                    Text(text = stringResource(R.string.action_open_add_city))
-                }
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                HomePager(
-                    cities = cities,
-                    currentPage = currentPage,
-                    onPageChanged = onPageChanged,
-                    contentFor = contentFor,
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
     }
@@ -166,7 +192,14 @@ fun EvSayfasiScreen(
  * dekoratiftir (ekran okuyucudan gizlenir), tek sayfada çizilmez.
  */
 @Composable
-private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Unit, openListText: String) {
+private fun HomeTitle(
+    cities: List<City>,
+    currentPage: Int,
+    onOpenList: () -> Unit,
+    openListText: String,
+    indicatorActive: Color,
+    indicatorInactive: Color
+) {
     val safeIndex = currentPage.coerceIn(0, (cities.size - 1).coerceAtLeast(0))
     val current = cities.getOrNull(safeIndex)
     // Ad boş olabilir (konum çözülemediyse); presentation dile göre çözer.
@@ -202,11 +235,7 @@ private fun HomeTitle(cities: List<City>, currentPage: Int, onOpenList: () -> Un
                         modifier = Modifier
                             .size(if (selected) HavaSpacing.sm else HavaSpacing.xs)
                             .background(
-                                color = if (selected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.outlineVariant
-                                },
+                                color = if (selected) indicatorActive else indicatorInactive,
                                 shape = CircleShape
                             )
                     )

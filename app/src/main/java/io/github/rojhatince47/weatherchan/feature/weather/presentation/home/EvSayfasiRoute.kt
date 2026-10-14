@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.core.navigation.SELECTED_CITY_ID
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
@@ -62,6 +63,9 @@ fun EvSayfasiRoute(
         onReadLocation = viewModel::refreshLocation
     )
 
+    // resolveIsDark composable'dır; lambda gövdesinden çağrılamaz (bir kez çöz).
+    val isDark = themeMode.resolveIsDark()
+
     EvSayfasiScreen(
         cities = uiState.pages,
         currentPage = uiState.currentPage,
@@ -73,6 +77,19 @@ fun EvSayfasiRoute(
                 onRefresh = { viewModel.onRefresh(city.id) },
                 isDark = themeMode.resolveIsDark()
             )
+        },
+        backgroundPaletteFor = { city ->
+            val detail = uiState.forecasts[city.id]
+            val current = (detail?.content as? UiState.Success)?.data?.currentWeather
+            if (current != null) {
+                WeatherBackgroundPalette.of(
+                    condition = current.condition,
+                    isDark = isDark,
+                    isDay = current.isDay
+                )
+            } else {
+                null
+            }
         },
         themeMode = themeMode,
         onPageChanged = viewModel::onPageChanged,

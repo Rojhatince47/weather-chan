@@ -99,4 +99,32 @@ class WeatherBackgroundTest {
         render(palette, animatorsEnabled = false)
         rule.onNodeWithTag("bg").captureToImage()
     }
+
+    @Test
+    fun neutralPaletteDrawsWithoutDecor() {
+        render(WeatherBackgroundPalette.neutral(isDark = false))
+        val image = rule.onNodeWithTag("bg").captureToImage().asAndroidBitmap()
+        val top = image.getPixel(image.width / 2, 8)
+        val bottom = image.getPixel(image.width / 2, image.height - 8)
+        assertNotEquals("neutral gradyan duz", top, bottom)
+    }
+
+    // İddiası yok; yalnız tasarım incelemesi için PNG üretir. Tam koşuda da geçer.
+    @Test
+    fun designReportImages() {
+        val combos = listOf(
+            "bg_clear_day_light" to WeatherBackgroundPalette.of(WeatherCondition.CLEAR, isDark = false, isDay = true),
+            "bg_clear_night_dark" to WeatherBackgroundPalette.of(WeatherCondition.CLEAR, isDark = true, isDay = false),
+            "bg_storm_dark" to WeatherBackgroundPalette.of(WeatherCondition.THUNDERSTORM, isDark = true, isDay = true),
+            "bg_snow_day_light" to WeatherBackgroundPalette.of(WeatherCondition.SNOW, isDark = false, isDay = true)
+        )
+        combos.forEach { (name, palette) ->
+            render(palette)
+            val bitmap = rule.onNodeWithTag("bg").captureToImage().asAndroidBitmap()
+            val dir = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .targetContext.getExternalFilesDir(null)
+            val file = java.io.File(dir, "$name.png")
+            file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+    }
 }
