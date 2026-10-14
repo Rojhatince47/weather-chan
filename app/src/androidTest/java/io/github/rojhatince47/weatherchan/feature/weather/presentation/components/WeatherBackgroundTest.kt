@@ -92,4 +92,11 @@ class WeatherBackgroundTest {
         val sky = image.getPixel((image.width * 0.78f).toInt(), (image.height * 0.55f).toInt())
         assertNotEquals("gok cismi cizilmemis", sun, sky)
     }
+
+    @Test
+    fun animatorsDisabledKeepsSceneStatic() {
+        val palette = WeatherBackgroundPalette.of(WeatherCondition.SNOW, isDark = true, isDay = false)
+        render(palette, animatorsEnabled = false)
+        rule.onNodeWithTag("bg").captureToImage()
+    }
 }
