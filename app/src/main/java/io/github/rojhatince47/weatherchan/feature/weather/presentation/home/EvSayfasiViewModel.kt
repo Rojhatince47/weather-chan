@@ -126,11 +126,61 @@ class EvSayfasiViewModel @Inject constructor(
     }
 
     fun onRetry(cityId: Long) {
-        loadForecast(cityId, force = true, isRefresh = false)
+        val city = _uiState.value.pages.find { it.id == cityId } ?: return
+        if (city.isLocation) {
+            refreshLocationForecast(city, isRefresh = false)
+        } else {
+            loadForecast(cityId, force = true, isRefresh = false)
+        }
     }
 
     fun onRefresh(cityId: Long) {
-        loadForecast(cityId, force = true, isRefresh = true)
+        val city = _uiState.value.pages.find { it.id == cityId } ?: return
+        if (city.isLocation) {
+            refreshLocationForecast(city, isRefresh = true)
+        } else {
+            loadForecast(cityId, force = true, isRefresh = true)
+        }
+    }
+
+    /**
+     * Konum sayfasının yenilenmesi: önce cihaz konumu **yeniden çözülür**
+     * (sahte GPS/gerçek hareket), sonra yeni koordinatlarla tahmin çekilir.
+     * Çözüm null ise (GPS kapalı, zaman aşımı) hava durumu yine eski
+     * koordinatlarla tazelenir — asla tamamen bloke olmaz.
+     */
+    private fun refreshLocationForecast(city: City, isRefresh: Boolean) {
+        val locationCity = getLocationCity
+        if (locationCity == null || locationJob?.isActive == true) {
+            loadForecast(city.id, force = true, isRefresh = isRefresh)
+            return
+        }
+        locationJob = viewModelScope.launch {
+            if (isRefresh) {
+                _uiState.update { state ->
+                    val existing = state.forecasts[city.id]
+                    state.copy(
+                        forecasts = state.forecasts + (
+                            city.id to DetailUiState(
+                                content = existing?.content ?: UiState.Loading,
+                                isRefreshing = true
+                            )
+                            )
+                    )
+                }
+            }
+            val resolved = locationCity()
+            if (resolved == null) {
+                loadForecast(city.id, force = true, isRefresh = isRefresh)
+                return@launch
+            }
+            invalidateLocationSeedIfMoved(resolved)
+            val updated = cityRepository.addAsLocation(resolved).firstOrNull { it.isLocation } ?: resolved
+            _uiState.update { it.copy(locationState = LocationState.Resolved) }
+            // Sayfa kimliği değişebilir (çözüm yeni City örneği üretir);
+            // iş yeni kimlikle koşar.
+            fetchForecast(updated, force = true, isRefresh = isRefresh)
+        }
     }
 
     /**
@@ -150,6 +200,11 @@ class EvSayfasiViewModel @Inject constructor(
 
     private fun loadForecast(cityId: Long, force: Boolean, isRefresh: Boolean = false) {
         val city = _uiState.value.pages.find { it.id == cityId } ?: return
+        fetchForecast(city, force = force, isRefresh = isRefresh)
+    }
+
+    private fun fetchForecast(city: City, force: Boolean, isRefresh: Boolean = false) {
+        val cityId = city.id
         if (cityId in forecastJobs) return
         if (!force) {
             // Bayat da olsa tohum içeriği önce ekrana basılır; yalnız taze
@@ -332,8 +387,23 @@ class EvSayfasiViewModel @Inject constructor(
                 _uiState.update { it.copy(locationState = LocationState.Unavailable) }
                 return@launch
             }
+            invalidateLocationSeedIfMoved(city)
             cityRepository.addAsLocation(city)
             _uiState.update { it.copy(locationState = LocationState.Resolved) }
+        }
+    }
+
+    /**
+     * Konum koordinatları değiştiyse `LOCATION_KEY` tohumu (bellek + tazelik
+     * damgası) düşürülür: eski yerin hava durumu yeni konuma miras kalamaz.
+     * Diskteki kayıt bir sonraki başarılı çekimle üzerine yazılır; soğuk
+     * açılışta da aynı kural geçerli (uygulama kapalıyken yer değişmişse).
+     */
+    private fun invalidateLocationSeedIfMoved(resolved: City) {
+        val previous = _uiState.value.pages.find { it.isLocation } ?: return
+        if (previous.coordinates != resolved.coordinates) {
+            forecastCache.remove(CachedForecast.LOCATION_KEY)
+            seedFetchedAt.remove(CachedForecast.LOCATION_KEY)
         }
     }
 

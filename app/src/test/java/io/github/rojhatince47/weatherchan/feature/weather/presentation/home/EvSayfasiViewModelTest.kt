@@ -565,6 +565,105 @@ class EvSayfasiViewModelTest {
 
     private val locationCoordinates = Coordinates(41.01, 28.98)
 
+    /** Konumu test ortasında değiştirebilen sahte (sahte GPS senaryosu). */
+    private class MutableLocationProvider(var coordinates: Coordinates?) : LocationProvider {
+        override suspend fun currentCoordinates(): Coordinates? = coordinates
+    }
+
+    @Test
+    fun `konum sayfasi yenilemesi konumu yeniden cozer ve yeni koordinatla ceker`() = runTest(dispatcher) {
+        val eski = Coordinates(41.01, 28.98)
+        val yeni = Coordinates(39.00, 32.00)
+        val provider = MutableLocationProvider(eski)
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(City("Yeni", null, null, yeni)))
+        }
+        val viewModel = evViewModelWithLocation(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(City("Konum", null, null, eski, isLocation = true))),
+            locationProvider = provider,
+            clock = fixedClockAt()
+        )
+        runCurrent()
+
+        // Sahte GPS taşındı.
+        provider.coordinates = yeni
+        fakeWeather.forecastRequests.clear()
+        val locationId = viewModel.uiState.value.pages.first { it.isLocation }.id
+        viewModel.onRefresh(locationId)
+        runCurrent()
+
+        assertTrue(
+            "Yenileme yeni koordinatla tahmin çekmeli: ${fakeWeather.forecastRequests.map { it.coordinates }}",
+            fakeWeather.forecastRequests.any { it.coordinates == yeni }
+        )
+        assertEquals(
+            "Sayfa koordinatı güncellenmeli",
+            yeni,
+            viewModel.uiState.value.pages.first { it.isLocation }.coordinates
+        )
+    }
+
+    @Test
+    fun `acilista yer degistirdiyse konum tohumu dusurulur ve yeni konum cekilir`() = runTest(dispatcher) {
+        val eski = Coordinates(41.01, 28.98)
+        val yeni = Coordinates(39.00, 32.00)
+        val eskiKonum = City("Eski", null, null, eski, isLocation = true)
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(City("Yeni", null, null, yeni)))
+            // Uygulama kapalıyken yer değişmiş: disk tohumu eski yerin hava
+            // durumu ve taze (fixedNow).
+            cachedForecasts = mapOf(CachedForecast.LOCATION_KEY to CachedForecast(fixedNow, forecastOf(eskiKonum)))
+        }
+        val viewModel = evViewModelWithLocation(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(eskiKonum)),
+            locationProvider = MutableLocationProvider(yeni),
+            clock = fixedClockAt(fixedNow.plusSeconds(60))
+        )
+        runCurrent()
+
+        assertTrue(
+            "Taze eski tohumla yetinilmemeli, yeni konum çekilmeli: ${fakeWeather.forecastRequests.map { it.coordinates }}",
+            fakeWeather.forecastRequests.any { it.coordinates == yeni }
+        )
+    }
+
+    @Test
+    fun `konum cozulemezse hava durumu yine tazelenir`() = runTest(dispatcher) {
+        val konumKoordinati = Coordinates(41.01, 28.98)
+        val provider = MutableLocationProvider(konumKoordinati)
+        val fakeWeather = FakeWeatherRepository().apply {
+            autoCompleteGates = true
+            searchResult = AppResult.Success(listOf(City("Konum", null, null, konumKoordinati)))
+        }
+        val viewModel = evViewModelWithLocation(
+            fakeWeather = fakeWeather,
+            fakeCities = FakeCityRepository(initial = listOf(City("Konum", null, null, konumKoordinati, isLocation = true))),
+            locationProvider = provider,
+            clock = fixedClockAt()
+        )
+        runCurrent()
+
+        provider.coordinates = null // GPS kapalı/zaman aşımı
+        fakeWeather.forecastRequests.clear()
+        val locationId = viewModel.uiState.value.pages.first { it.isLocation }.id
+        viewModel.onRefresh(locationId)
+        runCurrent()
+
+        assertTrue(
+            "Konum çözülemese de hava durumu tazelenmeli",
+            fakeWeather.forecastRequests.any { it.coordinates == konumKoordinati }
+        )
+        assertEquals(
+            "Konum çözülemediyse koordinat korunmalı",
+            konumKoordinati,
+            viewModel.uiState.value.pages.first { it.isLocation }.coordinates
+        )
+    }
+
     /** Bayrak okumasını istenen ana kadar bekleten sahte. */
     private class GatedCityPermissions(private val gate: CompletableDeferred<Boolean>) : CityPermissions {
         override suspend fun wasAsked(): Boolean = gate.await()
