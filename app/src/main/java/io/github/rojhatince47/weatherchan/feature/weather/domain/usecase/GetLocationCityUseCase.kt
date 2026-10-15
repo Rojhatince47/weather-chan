@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.domain.usecase
 
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
@@ -35,12 +36,28 @@ import kotlinx.coroutines.flow.first
  */
 class GetLocationCityUseCase @Inject constructor(
     private val locationProvider: LocationProvider,
-    private val weatherRepository: WeatherRepository
+    private val weatherRepository: WeatherRepository,
+    private val reverseGeocoder: ReverseGeocoder? = null
 ) {
     suspend operator fun invoke(): City? {
         val coordinates = locationProvider.currentCoordinates() ?: return null
 
-        // Önbellek vuruşu: ağa çıkılmaz. Taze koordinat taşınır (kart kimliği
+        // 1) Geri çözümleme (uygulama dilinde doğru yazım) — önbellek ve
+        // arama zincirinden ÖNCE: yanlış dildeki eski ad bile burada geçilir.
+        val reverse = reverseGeocoder?.reverse(coordinates)?.takeIf { it.name.isNotBlank() }
+        if (reverse != null) {
+            val city = City(
+                name = reverse.name,
+                region = reverse.region,
+                country = reverse.country,
+                coordinates = coordinates,
+                isLocation = true
+            )
+            weatherRepository.saveLocationCity(city)
+            return city
+        }
+
+        // 2) Önbellek vuruşu: ağa çıkılmaz. Taze koordinat taşınır (kart kimliği
         // güncel kalır); kayıt değişmezi gereği `isLocation` hep `true`'dur,
         // yine de açıkça zorlanır.
         weatherRepository.cachedLocationCity().first()?.takeIf {
@@ -49,6 +66,8 @@ class GetLocationCityUseCase @Inject constructor(
             return it.copy(coordinates = coordinates, isLocation = true)
         }
 
+        // 3) Arama zinciri (wttr.in ağırlıklı) — dil/yazım garantisi yoktur;
+        // yalnız geri çözümleme ve önbellek yoksa kullanılır.
         val query = coordinates.toQuery()
         val resolved = when (val result = weatherRepository.search(query)) {
             is AppResult.Success -> result.data.firstOrNull()

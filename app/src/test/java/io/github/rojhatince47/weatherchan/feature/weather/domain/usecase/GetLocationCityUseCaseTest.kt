@@ -3,6 +3,8 @@ package io.github.rojhatince47.weatherchan.feature.weather.domain.usecase
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.PlaceName
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider as Provider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -56,6 +58,66 @@ class GetLocationCityUseCaseTest {
         // Coğrafi çözümleme yapmayan ham sorgu gönderilmeli. Ondalık ayırıcı
         // nokta olmalı (Locale.US) ve hassasiyet 4 basamak.
         assertEquals(listOf("41.0100,28.9800"), weather.searchRequests)
+    }
+
+    /** Uygulama dilinde ad döndüren sahte geri çözümleyici. */
+    private class FakeReverseGeocoder(var placeName: PlaceName?) : ReverseGeocoder {
+        override suspend fun reverse(coordinates: Coordinates): PlaceName? = placeName
+    }
+
+    @Test
+    fun `geri cozumleme adi kazanir arama zinciri atlanir`() = runTest {
+        val weather = FakeWeatherRepository().apply {
+            searchResult = AppResult.Success(listOf(City("Kuzguncuk", "Istanbul", "Türkiye", coordinates)))
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather,
+            reverseGeocoder = FakeReverseGeocoder(PlaceName(name = "İstanbul", region = "İstanbul", country = "Türkiye"))
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Yerel dildeki ad kazanmalı", "İstanbul", city.name)
+        assertEquals("İstanbul", city.region)
+        assertEquals("Türkiye", city.country)
+        assertEquals(coordinates, city.coordinates)
+        assertTrue("Geri çözümleme yettiyse arama zincirine gidilmemeli", weather.searchRequests.isEmpty())
+    }
+
+    @Test
+    fun `geri cozumleme bossa arama zinciri devreye girer`() = runTest {
+        val weather = FakeWeatherRepository().apply {
+            searchResult = AppResult.Success(listOf(City("Kuzguncuk", "Istanbul", "Türkiye", coordinates)))
+        }
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather,
+            reverseGeocoder = FakeReverseGeocoder(placeName = null)
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Kuzguncuk", city.name)
+        assertEquals(listOf("41.0100,28.9800"), weather.searchRequests)
+    }
+
+    @Test
+    fun `yanlis dilli onbellek adi geri cozumlemeyle gecilir`() = runTest {
+        val weather = FakeWeatherRepository().apply {
+            searchResult = AppResult.Success(emptyList())
+        }
+        // 2 km içindeki eski, yanlış dilde çözülmüş ad önbellekte.
+        weather.saveLocationCity(City("Istanbul", "Marmara", "Türkiye", coordinates, isLocation = true))
+        val useCase = GetLocationCityUseCase(
+            locationProvider = FakeLocationProvider(coordinates),
+            weatherRepository = weather,
+            reverseGeocoder = FakeReverseGeocoder(PlaceName(name = "İstanbul", region = "İstanbul"))
+        )
+
+        val city = requireNotNull(useCase())
+
+        assertEquals("Önbellekteki eski ad yerine dil doğru ad gelmeli", "İstanbul", city.name)
     }
 
     @Test

@@ -9,8 +9,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.github.rojhatince47.weatherchan.core.di.WeatherCacheDataStore
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.location.AndroidLocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.data.location.AndroidReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.data.repository.WeatherRepositoryImpl
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import dagger.Binds
 import dagger.Module
@@ -31,6 +33,9 @@ abstract class WeatherDataModule {
 
     @Binds
     abstract fun bindLocationProvider(impl: AndroidLocationProvider): LocationProvider
+
+    @Binds
+    abstract fun bindReverseGeocoder(impl: AndroidReverseGeocoder): ReverseGeocoder
 
     companion object {
         @Provides
