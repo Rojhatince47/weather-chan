@@ -9,7 +9,9 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinat
 data class PlaceName(
     val name: String,
     val region: String?,
-    val country: String? = null
+    val country: String? = null,
+    /** ISO-3166 ülke kodu (ör. "TR"); geri çözümleyici biliyorsa doldurur. */
+    val countryCode: String? = null
 )
 
 /**

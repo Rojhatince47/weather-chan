@@ -1,21 +1,26 @@
 package io.github.rojhatince47.weatherchan.feature.city.domain.suggestion
 
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityProximity
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.first
 
 /**
  * Kullanıcıya konum, ülke ya da dünya temelinde şehir önerir.
  *
  * Öncelik zinciri (ilk bulunan dal kazanır):
  * 1. **Yakınında** — çözülmüş konum varsa, mesafeye göre en yakın N.
- * 2. **Ülkende** — konum yoksa, cihaz ülke kodu verideyse dosya sırası.
- * 3. **Dünyada** — ne konum ne ülke biliniyorsa, dünya yedek sırası.
+ * 2. **Ülkende** — geri çözümlemenin ISO ülke koduna göre dosya sırası;
+ *    konum yoksa son bilinen konum, o da yoksa cihaz ülke kodu.
+ * 3. **Dünyada** — ülke kodu bilinmiyorsa ya da havuzda o ülkeden şehir
+ *    yoksa dünya yedek sırası.
  *
- * Ülkeye göre **süzme yapılmaz**: geocoding ülke *adı* döndürür, kodu değil;
- * ada göre eşleştirme kırılgan olurdu. En yakın N şehir zaten kullanıcının
- * ülkesindedir.
+ * Süzme **ISO-2 koda** göredir (geocoding'in `countryCode` alanı); ülke adı
+ * eşleştirmesi yapılmaz — ad varyantları kırılgandı.
  *
  * **Konum izni asla bu akışta istenmez.** [LocationProvider] izni okumaz,
  * yalnız okumayı dener; izin yoksa `null` döner ve akış ülkeye düşer.
@@ -27,7 +32,9 @@ class SuggestCitiesUseCase @Inject constructor(
     private val suggestionProvider: CitySuggestionProvider,
     private val nearbyProvider: NearbyCitySuggestionProvider,
     private val locationProvider: LocationProvider,
-    private val deviceCountryProvider: DeviceCountryProvider
+    private val deviceCountryProvider: DeviceCountryProvider,
+    private val reverseGeocoder: ReverseGeocoder? = null,
+    private val weatherRepository: WeatherRepository? = null
 ) {
 
     suspend operator fun invoke(limit: Int = DEFAULT_LIMIT, refresh: Boolean = false, nearbyEnabled: Boolean = true): SuggestionGroup? {
@@ -52,11 +59,24 @@ class SuggestCitiesUseCase @Inject constructor(
         }
 
         return groupForCountryWorld(
-            countryCode = origin?.let { deviceCountryProvider.countryCode() },
+            countryCode = locationCountryCode(origin),
             pool = pool,
             worldFallbackOrder = data?.worldFallbackOrder.orEmpty(),
             limit = limit
         )
+    }
+
+    /**
+     * "Ülkende" kovasının ülke kodu. Kaynak sırası: **asıl konum** (GPS'li
+     * aşamada origin, dosya aşamasında son bilinen konum kaydı) üzerinden
+     * geri çözümleme (ISO-2) → cihaz kodu. Cihaz yapılandırma locale'i
+     * seyahatte/sahte GPS'te değişmediği için tek başına yeterli değildir.
+     */
+    private suspend fun locationCountryCode(origin: Coordinates?): String? {
+        val coordinates = origin ?: weatherRepository?.cachedLocationCity()?.first()?.coordinates
+        val resolved = coordinates?.let { reverseGeocoder?.reverse(it)?.countryCode }
+            ?.takeIf { it.length == 2 }
+        return resolved ?: deviceCountryProvider.countryCode()?.takeIf { it.length == 2 }
     }
 
     private fun groupForCountryWorld(
@@ -65,7 +85,7 @@ class SuggestCitiesUseCase @Inject constructor(
         worldFallbackOrder: List<String>,
         limit: Int
     ): SuggestionGroup? {
-        val code = countryCode?.takeIf { it.length == 2 } ?: deviceCountryProvider.countryCode()?.takeIf { it.length == 2 }
+        val code = countryCode?.takeIf { it.length == 2 }
         if (code != null) {
             val inCountry = pool.filter { it.countryCode.equals(code, ignoreCase = true) }.take(limit)
             if (inCountry.isNotEmpty()) {

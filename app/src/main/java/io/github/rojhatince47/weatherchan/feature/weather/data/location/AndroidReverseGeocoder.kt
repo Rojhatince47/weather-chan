@@ -38,7 +38,8 @@ class AndroidReverseGeocoder @Inject constructor(
             PlaceName(
                 name = name,
                 region = address.adminArea,
-                country = address.countryName
+                country = address.countryName,
+                countryCode = address.countryCode?.uppercase()
             )
         }.getOrNull()
     }

@@ -1,7 +1,11 @@
 package io.github.rojhatince47.weatherchan.feature.city.domain.suggestion
 
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.PlaceName
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
+import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,22 +19,34 @@ class SuggestCitiesUseCaseTest {
     private val mardin = CitySeed("Mardin", "TR", "Türkiye", Coordinates(37.3122, 40.7351))
     private val london = CitySeed("Londra", "GB", "Birleşik Krallık", Coordinates(51.5074, -0.1278))
     private val newYork = CitySeed("New York", "US", "Amerika Birleşik Devletleri", Coordinates(40.7128, -74.006))
+    private val berlin = CitySeed("Berlin", "DE", "Almanya", Coordinates(52.52, 13.405))
+
+    /** Sabit yanıt döndüren sahte geri çözümleyici. */
+    private class FakeReverseGeocoder(private val placeName: PlaceName?) : ReverseGeocoder {
+        override suspend fun reverse(coordinates: Coordinates): PlaceName? = placeName
+    }
 
     private suspend fun useCase(
         seeds: List<CitySeed>? = listOf(istanbul, kocaeli, mardin, london, newYork),
         coordinates: Coordinates? = null,
         countryCode: String? = "TR",
         nearbySeeds: List<CitySeed>? = seeds,
-        refresh: Boolean = false
+        refresh: Boolean = false,
+        nearbyEnabled: Boolean = true,
+        reverse: PlaceName? = null,
+        cachedLocation: City? = null
     ): SuggestionGroup? {
         val provider: CitySuggestionProvider =
             CitySuggestionProvider { seeds?.let { SuggestionData(it, listOf("GB", "US")) } }
+        val weather = FakeWeatherRepository().apply { cachedLocationCity = cachedLocation }
         return SuggestCitiesUseCase(
             suggestionProvider = provider,
             nearbyProvider = FakeNearbyCitySuggestionProvider(nearbySeeds),
             locationProvider = LocationProvider { coordinates },
-            deviceCountryProvider = DeviceCountryProvider { countryCode }
-        )(refresh = refresh)
+            deviceCountryProvider = DeviceCountryProvider { countryCode },
+            reverseGeocoder = FakeReverseGeocoder(reverse),
+            weatherRepository = weather
+        )(refresh = refresh, nearbyEnabled = nearbyEnabled)
     }
 
     @Test
@@ -77,6 +93,50 @@ class SuggestCitiesUseCaseTest {
     fun `yakin saglayici bos ulke de yoksa dunya yedegine duser`() = runTest {
         val group = useCase(nearbySeeds = null, coordinates = istanbul.coordinates, countryCode = "ZZ")!!
         assertEquals(SuggestionKind.World, group.kind)
+    }
+
+    @Test
+    fun `gps ulkesi cihaz ulkesini gecer`() = runTest {
+        // Sahte GPS'le ülke değişince Ülkende kovası da değişmeli: cihaz
+        // yapılandırma locale'i ("TR") değil, geri çözümlemenin ISO kodu ("DE").
+        val group = useCase(
+            seeds = listOf(istanbul, berlin),
+            coordinates = berlin.coordinates,
+            nearbySeeds = null,
+            countryCode = "TR",
+            reverse = PlaceName(name = "Berlin", region = "Berlin", country = "Almanya", countryCode = "DE")
+        )!!
+        assertEquals(SuggestionKind.Country, group.kind)
+        assertEquals(listOf("Berlin"), group.suggestions.map { it.city.name })
+    }
+
+    @Test
+    fun `geri cozumleme yoksa cihaz ulkesi kalir`() = runTest {
+        val group = useCase(
+            seeds = listOf(istanbul, berlin),
+            coordinates = berlin.coordinates,
+            nearbySeeds = null,
+            countryCode = "TR",
+            reverse = null
+        )!!
+        assertEquals(listOf("İstanbul"), group.suggestions.map { it.city.name })
+    }
+
+    @Test
+    fun `dosya asamasinda son bilinen konum ulkeyi belirler`() = runTest {
+        // Dosya aşamasında GPS bilinçli okunmaz (12 sn gecikme yasağı); ülke
+        // kodu son bilinen konum kaydından geri çözümlemeyle alınır.
+        val group = useCase(
+            seeds = listOf(istanbul, berlin),
+            coordinates = null,
+            nearbySeeds = null,
+            countryCode = "TR",
+            nearbyEnabled = false,
+            cachedLocation = City("Konum", null, null, berlin.coordinates, isLocation = true),
+            reverse = PlaceName(name = "Berlin", region = "Berlin", countryCode = "DE")
+        )!!
+        assertEquals(SuggestionKind.Country, group.kind)
+        assertEquals(listOf("Berlin"), group.suggestions.map { it.city.name })
     }
 
     @Test
