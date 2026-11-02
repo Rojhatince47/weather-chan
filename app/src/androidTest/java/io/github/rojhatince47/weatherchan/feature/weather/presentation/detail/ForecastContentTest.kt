@@ -23,8 +23,11 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CompanionUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
@@ -71,7 +74,12 @@ class ForecastContentTest {
                 icon = WeatherIcon.Glyph("☁"),
                 condition = WeatherCondition.CLOUDY
             )
-        }
+        },
+        companion = CompanionUiModel(
+            pose = CompanionPose.CHEERFUL,
+            category = AdviceCategory.CLEAR,
+            variantSeed = 0
+        )
     )
 
     /**
@@ -254,5 +262,57 @@ class ForecastContentTest {
         }
         val first = height("hourly_cell_0")
         repeat(4) { i -> assertEquals(first, height("hourly_cell_$i"), 1f) }
+    }
+
+    @Test
+    fun eslikciKartiBasariDurumundaCizilir() {
+        setForecastContentWrapped()
+
+        composeRule.onNodeWithTag("companion_card").assertExists()
+    }
+
+    @Test
+    fun eslikciKartiYuklemeDurumundaCizilmez() {
+        setForecastContentOnBackground(
+            contentColor = Color.Black,
+            background = Color.White,
+            uiState = DetailUiState(content = UiState.Loading)
+        )
+
+        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+    }
+
+    @Test
+    fun eslikciKartiBosDurumdaCizilmez() {
+        setForecastContentOnBackground(
+            contentColor = Color.Black,
+            background = Color.White,
+            uiState = DetailUiState(content = UiState.Empty)
+        )
+
+        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+    }
+
+    @Test
+    fun eslikciKartiHataDurumundaCizilmez() {
+        setForecastContentOnBackground(
+            contentColor = Color.Black,
+            background = Color.White,
+            uiState = DetailUiState(content = UiState.Error(UiText.Dynamic("Baglanti hatasi")))
+        )
+
+        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+    }
+
+    @Test
+    fun eslikciKartiAnlikKartIleSaatlikBaslikArasinda() {
+        setForecastContentWrapped()
+
+        val current = composeRule.onNodeWithTag("current_weather_card").getUnclippedBoundsInRoot()
+        val companion = composeRule.onNodeWithTag("companion_card").getUnclippedBoundsInRoot()
+        val header = composeRule.onNodeWithText("Saatlik Tahmin").getUnclippedBoundsInRoot()
+
+        assertTrue("anlik kart eslikciden once", current.bottom <= companion.top)
+        assertTrue("eslikci saatlik basliktan once", companion.bottom <= header.top)
     }
 }

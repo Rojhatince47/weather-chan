@@ -29,12 +29,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.CompanionAudioPlayer
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.CompanionCard
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.NoOpCompanionAudioPlayer
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CompanionUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.DailyForecastUiModel
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.ForecastDetailUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.HourlyForecastUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherIcon
 
@@ -45,6 +55,8 @@ fun ForecastContent(
     onRefresh: () -> Unit,
     isDark: Boolean,
     contentColor: Color,
+    companionAudio: CompanionAudioPlayer = NoOpCompanionAudioPlayer,
+    animationsEnabled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     PullToRefreshBox(
@@ -69,6 +81,18 @@ fun ForecastContent(
                             condition = content.data.currentWeather.condition,
                             isDay = content.data.currentWeather.isDay,
                             isDark = isDark
+                        )
+                    }
+                    item(key = "companion") {
+                        CompanionCard(
+                            advice = content.data.companion,
+                            colors = ConditionPalette.of(
+                                condition = content.data.currentWeather.condition,
+                                isDark = isDark,
+                                isDay = content.data.currentWeather.isDay
+                            ),
+                            audio = companionAudio,
+                            animationsEnabled = animationsEnabled
                         )
                     }
                     item {
@@ -226,7 +250,7 @@ private fun DailyForecastItem(item: DailyForecastUiModel, isDark: Boolean) {
 private fun ForecastContentPreview() {
     HavaTheme {
         ForecastContent(
-            uiState = DetailUiState(content = UiState.Loading),
+            uiState = DetailUiState(content = UiState.Success(previewDetail())),
             onRetry = {},
             onRefresh = {},
             isDark = false,
@@ -234,3 +258,48 @@ private fun ForecastContentPreview() {
         )
     }
 }
+
+private fun previewDetail() = ForecastDetailUiModel(
+    city = CityUiModel(1, "İstanbul", "Marmara", "Türkiye", 41.01, 28.98),
+    currentWeather = CurrentWeatherUiModel(
+        temperatureText = "18°C",
+        icon = WeatherIcon.Glyph("☀"),
+        conditionLabel = UiText.Resource(R.string.condition_clear),
+        windSpeedText = "8 km/s",
+        humidityText = "%50",
+        condition = WeatherCondition.CLEAR,
+        isDay = true
+    ),
+    hourlyForecast = List(8) { hour ->
+        HourlyForecastUiModel(
+            timeLabel = if (hour == 0) {
+                UiText.Resource(R.string.hourly_now)
+            } else {
+                UiText.Dynamic("%02d:00".format(hour))
+            },
+            temperatureText = "${18 + hour % 4}°C",
+            temperatureValue = 18 + hour % 4,
+            icon = WeatherIcon.Glyph("⛅"),
+            precipitationProbabilityText = "%10"
+        )
+    },
+    dailyForecast = List(7) { day ->
+        DailyForecastUiModel(
+            dayOffset = day,
+            dateText = if (day == 0) {
+                UiText.Resource(R.string.forecast_today)
+            } else {
+                UiText.Resource(R.string.day_friday)
+            },
+            minTemperatureText = "12°C",
+            maxTemperatureText = "20°C",
+            icon = WeatherIcon.Glyph("☁"),
+            condition = WeatherCondition.CLOUDY
+        )
+    },
+    companion = CompanionUiModel(
+        pose = CompanionPose.CHEERFUL,
+        category = AdviceCategory.CLEAR,
+        variantSeed = 0
+    )
+)

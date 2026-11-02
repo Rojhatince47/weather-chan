@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import org.junit.Assert.assertEquals
@@ -115,6 +116,20 @@ class ConditionPaletteTest {
                     ConditionPalette.of(WeatherCondition.RAIN, isDark = isDark, isDay = isDay),
                     ConditionPalette.of(WeatherCondition.LIGHT_SHOWERS, isDark = isDark, isDay = isDay)
                 )
+            }
+        }
+    }
+
+    @Test
+    fun `balon zemini tum kosullarda aa korur`() {
+        WeatherCondition.entries.forEach { condition ->
+            listOf(false, true).forEach { isDark ->
+                listOf(false, true).forEach { isDay ->
+                    val colors = ConditionPalette.of(condition, isDark, isDay)
+                    val bubble = lerp(colors.container, colors.accent, 0.08f)
+                    val ratio = contrastRatio(colors.onContainer, bubble)
+                    assertTrue("$condition dark=$isDark day=$isDay ratio=$ratio", ratio >= 4.5)
+                }
             }
         }
     }
