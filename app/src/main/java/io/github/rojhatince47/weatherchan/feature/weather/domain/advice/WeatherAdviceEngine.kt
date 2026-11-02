@@ -28,8 +28,10 @@ class WeatherAdviceEngine @Inject constructor() {
         context.condition == WeatherCondition.RAIN ||
             context.condition == WeatherCondition.LIGHT_SHOWERS -> AdviceCategory.RAIN
         context.upcomingHours.any { hour ->
-            (hour.condition == WeatherCondition.RAIN ||
-                hour.condition == WeatherCondition.LIGHT_SHOWERS) &&
+            (
+                hour.condition == WeatherCondition.RAIN ||
+                    hour.condition == WeatherCondition.LIGHT_SHOWERS
+                ) &&
                 hour.precipitationProbabilityPercent >= RAIN_SOON_THRESHOLD
         } -> AdviceCategory.RAIN_SOON
         context.windSpeedKmh >= WINDY_KMH -> AdviceCategory.WINDY
