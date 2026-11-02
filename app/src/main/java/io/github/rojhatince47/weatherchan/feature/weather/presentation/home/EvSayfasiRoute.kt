@@ -1,5 +1,6 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
+import android.animation.ValueAnimator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,6 +67,7 @@ fun EvSayfasiRoute(
 
     // resolveIsDark composable'dır; lambda gövdesinden çağrılamaz (bir kez çöz).
     val isDark = themeMode.resolveIsDark()
+    val animationsEnabled = ValueAnimator.areAnimatorsEnabled()
 
     // Arka plan paleti ile içerik rengi aynı kaynaktan gelir (DRY): veri
     // yoksa null → çağıran yerlerde neutral(isDark) karşılığı kullanılır.
@@ -93,7 +95,8 @@ fun EvSayfasiRoute(
                 onRetry = { viewModel.onRetry(city.id) },
                 onRefresh = { viewModel.onRefresh(city.id) },
                 isDark = isDark,
-                contentColor = (paletteFor(city) ?: WeatherBackgroundPalette.neutral(isDark)).contentColor
+                contentColor = (paletteFor(city) ?: WeatherBackgroundPalette.neutral(isDark)).contentColor,
+                animationsEnabled = animationsEnabled
             )
         },
         backgroundPaletteFor = ::paletteFor,
