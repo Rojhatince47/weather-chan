@@ -216,7 +216,7 @@ class ForecastContentTest {
         setForecastContentWrapped()
         val expectedWidth = widthDp("pull_refresh") - 32f
 
-        assertEquals(expectedWidth, widthDp("current_weather_card"), 1f)
+        assertEquals(expectedWidth, widthDp("companion_hero"), 1f)
         assertEquals(expectedWidth, widthDp("hourly_chart"), 1f)
         repeat(7) { index ->
             assertEquals(expectedWidth, widthDp(index, "daily_card"), 1f)
@@ -265,54 +265,67 @@ class ForecastContentTest {
     }
 
     @Test
-    fun eslikciKartiBasariDurumundaCizilir() {
+    fun heroBasariDurumundaCizilir() {
         setForecastContentWrapped()
 
-        composeRule.onNodeWithTag("companion_card").assertExists()
+        composeRule.onNodeWithTag("companion_hero").assertExists()
     }
 
     @Test
-    fun eslikciKartiYuklemeDurumundaCizilmez() {
+    fun heroYuklemeDurumundaCizilmez() {
         setForecastContentOnBackground(
             contentColor = Color.Black,
             background = Color.White,
             uiState = DetailUiState(content = UiState.Loading)
         )
 
-        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+        composeRule.onNodeWithTag("companion_hero").assertDoesNotExist()
     }
 
     @Test
-    fun eslikciKartiBosDurumdaCizilmez() {
+    fun heroBosDurumdaCizilmez() {
         setForecastContentOnBackground(
             contentColor = Color.Black,
             background = Color.White,
             uiState = DetailUiState(content = UiState.Empty)
         )
 
-        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+        composeRule.onNodeWithTag("companion_hero").assertDoesNotExist()
     }
 
     @Test
-    fun eslikciKartiHataDurumundaCizilmez() {
+    fun heroHataDurumundaCizilmez() {
         setForecastContentOnBackground(
             contentColor = Color.Black,
             background = Color.White,
             uiState = DetailUiState(content = UiState.Error(UiText.Dynamic("Baglanti hatasi")))
         )
 
-        composeRule.onNodeWithTag("companion_card").assertDoesNotExist()
+        composeRule.onNodeWithTag("companion_hero").assertDoesNotExist()
     }
 
     @Test
-    fun eslikciKartiAnlikKartIleSaatlikBaslikArasinda() {
+    fun heroAnlikHavaVeTavsiyeyiTasir() {
         setForecastContentWrapped()
 
-        val current = composeRule.onNodeWithTag("current_weather_card").getUnclippedBoundsInRoot()
-        val companion = composeRule.onNodeWithTag("companion_card").getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText("18°C").assertExists()
+        composeRule.onNodeWithTag("companion_weather").assertExists()
+    }
+
+    @Test
+    fun eskiAnlikKartKaldirildi() {
+        setForecastContentWrapped()
+
+        composeRule.onNodeWithTag("current_weather_card").assertDoesNotExist()
+    }
+
+    @Test
+    fun heroSaatlikBasliktanOnceCizilir() {
+        setForecastContentWrapped()
+
+        val hero = composeRule.onNodeWithTag("companion_hero").getUnclippedBoundsInRoot()
         val header = composeRule.onNodeWithText("Saatlik Tahmin").getUnclippedBoundsInRoot()
 
-        assertTrue("anlik kart eslikciden once", current.bottom <= companion.top)
-        assertTrue("eslikci saatlik basliktan once", companion.bottom <= header.top)
+        assertTrue("hero saatlik basliktan once", hero.bottom <= header.top)
     }
 }

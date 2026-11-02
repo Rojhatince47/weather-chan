@@ -38,7 +38,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.Companio
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.CompanionAudioPlayer
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.CompanionCard
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.CompanionHero
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.NoOpCompanionAudioPlayer
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CityUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CompanionUiModel
@@ -71,21 +71,10 @@ fun ForecastContent(
                     contentPadding = PaddingValues(HavaSpacing.lg),
                     verticalArrangement = Arrangement.spacedBy(HavaSpacing.lg)
                 ) {
-                    item {
-                        CurrentWeatherCard(
-                            temperatureText = content.data.currentWeather.temperatureText,
-                            icon = content.data.currentWeather.icon,
-                            conditionLabel = content.data.currentWeather.conditionLabel.asString(),
-                            windSpeedText = content.data.currentWeather.windSpeedText,
-                            humidityText = content.data.currentWeather.humidityText,
-                            condition = content.data.currentWeather.condition,
-                            isDay = content.data.currentWeather.isDay,
-                            isDark = isDark
-                        )
-                    }
-                    item(key = "companion") {
-                        CompanionCard(
+                    item(key = "companion_hero") {
+                        CompanionHero(
                             advice = content.data.companion,
+                            currentWeather = content.data.currentWeather,
                             colors = ConditionPalette.of(
                                 condition = content.data.currentWeather.condition,
                                 isDark = isDark,
@@ -144,62 +133,6 @@ fun ForecastContent(
                         is UiState.Success -> Unit
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CurrentWeatherCard(
-    temperatureText: String,
-    icon: WeatherIcon,
-    conditionLabel: String,
-    windSpeedText: String,
-    humidityText: String,
-    condition: WeatherCondition,
-    isDay: Boolean,
-    isDark: Boolean
-) {
-    val palette = ConditionPalette.of(condition, isDark = isDark, isDay = isDay)
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("current_weather_card"),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = palette.container,
-            contentColor = palette.onContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(HavaSpacing.xl),
-            verticalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
-        ) {
-            Text(
-                text = stringResource(R.string.section_current),
-                style = MaterialTheme.typography.labelSmall
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ConditionIcon(icon = icon, size = 40.dp)
-                Text(
-                    text = temperatureText,
-                    style = MaterialTheme.typography.displayLarge,
-                    modifier = Modifier.padding(start = HavaSpacing.md)
-                )
-            }
-            Text(
-                text = conditionLabel,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(HavaSpacing.lg)) {
-                Text(
-                    text = windSpeedText,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = humidityText,
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
         }
     }
