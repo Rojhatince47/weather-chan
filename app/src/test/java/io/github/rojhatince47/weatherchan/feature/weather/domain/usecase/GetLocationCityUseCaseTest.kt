@@ -3,9 +3,9 @@ package io.github.rojhatince47.weatherchan.feature.weather.domain.usecase
 import io.github.rojhatince47.weatherchan.core.common.error.AppError
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
+import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider as Provider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.PlaceName
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
-import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider as Provider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.testing.FakeWeatherRepository

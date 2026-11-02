@@ -30,6 +30,7 @@ class AndroidReverseGeocoder @Inject constructor(
         runCatching {
             val locale = Locale.forLanguageTag(languageProvider())
             val geocoder = Geocoder(context, locale)
+
             @Suppress("DEPRECATION")
             val address = geocoder
                 .getFromLocation(coordinates.latitude, coordinates.longitude, 1)
