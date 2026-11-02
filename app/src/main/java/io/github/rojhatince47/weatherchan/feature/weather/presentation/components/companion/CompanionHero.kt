@@ -170,7 +170,7 @@ fun CompanionHero(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(width = 136.dp, height = 170.dp)
+                        .size(width = 148.dp, height = 186.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.verticalGradient(
@@ -272,7 +272,7 @@ fun CompanionHero(
                     .testTag("companion_tail")
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val centerX = if (isRtl) size.width - 68.dp.toPx() else 68.dp.toPx()
+                    val centerX = if (isRtl) size.width - 74.dp.toPx() else 74.dp.toPx()
                     val half = 6.dp.toPx()
                     val path = Path().apply {
                         moveTo(centerX - half, size.height)

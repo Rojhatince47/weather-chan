@@ -96,8 +96,8 @@ class CompanionHeroTest {
     fun sanatPanosuBoyutu() {
         render()
         val art = bounds("companion_art")
-        assertEquals(136f, (art.right - art.left).value, 1f)
-        assertEquals(170f, (art.bottom - art.top).value, 1f)
+        assertEquals(148f, (art.right - art.left).value, 1f)
+        assertEquals(186f, (art.bottom - art.top).value, 1f)
     }
 
     @Test
