@@ -95,4 +95,76 @@
     <string name="delete_confirm">Delete</string>
     <string name="city_deleted">%1$s deleted</string>
     <string name="undo_delete">Undo</string>
+
+    <string name="companion_character_name">Weather-chan</string>
+    <string name="companion_tap_action">Tap Weather-chan</string>
+    <string name="companion_art_description">Weather-chan, %1$s pose</string>
+    <string name="companion_pose_cheerful">cheerful</string>
+    <string name="companion_pose_rainy">rainy</string>
+    <string name="companion_pose_cold">chilly</string>
+    <string name="companion_pose_windy">windy</string>
+    <string name="companion_pose_calm">calm</string>
+    <string name="companion_pose_sleepy">sleepy</string>
+    <string name="companion_pose_surprised">surprised</string>
+
+    <string-array name="advice_storm">
+        <item>Thunder\'s rolling in — stay indoors if you can, okay?</item>
+        <item>There\'s a storm out there; even an umbrella won\'t help much.</item>
+        <item>Don\'t be scared, just be careful. Let\'s wait it out inside.</item>
+    </string-array>
+    <string-array name="advice_snow">
+        <item>It\'s snowing, so don\'t leave without your scarf and gloves.</item>
+        <item>The roads may be slippery — take slow, careful steps, okay?</item>
+        <item>Everything\'s white outside; keep warm so you don\'t catch a cold.</item>
+    </string-array>
+    <string-array name="advice_rain">
+        <item>It\'s raining — don\'t go out without your umbrella, or I\'ll worry.</item>
+        <item>I\'ve got your umbrella ready so you don\'t get soaked. Be good.</item>
+        <item>Rainy out there; please wear something waterproof.</item>
+    </string-array>
+    <string-array name="advice_rain_soon">
+        <item>Rain\'s coming soon — take your umbrella with you.</item>
+        <item>The sky doesn\'t look innocent; it may start pouring any minute.</item>
+        <item>Rain\'s at the door; don\'t get caught unprepared, okay?</item>
+    </string-array>
+    <string-array name="advice_windy">
+        <item>The wind is fierce — my hair\'s a mess, and you should dress warmly too.</item>
+        <item>It\'s really windy today; hold on to your hat if you have one.</item>
+        <item>This wind is a handful — be careful out there.</item>
+    </string-array>
+    <string-array name="advice_cold">
+        <item>It\'s freezing — don\'t take that scarf off, okay?</item>
+        <item>It\'s really cold; layer up so you don\'t shiver.</item>
+        <item>My hands are freezing; don\'t forget your gloves either.</item>
+    </string-array>
+    <string-array name="advice_hot">
+        <item>It\'s scorching — don\'t forget to drink plenty of water, okay?</item>
+        <item>The sun is strong; stick to the shade and keep hydrated.</item>
+        <item>It\'s hot today; don\'t head out without a hat and water.</item>
+    </string-array>
+    <string-array name="advice_night">
+        <item>The stars are lovely — cover up and get some sleep now.</item>
+        <item>Nights get chilly; don\'t leave the window wide open.</item>
+        <item>Your eyes are closing — go on, have a nice long sleep.</item>
+    </string-array>
+    <string-array name="advice_clear">
+        <item>The weather\'s lovely — a little walk would do you good.</item>
+        <item>The sun\'s out; enjoy it today.</item>
+        <item>You can\'t stay inside on a day like this — go on out.</item>
+    </string-array>
+    <string-array name="advice_cloudy">
+        <item>Clouds rolled in, but I\'m in a good mood — how about you?</item>
+        <item>Calm weather; perfect for a warm drink.</item>
+        <item>The sky\'s a bit gray, but it\'s still a lovely day.</item>
+    </string-array>
+    <string-array name="companion_tap_reactions">
+        <item>Eek, that tickles!</item>
+        <item>You\'ll mess up my hair, hey!</item>
+        <item>You again? Fine, you can stay a little longer.</item>
+        <item>Hehe, you\'re such a tease!</item>
+        <item>Hold on, let me pull myself together.</item>
+        <item>So you wanted to touch me, you sweet thing.</item>
+        <item>My heart\'s racing — what did you do to me?</item>
+        <item>Okay, okay — I like you too.</item>
+    </string-array>
 </resources>

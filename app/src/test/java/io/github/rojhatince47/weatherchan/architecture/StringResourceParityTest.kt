@@ -23,8 +23,26 @@ class StringResourceParityTest {
         )
     }
 
+    @Test
+    fun `dizi anahtar kumeleri iki kaynak dosyada esittir`() {
+        assertEquals(
+            "values-tr'de eksik/fazla dizi var",
+            arrayKeysOf("src/main/res/values/strings.xml"),
+            arrayKeysOf("src/main/res/values-tr/strings.xml")
+        )
+    }
+
     private fun keysOf(path: String): Set<String> = File(path)
         .takeIf { it.isFile }?.readLines().orEmpty()
         .mapNotNull { Regex("<string name=\"([^\"]+)\"").find(it)?.groupValues?.get(1) }
         .toSet()
+
+    private fun arrayKeysOf(path: String): Set<String> = File(path)
+        .takeIf { it.isFile }?.readText().orEmpty()
+        .let { text ->
+            Regex("<string-array name=\"([^\"]+)\"")
+                .findAll(text)
+                .map { match -> match.groupValues[1] }
+                .toSet()
+        }
 }

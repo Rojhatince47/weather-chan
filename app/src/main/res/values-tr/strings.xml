@@ -95,4 +95,76 @@
     <string name="delete_confirm">Sil</string>
     <string name="city_deleted">%1$s silindi</string>
     <string name="undo_delete">Geri al</string>
+
+    <string name="companion_character_name">Weather-chan</string>
+    <string name="companion_tap_action">Weather-chan\'a dokun</string>
+    <string name="companion_art_description">Weather-chan, %1$s pozunda</string>
+    <string name="companion_pose_cheerful">neşeli</string>
+    <string name="companion_pose_rainy">yağmurlu</string>
+    <string name="companion_pose_cold">üşüyen</string>
+    <string name="companion_pose_windy">rüzgârlı</string>
+    <string name="companion_pose_calm">sakin</string>
+    <string name="companion_pose_sleepy">uykulu</string>
+    <string name="companion_pose_surprised">şaşkın</string>
+
+    <string-array name="advice_storm">
+        <item>Gök gürlüyor, mümkünse bugün evde kal tamam mı?</item>
+        <item>Fırtına var, dışarıda şemsiye bile pek işe yaramaz.</item>
+        <item>Korkma ama dikkatli ol; fırtına dinene kadar içeride kalalım.</item>
+    </string-array>
+    <string-array name="advice_snow">
+        <item>Kar yağıyor, atkını ve eldivenini almadan çıkma sakın.</item>
+        <item>Yollar kaygan olabilir, adımlarını yavaş at tamam mı?</item>
+        <item>Dışarısı bembeyaz; sıcak tut kendini, üşütmeyesin.</item>
+    </string-array>
+    <string-array name="advice_rain">
+        <item>Yağmur var, şemsiyeni almadan çıkma sonra üzülürüm.</item>
+        <item>Islanmayasın diye şemsiyeni hazır ettim; uslu dur.</item>
+        <item>Hava yağmurlu, üstüne su geçirmez bir şey al lütfen.</item>
+    </string-array>
+    <string-array name="advice_rain_soon">
+        <item>Birazdan yağmur başlayacak, şemsiyeni yanına al.</item>
+        <item>Gökyüzü pek masum durmuyor; birazdan yağabilir.</item>
+        <item>Yağmur kapıda, hazırlıksız yakalanma tamam mı?</item>
+    </string-array>
+    <string-array name="advice_windy">
+        <item>Rüzgâr sert, saçlarım dağılıyor; sen de sıkı giyin.</item>
+        <item>Bugün rüzgâr fena; şapkan varsa sıkı tut.</item>
+        <item>Rüzgârla uğraşmak zor, dışarıda dikkatli ol.</item>
+    </string-array>
+    <string-array name="advice_cold">
+        <item>Buz gibi olmuş, atkını çıkarma sakın.</item>
+        <item>Hava çok soğuk, kat kat giyin de üşümeyesin.</item>
+        <item>Ellerim dondu; sen de eldivenlerini unutma.</item>
+    </string-array>
+    <string-array name="advice_hot">
+        <item>Hava yakıcı, bol su içmeyi unutma tamam mı?</item>
+        <item>Güneş fena vuruyor; gölgeyi kolla ve su iç.</item>
+        <item>Bugün sıcak, şapkasız ve susuz dışarı çıkma.</item>
+    </string-array>
+    <string-array name="advice_night">
+        <item>Yıldızlar çok güzel, üstünü örtüp yat artık.</item>
+        <item>Gece serin olur, pencereni açık bırakma.</item>
+        <item>Gözlerin kapanıyor, hadi güzel bir uyku çek.</item>
+    </string-array>
+    <string-array name="advice_clear">
+        <item>Hava harika, biraz yürüyüş iyi gelir.</item>
+        <item>Güneş yüzünü gösterdi; bugün keyfini çıkar.</item>
+        <item>Böyle güzel havada içeride kalınmaz, hadi çık.</item>
+    </string-array>
+    <string-array name="advice_cloudy">
+        <item>Bulutlar toplandı ama keyfim yerinde; sen nasılsın?</item>
+        <item>Hava sakin, sıcak bir şeyler içmek tam havası.</item>
+        <item>Gökyüzü biraz kapalı; yine de güzel bir gün.</item>
+    </string-array>
+    <string-array name="companion_tap_reactions">
+        <item>Aaa, gıdıklanıyorum!</item>
+        <item>Saçımı bozacaksın, hiç!</item>
+        <item>Yine mi sen? Pekâlâ, biraz daha kalabilirsin.</item>
+        <item>Hihi, şımarık!</item>
+        <item>Bekle, bir an önce toparlanayım.</item>
+        <item>Dokunmak istedin demek, tatlı şey.</item>
+        <item>Kalbim pır pır etti, ne yaptın öyle?</item>
+        <item>Tamam tamam, ben de seni seviyorum.</item>
+    </string-array>
 </resources>
