@@ -153,6 +153,7 @@ fun CompanionCard(
                     lastTapAt = now
                     reacting = true
                     tapCount += 1
+                    audio.playTap()
                 }
             },
         shape = MaterialTheme.shapes.large,

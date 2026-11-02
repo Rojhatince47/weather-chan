@@ -195,4 +195,42 @@ class CompanionCardTest {
         assertTrue("balon karti yatay asiyor", bubble.left >= card.left && bubble.right <= card.right)
         assertTrue(bubbleText().isNotBlank())
     }
+
+    private class RecordingAudio : CompanionAudioPlayer {
+        var taps = 0
+
+        override fun playTap() {
+            taps++
+        }
+
+        override fun release() = Unit
+    }
+
+    @Test
+    fun dokunusSesOynaticisinaIletilir() {
+        val audio = RecordingAudio()
+        composeRule.setContent {
+            HavaTheme {
+                CompanionCard(
+                    advice = CompanionUiModel(
+                        pose = CompanionPose.CHEERFUL,
+                        category = AdviceCategory.CLEAR,
+                        variantSeed = 0
+                    ),
+                    colors = ConditionPalette.of(WeatherCondition.CLEAR, isDark = false, isDay = true),
+                    audio = audio,
+                    animationsEnabled = false
+                )
+            }
+        }
+        composeRule.onNodeWithTag("companion_card").performClick()
+        composeRule.runOnIdle { assertEquals(1, audio.taps) }
+    }
+
+    @Test
+    fun yerTutucuSesDosyalariOkunabilir() {
+        CompanionSoundAssets.tapClips.forEach { id ->
+            composeRule.activity.resources.openRawResource(id).use { assertTrue(it.available() > 0) }
+        }
+    }
 }

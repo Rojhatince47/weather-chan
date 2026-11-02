@@ -14,6 +14,7 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.rememberCompanionAudioPlayer
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.ForecastContent
 
@@ -68,6 +69,7 @@ fun EvSayfasiRoute(
     // resolveIsDark composable'dır; lambda gövdesinden çağrılamaz (bir kez çöz).
     val isDark = themeMode.resolveIsDark()
     val animationsEnabled = ValueAnimator.areAnimatorsEnabled()
+    val companionAudio = rememberCompanionAudioPlayer()
 
     // Arka plan paleti ile içerik rengi aynı kaynaktan gelir (DRY): veri
     // yoksa null → çağıran yerlerde neutral(isDark) karşılığı kullanılır.
@@ -96,6 +98,7 @@ fun EvSayfasiRoute(
                 onRefresh = { viewModel.onRefresh(city.id) },
                 isDark = isDark,
                 contentColor = (paletteFor(city) ?: WeatherBackgroundPalette.neutral(isDark)).contentColor,
+                companionAudio = companionAudio,
                 animationsEnabled = animationsEnabled
             )
         },
