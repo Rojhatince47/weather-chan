@@ -95,6 +95,15 @@ class CompanionCardTest {
     }
 
     @Test
+    fun sanatPanosuYeniBoyuttaCizilir() {
+        render(animationsEnabled = false)
+
+        val bounds = composeRule.onNodeWithTag("companion_art", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertEquals(128f, (bounds.right - bounds.left).value, 1f)
+        assertEquals(160f, (bounds.bottom - bounds.top).value, 1f)
+    }
+
+    @Test
     fun dokunusTapRepligineVeSurprisedPozaGecirir() {
         render(animationsEnabled = false)
         composeRule.onNodeWithTag("companion_card").performClick()

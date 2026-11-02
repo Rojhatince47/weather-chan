@@ -163,13 +163,13 @@ fun CompanionCard(
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 112.dp, height = 140.dp)
+                    .size(width = 128.dp, height = 160.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(
                         Brush.verticalGradient(

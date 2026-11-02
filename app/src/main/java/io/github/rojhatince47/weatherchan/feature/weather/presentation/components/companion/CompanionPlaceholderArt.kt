@@ -25,15 +25,15 @@ fun CompanionPlaceholderArt(pose: CompanionPose, colors: ConditionColors, modifi
         val w = size.width
         val h = size.height
         val cx = w * 0.5f
-        val faceY = h * 0.40f
-        val faceRadius = w * 0.27f
+        val faceY = h * 0.42f
+        val faceRadius = w * 0.30f
         val ink = colors.onContainer
 
         // Gövde / hırka
         drawRoundRect(
             color = colors.accent.copy(alpha = 0.35f),
-            topLeft = Offset(cx - w * 0.24f, faceY + faceRadius * 0.55f),
-            size = Size(w * 0.48f, h * 0.34f),
+            topLeft = Offset(cx - w * 0.26f, faceY + faceRadius * 0.55f),
+            size = Size(w * 0.52f, h * 0.32f),
             cornerRadius = CornerRadius(w * 0.12f, w * 0.12f)
         )
 
