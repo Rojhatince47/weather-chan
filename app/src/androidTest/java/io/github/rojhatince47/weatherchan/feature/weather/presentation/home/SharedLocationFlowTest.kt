@@ -18,6 +18,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.Settings
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeAppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.usecase.GetCachedForecastsUseCase
@@ -84,7 +85,7 @@ class SharedLocationFlowTest {
             getForecast = GetForecastUseCase(fakeWeather),
             getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
             unitRepository = FakeTemperatureUnitRepository(),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             getLocationCity = GetLocationCityUseCase(FakeLocationProvider(Coordinates(39.20, 30.10)), fakeWeather)
         )
         val settingsViewModel = SettingsViewModel(
@@ -147,7 +148,7 @@ class SharedLocationFlowTest {
             getForecast = GetForecastUseCase(fakeWeather),
             getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
             unitRepository = FakeTemperatureUnitRepository(),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             getLocationCity = GetLocationCityUseCase(
                 FakeLocationProvider(Coordinates(39.20, 30.10), gate),
                 fakeWeather
@@ -162,7 +163,7 @@ class SharedLocationFlowTest {
         val mainViewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeWeather),
             getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = fakeCities
         )

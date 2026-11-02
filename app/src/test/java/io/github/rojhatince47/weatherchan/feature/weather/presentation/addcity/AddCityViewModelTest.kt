@@ -13,6 +13,7 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.Suggest
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -85,7 +86,7 @@ class AddCityViewModelTest {
             cityRepository = cities,
             getCityWeathers = GetCityWeathersUseCase(weather),
             unitRepository = unitRepository,
-            weatherUiMapper = WeatherUiMapper()
+            weatherUiMapper = WeatherUiMapper(WeatherAdviceEngine())
         )
     }
 

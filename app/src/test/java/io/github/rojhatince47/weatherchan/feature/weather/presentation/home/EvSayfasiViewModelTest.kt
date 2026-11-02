@@ -7,6 +7,7 @@ import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityPermissio
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -76,7 +77,7 @@ class EvSayfasiViewModelTest {
         getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
         unitRepository = unitRepository,
         clock = clock,
-        uiMapper = WeatherUiMapper()
+        uiMapper = WeatherUiMapper(WeatherAdviceEngine())
     )
 
     private fun evViewModelWithLocation(
@@ -94,7 +95,7 @@ class EvSayfasiViewModelTest {
         clock = clock,
         getLocationCity = GetLocationCityUseCase(locationProvider, fakeWeather),
         cityPermissions = permissions,
-        uiMapper = WeatherUiMapper()
+        uiMapper = WeatherUiMapper(WeatherAdviceEngine())
     )
 
     private val fixedNow = Instant.parse("2026-10-02T10:00:00Z")

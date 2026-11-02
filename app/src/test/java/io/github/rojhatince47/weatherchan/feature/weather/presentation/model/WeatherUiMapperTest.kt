@@ -3,6 +3,11 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.model
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceContext
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdvice
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -11,15 +16,30 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyFore
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.HourlyForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import java.time.LocalDate
 import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class WeatherUiMapperTest {
-    private val mapper = WeatherUiMapper()
+    private val engine = mockk<WeatherAdviceEngine>()
+    private val mapper = WeatherUiMapper(engine)
+
+    @Before
+    fun stubAdvice() {
+        every { engine.advise(any()) } returns WeatherAdvice(
+            category = AdviceCategory.CLEAR,
+            pose = CompanionPose.CHEERFUL,
+            variantSeed = 3
+        )
+    }
 
     private val istanbul = City(
         name = "İstanbul",
@@ -373,5 +393,64 @@ class WeatherUiMapperTest {
             today = dayZero
         )
         assertEquals(UiText.Resource(R.string.hourly_now), ui.hourlyForecast.single().timeLabel)
+    }
+
+    @Test
+    fun `companion alani her kosulda doludur`() {
+        val ui = mapper.toForecastDetailUiModel(
+            forecast(),
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 0),
+            today = dayZero
+        )
+        assertEquals(AdviceCategory.CLEAR, ui.companion.category)
+        assertEquals(CompanionPose.CHEERFUL, ui.companion.pose)
+        assertEquals(3, ui.companion.variantSeed)
+    }
+
+    @Test
+    fun `upcomingHours simdi disindaki ilk uc saattir`() {
+        val slot = slot<AdviceContext>()
+        mapper.toForecastDetailUiModel(
+            forecast(),
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 30),
+            today = dayZero
+        )
+        verify { engine.advise(capture(slot)) }
+
+        val captured = slot.captured
+        assertEquals(3, captured.upcomingHours.size)
+        assertEquals(WeatherCondition.PARTLY_CLOUDY, captured.upcomingHours.first().condition)
+        assertEquals(3, captured.upcomingHours.first().precipitationProbabilityPercent)
+        assertEquals(18, captured.temperatureCelsius)
+        assertEquals(LocalDate.of(2026, 10, 8).toEpochDay(), captured.epochDay)
+        assertEquals(0, captured.hourOfDay)
+    }
+
+    @Test
+    fun `light showers kosulu motora aynen aktarilir`() {
+        val slot = slot<AdviceContext>()
+        val showers = forecast().let {
+            it.copy(currentWeather = it.currentWeather.copy(condition = WeatherCondition.LIGHT_SHOWERS))
+        }
+        mapper.toForecastDetailUiModel(
+            showers,
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 0),
+            today = dayZero
+        )
+        verify { engine.advise(capture(slot)) }
+        assertEquals(WeatherCondition.LIGHT_SHOWERS, slot.captured.condition)
+    }
+
+    @Test
+    fun `fahrenheit birimi tavsiye girdisini degistirmez`() {
+        val slot = slot<AdviceContext>()
+        mapper.toForecastDetailUiModel(
+            forecast(),
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 0),
+            today = dayZero,
+            unit = TemperatureUnit.FAHRENHEIT
+        )
+        verify { engine.advise(capture(slot)) }
+        assertEquals(18, slot.captured.temperatureCelsius)
     }
 }

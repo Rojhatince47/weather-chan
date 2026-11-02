@@ -16,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.App
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
@@ -59,7 +60,7 @@ class MainRouteTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
             getCachedForecasts = GetCachedForecastsUseCase(weather),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
@@ -69,7 +70,7 @@ class MainRouteTest {
             getForecast = GetForecastUseCase(weather),
             getCachedForecasts = GetCachedForecastsUseCase(weather),
             unitRepository = unitRepository,
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             getLocationCity = null,
             cityPermissions = null
         )
@@ -126,7 +127,7 @@ class MainRouteTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
             getCachedForecasts = GetCachedForecastsUseCase(weather),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
@@ -136,7 +137,7 @@ class MainRouteTest {
             getForecast = GetForecastUseCase(weather),
             getCachedForecasts = GetCachedForecastsUseCase(weather),
             unitRepository = unitRepository,
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             getLocationCity = null,
             cityPermissions = null
         )

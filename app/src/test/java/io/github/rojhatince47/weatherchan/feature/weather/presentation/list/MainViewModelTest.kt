@@ -9,6 +9,7 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRep
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
@@ -60,7 +61,7 @@ class MainViewModelTest {
     ) = MainViewModel(
         getCityWeathers = GetCityWeathersUseCase(fakeWeather),
         getCachedForecasts = GetCachedForecastsUseCase(fakeWeather),
-        uiMapper = WeatherUiMapper(),
+        uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
         unitRepository = FakeTemperatureUnitRepository(),
         cityRepository = fakeCities,
         clock = clock
@@ -102,7 +103,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             getCachedForecasts = GetCachedForecastsUseCase(FakeWeatherRepository()),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -497,7 +498,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -521,7 +522,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(FakeWeatherRepository().apply { autoCompleteGates = true }),
             getCachedForecasts = GetCachedForecastsUseCase(FakeWeatherRepository()),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = unitRepository,
             cityRepository = FakeCityRepository()
         )
@@ -550,7 +551,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -577,7 +578,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -597,7 +598,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -622,7 +623,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -656,7 +657,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -691,7 +692,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(fakeRepository),
             getCachedForecasts = GetCachedForecastsUseCase(fakeRepository),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository()
         )
@@ -1059,7 +1060,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             getCityWeathers = GetCityWeathersUseCase(weather),
             getCachedForecasts = GetCachedForecastsUseCase(weather),
-            uiMapper = WeatherUiMapper(),
+            uiMapper = WeatherUiMapper(WeatherAdviceEngine()),
             unitRepository = FakeTemperatureUnitRepository(),
             cityRepository = FakeCityRepository(initial = listOf(istanbul, ankara, izmir))
         )

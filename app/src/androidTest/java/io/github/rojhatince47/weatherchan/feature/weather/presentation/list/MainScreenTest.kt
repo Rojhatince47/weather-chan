@@ -17,6 +17,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -35,7 +36,7 @@ class MainScreenTest {
 
     @Test
     fun mainScreenShowsCities() {
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -143,7 +144,7 @@ class MainScreenTest {
 
     @Test
     fun mainScreenRestoresScrollPositionFromListState() {
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -175,7 +176,7 @@ class MainScreenTest {
     @Test
     fun mainScreenRefreshesOnPullDown() {
         var refreshed = false
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -212,7 +213,7 @@ class MainScreenTest {
 
     @Test
     fun mainScreenKeepsContentWhileRefreshing() {
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -276,7 +277,7 @@ class MainScreenTest {
 
     @Test
     fun longPressCityCardShowsDeleteConfirmationSheet() {
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -309,7 +310,7 @@ class MainScreenTest {
     @Test
     fun confirmingDeleteInvokesCallbackWithCityIdAndClosesSheet() {
         var deletedId: Long? = null
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -344,7 +345,7 @@ class MainScreenTest {
     @Test
     fun cancelingDeleteClosesSheetWithoutCallback() {
         var deleted = false
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
@@ -375,13 +376,13 @@ class MainScreenTest {
         composeRule.onNodeWithText("İstanbul silinsin mi?").assertDoesNotExist()
     }
 
-    private fun sampleCities() = WeatherUiMapper().let { mapper ->
+    private fun sampleCities() = WeatherUiMapper(WeatherAdviceEngine()).let { mapper ->
         syntheticCityWeathers().map {
             mapper.toCityWeatherUiModel(it)
         }
     }
 
-    private fun unavailableCard() = WeatherUiMapper().toUnavailable(
+    private fun unavailableCard() = WeatherUiMapper(WeatherAdviceEngine()).toUnavailable(
         City("İzmir", "Ege", "Türkiye", Coordinates(38.42, 27.14))
     )
 
@@ -611,7 +612,7 @@ class MainScreenTest {
 
     @Test
     fun doluListedeKonumSatiriCizilmez() {
-        val mapper = WeatherUiMapper()
+        val mapper = WeatherUiMapper(WeatherAdviceEngine())
         val cityWeathers = syntheticCityWeathers().map { mapper.toCityWeatherUiModel(it) }
         composeRule.setContent {
             HavaTheme {
