@@ -17,6 +17,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,10 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
@@ -264,7 +265,29 @@ fun CompanionHero(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .testTag("companion_tail")
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val centerX = if (isRtl) size.width - 68.dp.toPx() else 68.dp.toPx()
+                    val half = 6.dp.toPx()
+                    val path = Path().apply {
+                        moveTo(centerX - half, size.height)
+                        lineTo(centerX + half, size.height)
+                        lineTo(centerX, 0f)
+                        close()
+                    }
+                    drawPath(path, bubbleColor)
+                    drawPath(
+                        path = path,
+                        color = colors.accent.copy(alpha = 0.35f),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -273,18 +296,6 @@ fun CompanionHero(
                     .semantics(mergeDescendants = true) { }
                     .background(bubbleColor, bubbleShape)
                     .border(1.dp, colors.accent.copy(alpha = 0.35f), bubbleShape)
-                    .drawBehind {
-                        val centerX = if (isRtl) size.width - 68.dp.toPx() else 68.dp.toPx()
-                        val half = 6.dp.toPx()
-                        val tailHeight = 10.dp.toPx()
-                        val path = Path().apply {
-                            moveTo(centerX - half, 0f)
-                            lineTo(centerX + half, 0f)
-                            lineTo(centerX, -tailHeight)
-                            close()
-                        }
-                        drawPath(path, bubbleColor)
-                    }
                     .clickable(onClickLabel = tapActionLabel, onClick = onTap)
                     .padding(14.dp)
             ) {

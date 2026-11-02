@@ -101,6 +101,16 @@ class CompanionHeroTest {
     }
 
     @Test
+    fun balonKuyruguKaraktereBakar() {
+        render()
+        val tail = bounds("companion_tail")
+        val bubble = bounds("companion_bubble")
+        assertTrue("kuyruk balonun ustunde", tail.top < bubble.top)
+        assertTrue("kuyruk balona degmeli", tail.bottom <= bubble.top + 1.dp)
+        assertTrue("kuyruk gorunur genislikte", (tail.right - tail.left) >= 12.dp)
+    }
+
+    @Test
     fun kartDokunmaHedefiEnAzKirkSekizDp() {
         render()
         val hero = bounds("companion_hero")
