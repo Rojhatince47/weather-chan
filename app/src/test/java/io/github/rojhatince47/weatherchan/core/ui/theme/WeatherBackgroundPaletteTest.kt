@@ -15,14 +15,13 @@ class WeatherBackgroundPaletteTest {
         return (lighter + 0.05) / (darker + 0.05)
     }
 
-    private fun allStates(): List<WeatherBackgroundPalette> =
-        WeatherCondition.entries.flatMap { condition ->
-            listOf(false, true).flatMap { isDark ->
-                listOf(true, false).map { isDay ->
-                    WeatherBackgroundPalette.of(condition, isDark = isDark, isDay = isDay)
-                }
+    private fun allStates(): List<WeatherBackgroundPalette> = WeatherCondition.entries.flatMap { condition ->
+        listOf(false, true).flatMap { isDark ->
+            listOf(true, false).map { isDay ->
+                WeatherBackgroundPalette.of(condition, isDark = isDark, isDay = isDay)
             }
         }
+    }
 
     @Test
     fun `her durum tanimli ve duraklar farkli`() {
