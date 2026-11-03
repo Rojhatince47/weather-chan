@@ -60,7 +60,6 @@ Ayrıntılar: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Proje notları
 
-- Tasarım ve uygulama kayıtları `docs/superpowers/` altında tutulur.
 - Gerçek karakter görselleri ve sesleri geldiğinde yalnız
   `CompanionArtAssets.overrides` ve `CompanionSoundAssets.tapClips`
   güncellenir; kodun geri kalanı değişmez.
