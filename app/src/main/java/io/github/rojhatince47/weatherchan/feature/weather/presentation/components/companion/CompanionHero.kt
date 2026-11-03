@@ -170,7 +170,7 @@ fun CompanionHero(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(width = 168.dp, height = 210.dp)
+                        .size(width = 168.dp, height = 280.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.verticalGradient(

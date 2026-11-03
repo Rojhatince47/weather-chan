@@ -97,7 +97,7 @@ class CompanionHeroTest {
         render()
         val art = bounds("companion_art")
         assertEquals(168f, (art.right - art.left).value, 1f)
-        assertEquals(210f, (art.bottom - art.top).value, 1f)
+        assertEquals(280f, (art.bottom - art.top).value, 1f)
     }
 
     @Test
