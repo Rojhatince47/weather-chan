@@ -4,7 +4,7 @@
 ## Neden?
 
 ## Kontrol listesi
-- [ ] Katman kuralları korunuyor (domain'de Android/Retrofit/Room importu yok — `LayerDependencyTest`)
+- [ ] Katman kuralları korunuyor (domain'de Android/Retrofit/OkHttp importu yok — `LayerDependencyTest`)
 - [ ] Yeni davranış için unit test eklendi
 - [ ] `./gradlew spotlessCheck testDebugUnitTest assembleDebug` yeşil
 - [ ] Loading / Success / Empty / Error durumları ele alındı (ekran içeriyorsa)
