@@ -64,3 +64,14 @@ Ayrıntılar: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Gerçek karakter görselleri ve sesleri geldiğinde yalnız
   `CompanionArtAssets.overrides` ve `CompanionSoundAssets.tapClips`
   güncellenir; kodun geri kalanı değişmez.
+
+## Lisans
+
+Bu proje **tüm hakları saklı** olarak yayınlanmıştır. Kaynak kodu
+görüntülenebilir; ancak önceden yazılı izin olmadan kopyalanamaz,
+değiştirilemez, dağıtılamaz veya ticari olarak kullanılamaz.
+
+Weather-chan adı, karakter tasarımı ve ileride eklenecek görsel/ses
+varlıkları da aynı koşullara tabidir.
+
+Ayrıntılar: [LICENSE](LICENSE)
