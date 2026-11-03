@@ -1,10 +1,10 @@
 package io.github.rojhatince47.weatherchan.feature.city.data.suggestion
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestionProvider
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.SuggestionData
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException

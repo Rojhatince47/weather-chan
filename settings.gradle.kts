@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Hava"
+rootProject.name = "Weather-chan"
 include(":app")

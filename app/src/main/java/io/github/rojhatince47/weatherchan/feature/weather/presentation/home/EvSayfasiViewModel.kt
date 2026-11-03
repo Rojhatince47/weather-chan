@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.toUiText
@@ -18,7 +19,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.De
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.WeatherUiMapper
-import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

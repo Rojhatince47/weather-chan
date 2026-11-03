@@ -4,6 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import io.github.rojhatince47.weatherchan.core.di.CityDataStore
 import io.github.rojhatince47.weatherchan.feature.city.data.permission.DataStoreCityPermissions
 import io.github.rojhatince47.weatherchan.feature.city.data.repository.DataStoreCityRepository
@@ -14,12 +20,6 @@ import io.github.rojhatince47.weatherchan.feature.city.domain.permission.CityPer
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.CitySuggestionProvider
 import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.DeviceCountryProvider
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 private val Context.cityDataStore: DataStore<Preferences> by preferencesDataStore(name = "hava_city")

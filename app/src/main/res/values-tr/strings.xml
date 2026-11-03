@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Hava</string>
+    <string name="app_name">Weather-chan</string>
 
     <string name="home_title">Weather-chan</string>
     <string name="home_open_list">Şehir listesini aç</string>

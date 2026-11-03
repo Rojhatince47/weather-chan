@@ -1,8 +1,8 @@
 package io.github.rojhatince47.weatherchan.feature.city.data.suggestion
 
 import android.content.Context
-import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.DeviceCountryProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.rojhatince47.weatherchan.feature.city.domain.suggestion.DeviceCountryProvider
 import javax.inject.Inject
 
 /**

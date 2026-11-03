@@ -6,6 +6,12 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import io.github.rojhatince47.weatherchan.core.di.WeatherCacheDataStore
 import io.github.rojhatince47.weatherchan.feature.weather.data.local.WeatherCachePreferences
 import io.github.rojhatince47.weatherchan.feature.weather.data.location.AndroidLocationProvider
@@ -14,12 +20,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.data.repository.Weathe
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.repository.WeatherRepository
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 private val Context.weatherCacheDataStore: DataStore<Preferences> by preferencesDataStore(name = "hava_weather_cache")

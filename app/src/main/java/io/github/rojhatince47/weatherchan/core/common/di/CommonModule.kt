@@ -1,14 +1,14 @@
 package io.github.rojhatince47.weatherchan.core.common.di
 
-import io.github.rojhatince47.weatherchan.core.common.dispatcher.DefaultDispatcher
-import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
-import io.github.rojhatince47.weatherchan.core.common.error.ErrorMapper
-import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.rojhatince47.weatherchan.core.common.dispatcher.DefaultDispatcher
+import io.github.rojhatince47.weatherchan.core.common.dispatcher.IoDispatcher
+import io.github.rojhatince47.weatherchan.core.common.error.ErrorMapper
+import io.github.rojhatince47.weatherchan.core.network.NetworkErrorMapper
 import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

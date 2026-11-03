@@ -4,6 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import io.github.rojhatince47.weatherchan.core.di.SettingsDataStore
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.AppCompatAppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreTemperatureUnitRepository
@@ -11,12 +17,6 @@ import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataS
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "hava_settings")

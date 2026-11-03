@@ -2,10 +2,10 @@ package io.github.rojhatince47.weatherchan.feature.weather.data.location
 
 import android.content.Context
 import android.location.Geocoder
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.PlaceName
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.ReverseGeocoder
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton

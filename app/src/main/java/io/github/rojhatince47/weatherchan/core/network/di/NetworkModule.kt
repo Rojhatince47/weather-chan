@@ -1,15 +1,15 @@
 package io.github.rojhatince47.weatherchan.core.network.di
 
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import io.github.rojhatince47.weatherchan.core.network.GeocodingRetrofit
 import io.github.rojhatince47.weatherchan.core.network.OpenMeteoRetrofit
 import io.github.rojhatince47.weatherchan.core.network.WttrInRetrofit
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.openmeteo.OpenMeteoGeocodingApi
 import io.github.rojhatince47.weatherchan.feature.weather.data.remote.wttrin.WttrInApi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType

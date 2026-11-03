@@ -10,9 +10,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.rojhatince47.weatherchan.feature.weather.domain.location.LocationProvider
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.Executor
 import java.util.function.Consumer
 import javax.inject.Inject
