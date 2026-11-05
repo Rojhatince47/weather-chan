@@ -29,6 +29,6 @@ internal val companionReactions: List<CompanionReaction> = listOf(
     CompanionReaction(CompanionPose.SURPRISED, clipIndex = 3, textVibe = CompanionTextVibe.SURPRISED),
     CompanionReaction(CompanionPose.TAP_GIGGLE, clipIndex = 0, textVibe = CompanionTextVibe.PLAYFUL),
     CompanionReaction(CompanionPose.TAP_HUM, clipIndex = 2, textVibe = CompanionTextVibe.SOFT),
-    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.PLAYFUL),
-    CompanionReaction(CompanionPose.TAP_SIGH, clipIndex = 4, textVibe = CompanionTextVibe.SOFT)
+    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.PLAYFUL)
+    // İç çekme (TAP_SIGH) sesi beğenilmedi; uygun ses bulununca eklenecek.
 )
