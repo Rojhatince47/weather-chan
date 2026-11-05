@@ -15,6 +15,10 @@ internal object CompanionArtAssets {
         CompanionPose.WINDY to R.drawable.companion_windy,
         CompanionPose.CALM to R.drawable.companion_calm,
         CompanionPose.SLEEPY to R.drawable.companion_sleepy,
-        CompanionPose.SURPRISED to R.drawable.companion_surprised
+        CompanionPose.SURPRISED to R.drawable.companion_surprised,
+        CompanionPose.TAP_GIGGLE to R.drawable.companion_tap_giggle,
+        CompanionPose.TAP_LAUGH to R.drawable.companion_tap_laugh,
+        CompanionPose.TAP_HUM to R.drawable.companion_tap_hum,
+        CompanionPose.TAP_SIGH to R.drawable.companion_tap_sigh
     )
 }

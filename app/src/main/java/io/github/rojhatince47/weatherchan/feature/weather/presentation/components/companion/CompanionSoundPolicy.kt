@@ -11,10 +11,11 @@ internal fun shouldPlayCompanionSound(enabled: Boolean, silentMode: Boolean): Bo
 
 /**
  * SoundPool `load` çağrısı kaynak kimliği değil **örnek kimliği** döndürür;
- * `loadComplete` de örnek kimliğini verir. Bu yüzden yüklü klip listesi
- * kaynak kimliğiyle değil, kaynak → örnek eşlemesi üzerinden seçilir.
+ * `loadComplete` de örnek kimliğini verir. Bu yüzden istenen klip, kaynak →
+ * örnek eşlemesi ve yüklü örnek kümesi üzerinden çözülür.
  */
-internal fun availableTapClips(clips: List<Int>, sampleIdByResId: Map<Int, Int>, loadedSampleIds: Set<Int>): List<Int> =
-    clips.filter { resId ->
-        sampleIdByResId[resId]?.let { it in loadedSampleIds } == true
-    }
+internal fun sampleIdForClip(clips: List<Int>, clipIndex: Int, sampleIdByResId: Map<Int, Int>, loadedSampleIds: Set<Int>): Int? {
+    val resId = clips.getOrNull(clipIndex) ?: return null
+    val sampleId = sampleIdByResId[resId] ?: return null
+    return sampleId.takeIf { it in loadedSampleIds }
+}

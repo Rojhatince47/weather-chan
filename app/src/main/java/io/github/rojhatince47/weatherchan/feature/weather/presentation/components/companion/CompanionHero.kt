@@ -69,7 +69,6 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.CompanionMotion
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionColors
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaMotion
-import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.ConditionIcon
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CompanionUiModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.model.CurrentWeatherUiModel
@@ -93,10 +92,13 @@ fun CompanionHero(
 ) {
     var reacting by remember(advice.pose, advice.category, advice.variantSeed) { mutableStateOf(false) }
     var tapCount by remember(advice.pose, advice.category, advice.variantSeed) { mutableIntStateOf(0) }
+    var reaction by remember(advice.pose, advice.category, advice.variantSeed) {
+        mutableStateOf(companionReactions.first())
+    }
     var lastTapAt by remember(advice.pose, advice.category, advice.variantSeed) {
         mutableLongStateOf(-CompanionMotion.TAP_DEBOUNCE_MS)
     }
-    val effectivePose = if (reacting) CompanionPose.SURPRISED else advice.pose
+    val effectivePose = if (reacting) reaction.pose else advice.pose
     val artDescription = stringResource(
         R.string.companion_art_description,
         stringResource(effectivePose.labelRes())
@@ -150,9 +152,10 @@ fun CompanionHero(
         val now = SystemClock.uptimeMillis()
         if (now - lastTapAt >= CompanionMotion.TAP_DEBOUNCE_MS) {
             lastTapAt = now
+            reaction = companionReactions[Math.floorMod(tapCount, companionReactions.size)]
             reacting = true
             tapCount += 1
-            audio.playTap()
+            audio.playTap(reaction.clipIndex)
         }
     }
 
@@ -312,7 +315,7 @@ fun CompanionHero(
                 ) { isReacting ->
                     Text(
                         text = if (isReacting) {
-                            tapLine(advice.variantSeed, tapCount)
+                            tapLine(reaction.textVibe, advice.variantSeed, tapCount)
                         } else {
                             adviceLine(advice.category, advice.variantSeed)
                         },

@@ -1,8 +1,9 @@
 package io.github.rojhatince47.weatherchan.feature.weather.domain.advice
 
 /**
- * Weather-chan'ın kartta takındığı poz. Yedi poz, yedi ayrı Canvas/illüstrasyon
- * durumudur; kategori eşlemesi [AdviceCategory.pose] ile yapılır.
+ * Weather-chan'ın kartta takındığı poz. Altı hava pozu, bir şaşkın tepkisi
+ * ve dört dokunuş tepkisi; kategori eşlemesi [AdviceCategory.pose] ile
+ * yapılır.
  */
 enum class CompanionPose {
     CHEERFUL,
@@ -11,5 +12,9 @@ enum class CompanionPose {
     WINDY,
     CALM,
     SLEEPY,
-    SURPRISED
+    SURPRISED,
+    TAP_GIGGLE,
+    TAP_LAUGH,
+    TAP_HUM,
+    TAP_SIGH
 }

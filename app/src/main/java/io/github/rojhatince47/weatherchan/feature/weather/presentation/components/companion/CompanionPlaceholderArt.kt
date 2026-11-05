@@ -102,7 +102,7 @@ fun CompanionPlaceholderArt(pose: CompanionPose, colors: ConditionColors, modifi
         }
 
         when (pose) {
-            CompanionPose.CHEERFUL -> {
+            CompanionPose.CHEERFUL, CompanionPose.TAP_GIGGLE, CompanionPose.TAP_LAUGH -> {
                 arm(cx - bodyHalf * 0.9f, shoulderY + h * 0.04f, cx - bodyHalf - w * 0.03f, hipY - h * 0.08f)
                 arm(cx + bodyHalf * 0.9f, shoulderY + h * 0.04f, cx + bodyHalf + w * 0.08f, shoulderY - h * 0.04f)
             }
@@ -118,7 +118,7 @@ fun CompanionPlaceholderArt(pose: CompanionPose, colors: ConditionColors, modifi
                 arm(cx - bodyHalf * 0.9f, shoulderY + h * 0.04f, cx - w * 0.10f, shoulderY - h * 0.08f)
                 arm(cx + bodyHalf * 0.9f, shoulderY + h * 0.04f, cx + w * 0.12f, hipY - h * 0.10f)
             }
-            CompanionPose.CALM -> {
+            CompanionPose.CALM, CompanionPose.TAP_HUM, CompanionPose.TAP_SIGH -> {
                 arm(cx - bodyHalf * 0.9f, shoulderY + h * 0.04f, cx - w * 0.075f, shoulderY + h * 0.16f)
                 arm(cx + bodyHalf * 0.9f, shoulderY + h * 0.04f, cx + w * 0.075f, shoulderY + h * 0.16f)
             }
@@ -187,7 +187,7 @@ fun CompanionPlaceholderArt(pose: CompanionPose, colors: ConditionColors, modifi
 
         // Poz aksesuarları
         when (pose) {
-            CompanionPose.CHEERFUL -> {
+            CompanionPose.CHEERFUL, CompanionPose.TAP_GIGGLE, CompanionPose.TAP_LAUGH -> {
                 val sparkle = headR * 0.12f
                 listOf(
                     Offset(w * 0.18f, h * 0.12f),
@@ -249,7 +249,7 @@ fun CompanionPlaceholderArt(pose: CompanionPose, colors: ConditionColors, modifi
                     )
                 }
             }
-            CompanionPose.CALM -> {
+            CompanionPose.CALM, CompanionPose.TAP_HUM, CompanionPose.TAP_SIGH -> {
                 val cupTop = shoulderY + h * 0.13f
                 drawRoundRect(
                     color = accent.copy(alpha = 0.55f),

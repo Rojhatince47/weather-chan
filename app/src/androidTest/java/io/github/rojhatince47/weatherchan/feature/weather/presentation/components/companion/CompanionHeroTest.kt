@@ -138,7 +138,7 @@ class CompanionHeroTest {
         render()
         composeRule.onNodeWithTag("companion_art").performClick()
 
-        val tapLines = composeRule.activity.resources.getStringArray(R.array.companion_tap_reactions)
+        val tapLines = allTapLines()
         assertTrue(bubbleText() in tapLines)
         composeRule.onNodeWithContentDescription(
             "şaşkın",
@@ -153,7 +153,7 @@ class CompanionHeroTest {
         composeRule.onNodeWithTag("companion_bubble").performClick()
 
         assertTrue(
-            bubbleText() in composeRule.activity.resources.getStringArray(R.array.companion_tap_reactions)
+            bubbleText() in allTapLines()
         )
     }
 
@@ -162,7 +162,7 @@ class CompanionHeroTest {
         render()
         composeRule.onNodeWithTag("companion_art").performClick()
 
-        val tapLines = composeRule.activity.resources.getStringArray(R.array.companion_tap_reactions)
+        val tapLines = allTapLines()
         assertTrue("once tap repligi gelmeli", bubbleText() in tapLines)
         val adviceLines = composeRule.activity.resources.getStringArray(R.array.advice_clear)
         composeRule.waitUntil(5_000) { bubbleText() in adviceLines }
@@ -207,11 +207,19 @@ class CompanionHeroTest {
         assertTrue(bubbleText().isNotBlank())
     }
 
+    private fun allTapLines(): List<String> = listOf(
+        R.array.companion_tap_surprised,
+        R.array.companion_tap_playful,
+        R.array.companion_tap_soft
+    ).flatMap { composeRule.activity.resources.getStringArray(it).toList() }
+
     private class RecordingAudio : CompanionAudioPlayer {
         var taps = 0
+        var lastClipIndex: Int? = null
 
-        override fun playTap() {
+        override fun playTap(clipIndex: Int) {
             taps++
+            lastClipIndex = clipIndex
         }
 
         override fun release() = Unit
@@ -232,7 +240,10 @@ class CompanionHeroTest {
             }
         }
         composeRule.onNodeWithTag("companion_art").performClick()
-        composeRule.runOnIdle { assertEquals(1, audio.taps) }
+        composeRule.runOnIdle {
+            assertEquals(1, audio.taps)
+            assertEquals(3, audio.lastClipIndex)
+        }
     }
 
     @Test

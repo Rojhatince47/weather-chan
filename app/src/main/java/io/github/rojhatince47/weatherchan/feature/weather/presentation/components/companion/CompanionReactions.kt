@@ -52,7 +52,7 @@ fun CompanionReactions(pose: CompanionPose, color: Color, animationsEnabled: Boo
         val stroke = Stroke(width = size.minDimension * 0.08f, cap = StrokeCap.Round)
 
         when (pose) {
-            CompanionPose.CHEERFUL -> {
+            CompanionPose.CHEERFUL, CompanionPose.TAP_GIGGLE, CompanionPose.TAP_LAUGH -> {
                 val r = size.minDimension * 0.28f
                 drawLine(
                     color.copy(alpha = alpha),
@@ -118,7 +118,7 @@ fun CompanionReactions(pose: CompanionPose, color: Color, animationsEnabled: Boo
                     cap = StrokeCap.Round
                 )
             }
-            CompanionPose.CALM -> {
+            CompanionPose.CALM, CompanionPose.TAP_HUM, CompanionPose.TAP_SIGH -> {
                 repeat(2) { index ->
                     val offset = index * size.minDimension * 0.16f
                     drawArc(

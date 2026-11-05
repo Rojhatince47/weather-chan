@@ -108,6 +108,10 @@
     <string name="companion_pose_calm">calm</string>
     <string name="companion_pose_sleepy">sleepy</string>
     <string name="companion_pose_surprised">surprised</string>
+    <string name="companion_pose_tap_giggle">giggling</string>
+    <string name="companion_pose_tap_laugh">laughing</string>
+    <string name="companion_pose_tap_hum">humming</string>
+    <string name="companion_pose_tap_sigh">sighing</string>
 
     <string-array name="advice_storm">
         <item>Thunder\'s rolling in — stay indoors if you can, okay?</item>
@@ -159,14 +163,18 @@
         <item>Calm weather; perfect for a warm drink.</item>
         <item>The sky\'s a bit gray, but it\'s still a lovely day.</item>
     </string-array>
-    <string-array name="companion_tap_reactions">
+    <string-array name="companion_tap_surprised">
         <item>Eek, that tickles!</item>
-        <item>You\'ll mess up my hair, hey!</item>
-        <item>You again? Fine, you can stay a little longer.</item>
-        <item>Hehe, you\'re such a tease!</item>
-        <item>Hold on, let me pull myself together.</item>
-        <item>So you wanted to touch me, you sweet thing.</item>
         <item>My heart\'s racing — what did you do to me?</item>
+    </string-array>
+    <string-array name="companion_tap_playful">
+        <item>You\'ll mess up my hair, hey!</item>
+        <item>Hehe, you\'re such a tease!</item>
+        <item>So you wanted to touch me, you sweet thing.</item>
         <item>Okay, okay — I like you too.</item>
+    </string-array>
+    <string-array name="companion_tap_soft">
+        <item>You again? Fine, you can stay a little longer.</item>
+        <item>Hold on, let me pull myself together.</item>
     </string-array>
 </resources>

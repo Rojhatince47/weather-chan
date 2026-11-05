@@ -32,6 +32,10 @@ internal fun CompanionPose.labelRes(): Int = when (this) {
     CompanionPose.CALM -> R.string.companion_pose_calm
     CompanionPose.SLEEPY -> R.string.companion_pose_sleepy
     CompanionPose.SURPRISED -> R.string.companion_pose_surprised
+    CompanionPose.TAP_GIGGLE -> R.string.companion_pose_tap_giggle
+    CompanionPose.TAP_LAUGH -> R.string.companion_pose_tap_laugh
+    CompanionPose.TAP_HUM -> R.string.companion_pose_tap_hum
+    CompanionPose.TAP_SIGH -> R.string.companion_pose_tap_sigh
 }
 
 /**
@@ -47,7 +51,7 @@ internal fun adviceLine(category: AdviceCategory, seed: Int): String {
 }
 
 @Composable
-internal fun tapLine(seed: Int, tapCount: Int): String {
-    val lines = stringArrayResource(R.array.companion_tap_reactions)
+internal fun tapLine(vibe: CompanionTextVibe, seed: Int, tapCount: Int): String {
+    val lines = stringArrayResource(vibe.arrayRes)
     return lines[lineIndex(lines.size, seed + tapCount)]
 }

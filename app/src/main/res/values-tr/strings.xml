@@ -108,6 +108,10 @@
     <string name="companion_pose_calm">sakin</string>
     <string name="companion_pose_sleepy">uykulu</string>
     <string name="companion_pose_surprised">şaşkın</string>
+    <string name="companion_pose_tap_giggle">kıkırdayan</string>
+    <string name="companion_pose_tap_laugh">gülen</string>
+    <string name="companion_pose_tap_hum">mırıldanan</string>
+    <string name="companion_pose_tap_sigh">iç çeken</string>
 
     <string-array name="advice_storm">
         <item>Gök gürlüyor, mümkünse bugün evde kal tamam mı?</item>
@@ -159,14 +163,18 @@
         <item>Hava sakin, sıcak bir şeyler içmek tam havası.</item>
         <item>Gökyüzü biraz kapalı; yine de güzel bir gün.</item>
     </string-array>
-    <string-array name="companion_tap_reactions">
+    <string-array name="companion_tap_surprised">
         <item>Aaa, gıdıklanıyorum!</item>
-        <item>Saçımı bozacaksın, hiç!</item>
-        <item>Yine mi sen? Pekâlâ, biraz daha kalabilirsin.</item>
-        <item>Hihi, şımarık!</item>
-        <item>Bekle, bir an önce toparlanayım.</item>
-        <item>Dokunmak istedin demek, tatlı şey.</item>
         <item>Kalbim pır pır etti, ne yaptın öyle?</item>
+    </string-array>
+    <string-array name="companion_tap_playful">
+        <item>Saçımı bozacaksın, hiç!</item>
+        <item>Hihi, şımarık!</item>
+        <item>Dokunmak istedin demek, tatlı şey.</item>
         <item>Tamam tamam, ben de seni seviyorum.</item>
+    </string-array>
+    <string-array name="companion_tap_soft">
+        <item>Yine mi sen? Pekâlâ, biraz daha kalabilirsin.</item>
+        <item>Bekle, bir an önce toparlanayım.</item>
     </string-array>
 </resources>

@@ -5,24 +5,21 @@ import android.media.AudioManager
 import android.media.SoundPool
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import java.util.concurrent.ConcurrentHashMap
 
 /** Dokunuş sesi portu; üretimde [rememberCompanionAudioPlayer] kullanılır. */
 interface CompanionAudioPlayer {
-    fun playTap()
+    fun playTap(clipIndex: Int)
 
     fun release()
 }
 
 /** Test/preview varsayılanı: hiçbir ses çıkarmaz. */
 object NoOpCompanionAudioPlayer : CompanionAudioPlayer {
-    override fun playTap() = Unit
+    override fun playTap(clipIndex: Int) = Unit
 
     override fun release() = Unit
 }
@@ -53,7 +50,6 @@ fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer 
 
     val loaded = remember(player) { ConcurrentHashMap.newKeySet<Int>() }
     val sampleIdByResId = remember(player) { ConcurrentHashMap<Int, Int>() }
-    var nextClip by remember(player) { mutableIntStateOf(0) }
 
     DisposableEffect(player) {
         player.setOnLoadCompleteListener { _, sampleId, status ->
@@ -70,20 +66,17 @@ fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer 
 
     return remember(player, loaded) {
         object : CompanionAudioPlayer {
-            override fun playTap() {
+            override fun playTap(clipIndex: Int) {
                 val ringerMode = audioManager?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL
                 val silentMode = ringerMode != AudioManager.RINGER_MODE_NORMAL
                 if (!shouldPlayCompanionSound(enabledState.value, silentMode)) return
 
-                val available = availableTapClips(
+                val sampleId = sampleIdForClip(
                     CompanionSoundAssets.tapClips,
+                    clipIndex,
                     sampleIdByResId,
                     loaded
-                )
-                if (available.isEmpty()) return
-                val index = Math.floorMod(nextClip, available.size)
-                nextClip = (index + 1) % available.size
-                val sampleId = sampleIdByResId[available[index]] ?: return
+                ) ?: return
                 runCatching { player.play(sampleId, 0.35f, 0.35f, 1, 0, 1f) }
             }
 

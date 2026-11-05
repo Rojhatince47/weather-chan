@@ -33,12 +33,23 @@ class CompanionStringsTest {
     }
 
     @Test
-    fun `dokunus dizisi iki dilde bes ile sekiz arasi satir tasir`() {
+    fun `dokunus havuzlari iki dilde dolu ve rakamsiz`() {
+        val keys = listOf(
+            "companion_tap_surprised",
+            "companion_tap_playful",
+            "companion_tap_soft"
+        )
         paths.forEach { path ->
-            val items = arraysOf(path)["companion_tap_reactions"]
-                ?: error("$path: companion_tap_reactions dizisi yok")
-            assertTrue("$path tap 5..8", items.size in 5..8)
-            items.forEach { assertFalse("$path tap rakam: $it", it.contains(Regex("[0-9]"))) }
+            val arrays = arraysOf(path)
+            keys.forEach { key ->
+                val items = arrays[key] ?: error("$path: $key dizisi yok")
+                assertTrue("$path/$key 1..5", items.size in 1..5)
+                items.forEach {
+                    assertTrue("$path/$key bos satir", it.isNotBlank())
+                    assertFalse("$path/$key rakam iceriyor: $it", it.contains(Regex("[0-9]")))
+                    assertTrue("$path/$key cok uzun: $it", it.length <= 90)
+                }
+            }
         }
     }
 
