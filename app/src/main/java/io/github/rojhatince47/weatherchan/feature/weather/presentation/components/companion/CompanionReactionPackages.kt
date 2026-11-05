@@ -29,6 +29,7 @@ internal val companionReactions: List<CompanionReaction> = listOf(
     CompanionReaction(CompanionPose.SURPRISED, clipIndex = 3, textVibe = CompanionTextVibe.SURPRISED),
     CompanionReaction(CompanionPose.TAP_GIGGLE, clipIndex = 0, textVibe = CompanionTextVibe.PLAYFUL),
     CompanionReaction(CompanionPose.TAP_HUM, clipIndex = 2, textVibe = CompanionTextVibe.SOFT),
-    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.PLAYFUL)
-    // Rahatlamış gülüş (3.12 görseli) gelince 5+6 birleşik sesle eklenecek.
+    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.PLAYFUL),
+    // 3.11 iç çekme görseli + 6. ses (burun gülüşü) = rahatlamış gülüş.
+    CompanionReaction(CompanionPose.TAP_SIGH, clipIndex = 5, textVibe = CompanionTextVibe.SOFT)
 )
