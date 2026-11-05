@@ -164,17 +164,17 @@
         <item>The sky\'s a bit gray, but it\'s still a lovely day.</item>
     </string-array>
     <string-array name="companion_tap_surprised">
-        <item>Eek, that tickles!</item>
-        <item>My heart\'s racing — what did you do to me?</item>
+        <item>Eek, you startled me!</item>
+        <item>What happened? Is something wrong?</item>
     </string-array>
     <string-array name="companion_tap_playful">
         <item>You\'ll mess up my hair, hey!</item>
         <item>Hehe, you\'re such a tease!</item>
-        <item>So you wanted to touch me, you sweet thing.</item>
-        <item>Okay, okay — I like you too.</item>
+        <item>Hold on, that tickles!</item>
+        <item>Don\'t do that again, okay?</item>
     </string-array>
     <string-array name="companion_tap_soft">
-        <item>You again? Fine, you can stay a little longer.</item>
-        <item>Hold on, let me pull myself together.</item>
+        <item>Mmm... let\'s stay a little longer.</item>
+        <item>Ohh... that felt nice.</item>
     </string-array>
 </resources>

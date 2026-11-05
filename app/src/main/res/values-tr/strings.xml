@@ -164,17 +164,17 @@
         <item>Gökyüzü biraz kapalı; yine de güzel bir gün.</item>
     </string-array>
     <string-array name="companion_tap_surprised">
-        <item>Aaa, gıdıklanıyorum!</item>
-        <item>Kalbim pır pır etti, ne yaptın öyle?</item>
+        <item>Aaa, korkuttun beni!</item>
+        <item>Ne oldu? Bir şey mi var?</item>
     </string-array>
     <string-array name="companion_tap_playful">
         <item>Saçımı bozacaksın, hiç!</item>
         <item>Hihi, şımarık!</item>
-        <item>Dokunmak istedin demek, tatlı şey.</item>
-        <item>Tamam tamam, ben de seni seviyorum.</item>
+        <item>Dur, gıdıklanıyorum!</item>
+        <item>Bir daha yapma, tamam mı?</item>
     </string-array>
     <string-array name="companion_tap_soft">
-        <item>Yine mi sen? Pekâlâ, biraz daha kalabilirsin.</item>
-        <item>Bekle, bir an önce toparlanayım.</item>
+        <item>Mmm... biraz daha kalalım.</item>
+        <item>Ohh... iyi geldi.</item>
     </string-array>
 </resources>
