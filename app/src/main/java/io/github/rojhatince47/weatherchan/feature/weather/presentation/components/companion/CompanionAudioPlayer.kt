@@ -52,6 +52,7 @@ fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer 
     } ?: return NoOpCompanionAudioPlayer
 
     val loaded = remember(player) { ConcurrentHashMap.newKeySet<Int>() }
+    val sampleIdByResId = remember(player) { ConcurrentHashMap<Int, Int>() }
     var nextClip by remember(player) { mutableIntStateOf(0) }
 
     DisposableEffect(player) {
@@ -60,6 +61,9 @@ fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer 
         }
         CompanionSoundAssets.tapClips.forEach { id ->
             runCatching { player.load(context, id, 1) }
+                .getOrNull()
+                ?.takeIf { it != 0 }
+                ?.let { sampleIdByResId[id] = it }
         }
         onDispose { runCatching { player.release() } }
     }
@@ -71,11 +75,16 @@ fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer 
                 val silentMode = ringerMode != AudioManager.RINGER_MODE_NORMAL
                 if (!shouldPlayCompanionSound(enabledState.value, silentMode)) return
 
-                val available = CompanionSoundAssets.tapClips.filter { it in loaded }
+                val available = availableTapClips(
+                    CompanionSoundAssets.tapClips,
+                    sampleIdByResId,
+                    loaded
+                )
                 if (available.isEmpty()) return
                 val index = Math.floorMod(nextClip, available.size)
                 nextClip = (index + 1) % available.size
-                runCatching { player.play(available[index], 0.35f, 0.35f, 1, 0, 1f) }
+                val sampleId = sampleIdByResId[available[index]] ?: return
+                runCatching { player.play(sampleId, 0.35f, 0.35f, 1, 0, 1f) }
             }
 
             override fun release() = Unit
