@@ -29,8 +29,7 @@ class WttrInWeatherMapper @Inject constructor() {
                 condition = toCondition(current.weatherCode.toIntOrNull()),
                 windSpeedKmh = current.windSpeedKmph.toDoubleOrNull()?.roundToInt() ?: 0,
                 humidityPercent = current.humidity.toIntOrNull() ?: 0,
-                // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
-                isDay = true
+                isDay = currentIsDay(dto, current)
             )
         )
     }
@@ -53,8 +52,7 @@ class WttrInWeatherMapper @Inject constructor() {
                 condition = toCondition(current.weatherCode.toIntOrNull()),
                 windSpeedKmh = current.windSpeedKmph.toDoubleOrNull()?.roundToInt() ?: 0,
                 humidityPercent = current.humidity.toIntOrNull() ?: 0,
-                // Yedek yolda saat-türetme yoktur; gündüz varsayımı bilinçlidir.
-                isDay = true
+                isDay = currentIsDay(dto, current)
             ),
             hourlyForecast = days.flatMap { day ->
                 val date = runCatching { LocalDate.parse(day.date) }.getOrNull() ?: return@flatMap emptyList()
@@ -109,6 +107,21 @@ class WttrInWeatherMapper @Inject constructor() {
         179, 182, 227, 230, 323, 326, 329, 332, 335, 338, 350, 368, 371, 374, 377 -> WeatherCondition.SNOW
         200, 386, 389, 392, 395 -> WeatherCondition.THUNDERSTORM
         else -> WeatherCondition.CLOUDY
+    }
+
+    /**
+     * Yedek kaynakta `current.is_day` yoktur; yerel gözlem saatini bugünün
+     * gün doğumu/batımı penceresiyle karşılaştırır. Saat veya astronomi
+     * eksikse gündüz varsayılır (eski davranış).
+     */
+    private fun currentIsDay(dto: WttrInDto, current: WttrInCurrentDto): Boolean {
+        val time = parseClock(current.observationTime) ?: return true
+        val day = dto.weather.firstOrNull() ?: return true
+        val astro = day.astronomy.firstOrNull() ?: return true
+        val rise = parseClock(astro.sunrise) ?: return true
+        val set = parseClock(astro.sunset) ?: return true
+        if (rise >= set) return true
+        return Daylight.isDay(time.hour, DaylightWindow(rise, set))
     }
 
     private val clockFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)

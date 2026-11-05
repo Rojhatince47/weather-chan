@@ -12,6 +12,7 @@ data class WttrInDto(
 
 @Serializable
 data class WttrInCurrentDto(
+    @SerialName("observation_time") val observationTime: String = "",
     @SerialName("temp_C") val tempC: String = "0",
     @SerialName("humidity") val humidity: String = "0",
     @SerialName("windspeedKmph") val windSpeedKmph: String = "0",

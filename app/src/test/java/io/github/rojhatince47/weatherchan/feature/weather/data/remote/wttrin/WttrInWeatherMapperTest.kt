@@ -11,9 +11,28 @@ import org.junit.Test
 class WttrInWeatherMapperTest {
 
     @Test
+    fun `yedek kaynak yerel saat ve astronomiye gore geceyi tanir`() {
+        val city = City("New York", "New York", "ABD", Coordinates(40.71, -74.0))
+        val dto = WttrInDto(
+            currentCondition = listOf(WttrInCurrentDto(observationTime = "11:05 PM")),
+            weather = listOf(
+                WttrInDayDto(
+                    date = "2026-11-06",
+                    astronomy = listOf(WttrInAstronomyDto(sunrise = "06:30 AM", sunset = "04:45 PM"))
+                )
+            )
+        )
+
+        val mapper = WttrInWeatherMapper()
+
+        assertFalse(mapper.toCityWeather(city, dto).currentWeather.isDay)
+        assertFalse(mapper.toForecast(city, dto).currentWeather.isDay)
+    }
+
+    @Test
     fun `yedek kaynak gunduz varsayar`() {
-        // Yedek yolda saat-türetme yoktur (bilinçli kapsam kesiti); veri doğru,
-        // sunum gündüz varsayımıyla çizilir.
+        // observation_time veya astronomi yoksa saat-türetme yapılamaz;
+        // gündüz varsayımı bilinçli yedektir.
         val city = City("İstanbul", "Marmara", "Türkiye", Coordinates(41.01, 28.98))
         val mapper = WttrInWeatherMapper()
         assertTrue(mapper.toCityWeather(city, WttrInDto()).currentWeather.isDay)
