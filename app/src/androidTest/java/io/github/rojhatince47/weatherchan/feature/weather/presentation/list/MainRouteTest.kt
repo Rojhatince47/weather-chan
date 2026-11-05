@@ -16,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.App
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeSoundEffectsRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CachedForecast
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
@@ -64,7 +65,12 @@ class MainRouteTest {
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
-        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
+        val settingsViewModel = SettingsViewModel(
+            unitRepository,
+            RouteThemeRepository(),
+            RouteAppLanguageApplier(),
+            FakeSoundEffectsRepository()
+        )
         val evViewModel = EvSayfasiViewModel(
             cityRepository = fakeCities,
             getForecast = GetForecastUseCase(weather),
@@ -131,7 +137,12 @@ class MainRouteTest {
             unitRepository = unitRepository,
             cityRepository = fakeCities
         )
-        val settingsViewModel = SettingsViewModel(unitRepository, RouteThemeRepository(), RouteAppLanguageApplier())
+        val settingsViewModel = SettingsViewModel(
+            unitRepository,
+            RouteThemeRepository(),
+            RouteAppLanguageApplier(),
+            FakeSoundEffectsRepository()
+        )
         val evViewModel = EvSayfasiViewModel(
             cityRepository = fakeCities,
             getForecast = GetForecastUseCase(weather),

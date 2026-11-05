@@ -1,12 +1,14 @@
 package io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion
 
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.SoundPool
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import java.util.concurrent.ConcurrentHashMap
@@ -31,8 +33,10 @@ object NoOpCompanionAudioPlayer : CompanionAudioPlayer {
  * `runCatching` ile sarılır; hata sessiz no-op'a düşer.
  */
 @Composable
-fun rememberCompanionAudioPlayer(): CompanionAudioPlayer {
+fun rememberCompanionAudioPlayer(enabled: Boolean = true): CompanionAudioPlayer {
     val context = LocalContext.current.applicationContext
+    val enabledState = rememberUpdatedState(enabled)
+    val audioManager = remember(context) { context.getSystemService(AudioManager::class.java) }
     val player = remember(context) {
         runCatching {
             SoundPool.Builder()
@@ -63,6 +67,10 @@ fun rememberCompanionAudioPlayer(): CompanionAudioPlayer {
     return remember(player, loaded) {
         object : CompanionAudioPlayer {
             override fun playTap() {
+                val ringerMode = audioManager?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL
+                val silentMode = ringerMode != AudioManager.RINGER_MODE_NORMAL
+                if (!shouldPlayCompanionSound(enabledState.value, silentMode)) return
+
                 val available = CompanionSoundAssets.tapClips.filter { it in loaded }
                 if (available.isEmpty()) return
                 val index = Math.floorMod(nextClip, available.size)

@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,6 +24,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.to
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -294,5 +297,36 @@ class SettingsScreenTest {
     fun sehirlerimButonuKonumKartiEklendigindeDeGorunur() {
         setSettingsScreen(locationAdded = true)
         composeRule.onNodeWithText("Şehirlerim").assertExists()
+    }
+
+    @Test
+    fun sesEfektleriAnahtariVarsayilanAcikVeKapatilabilir() {
+        var enabled by mutableStateOf(true)
+        composeRule.setContent {
+            HavaTheme {
+                SettingsScreen(
+                    unit = TemperatureUnit.CELSIUS.toUiModel(),
+                    themeMode = ThemeMode.SYSTEM,
+                    appLanguage = AppLanguage.SYSTEM,
+                    locationState = LocationState.Idle,
+                    locationAdded = false,
+                    onAddLocation = {},
+                    onRetryLocation = {},
+                    onUnitSelected = {},
+                    onThemeModeSelected = {},
+                    onAppLanguageSelected = {},
+                    onOpenCityList = {},
+                    onBack = {},
+                    soundEffectsEnabled = enabled,
+                    onSoundEffectsEnabledChange = { enabled = it }
+                )
+            }
+        }
+        composeRule.onNodeWithText("Ses").performScrollTo().assertIsDisplayed()
+        val switch = composeRule.onNodeWithTag("settings_sound_effects").performScrollTo()
+        switch.assertIsOn()
+        switch.performClick()
+        assertFalse(enabled)
+        switch.assertIsOff()
     }
 }

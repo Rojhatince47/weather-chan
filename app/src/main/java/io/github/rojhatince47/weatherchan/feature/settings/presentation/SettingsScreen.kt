@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,14 +18,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -63,6 +68,8 @@ fun SettingsScreen(
     onAppLanguageSelected: (AppLanguage) -> Unit,
     onOpenCityList: () -> Unit,
     onBack: () -> Unit,
+    soundEffectsEnabled: Boolean = true,
+    onSoundEffectsEnabledChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -170,6 +177,39 @@ fun SettingsScreen(
                     )
                 }
             }
+            SectionTitle(
+                text = stringResource(R.string.settings_sound_section),
+                modifier = Modifier.padding(top = HavaSpacing.md)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = soundEffectsEnabled,
+                        onValueChange = onSoundEffectsEnabledChange,
+                        role = Role.Switch
+                    )
+                    .testTag("settings_sound_effects")
+                    .padding(vertical = HavaSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_sound_effects),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_sound_effects_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = soundEffectsEnabled,
+                    onCheckedChange = null
+                )
+            }
         }
     }
 }
@@ -197,6 +237,7 @@ fun SettingsRoute(
     val unitState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val appLanguage by settingsViewModel.appLanguage.collectAsStateWithLifecycle()
+    val soundEffectsEnabled by settingsViewModel.soundEffectsEnabled.collectAsStateWithLifecycle()
     val evUiState by evViewModel.uiState.collectAsStateWithLifecycle()
     // Ekran her açılışında seçim dış kaynakla (sistem ayarları) tazelenir.
     LaunchedEffect(Unit) { settingsViewModel.refreshAppLanguage() }
@@ -222,6 +263,8 @@ fun SettingsRoute(
         onAppLanguageSelected = settingsViewModel::onAppLanguageSelected,
         onOpenCityList = onOpenCityList,
         onBack = onBack,
+        soundEffectsEnabled = soundEffectsEnabled,
+        onSoundEffectsEnabledChange = settingsViewModel::onSoundEffectsEnabledChanged,
         modifier = modifier
     )
 }

@@ -42,6 +42,7 @@ fun EvSayfasiRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
+    val soundEffectsEnabled by settingsViewModel.soundEffectsEnabled.collectAsStateWithLifecycle()
 
     // Liste ya da şehir ekleme ekranı kapandığında seçilen şehrin kimliği
     // buradan okunur; pager o sayfaya kaydırır ve anahtar temizlenir ki
@@ -69,7 +70,7 @@ fun EvSayfasiRoute(
     // resolveIsDark composable'dır; lambda gövdesinden çağrılamaz (bir kez çöz).
     val isDark = themeMode.resolveIsDark()
     val animationsEnabled = ValueAnimator.areAnimatorsEnabled()
-    val companionAudio = rememberCompanionAudioPlayer()
+    val companionAudio = rememberCompanionAudioPlayer(enabled = soundEffectsEnabled)
 
     // Arka plan paleti ile içerik rengi aynı kaynaktan gelir (DRY): veri
     // yoksa null → çağıran yerlerde neutral(isDark) karşılığı kullanılır.

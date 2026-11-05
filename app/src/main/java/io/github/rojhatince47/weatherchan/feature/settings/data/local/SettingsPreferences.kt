@@ -2,6 +2,7 @@ package io.github.rojhatince47.weatherchan.feature.settings.data.local
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.map
  * Anahtarlar:
  * - `theme_mode`: ThemeMode adı, yoksa SYSTEM.
  * - `temperature_unit`: TemperatureUnit adı, yoksa CELSIUS.
+ * - `sound_effects_enabled`: dokunuş sesleri açık mı, yoksa açık (true).
  */
 @Singleton
 class SettingsPreferences @Inject constructor(
@@ -30,6 +32,7 @@ class SettingsPreferences @Inject constructor(
 ) {
     private val themeModeKey = stringPreferencesKey("theme_mode")
     private val unitKey = stringPreferencesKey("temperature_unit")
+    private val soundEffectsEnabledKey = booleanPreferencesKey("sound_effects_enabled")
 
     fun themeMode(): Flow<ThemeMode> = dataStore.data
         .catch { emit(emptyPreferences()) }
@@ -39,12 +42,20 @@ class SettingsPreferences @Inject constructor(
         .catch { emit(emptyPreferences()) }
         .map { it[unitKey].toUnit() }
 
+    fun soundEffectsEnabled(): Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[soundEffectsEnabledKey] ?: true }
+
     suspend fun writeThemeMode(themeMode: ThemeMode) {
         dataStore.edit { it[themeModeKey] = themeMode.name }
     }
 
     suspend fun writeUnit(unit: TemperatureUnit) {
         dataStore.edit { it[unitKey] = unit.name }
+    }
+
+    suspend fun writeSoundEffectsEnabled(enabled: Boolean) {
+        dataStore.edit { it[soundEffectsEnabledKey] = enabled }
     }
 
     // Anahtar yoksa ya da kayıt tanınmıyorsa varsayılana düşülür; akış

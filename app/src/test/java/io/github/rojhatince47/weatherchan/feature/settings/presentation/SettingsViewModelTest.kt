@@ -6,6 +6,8 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLangu
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.SoundEffectsRepository
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeSoundEffectsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -127,10 +130,14 @@ class SettingsViewModelTest {
         }
     }
 
-    private fun newViewModel(applier: AppLanguageApplier = FakeAppLanguageApplier()): SettingsViewModel = SettingsViewModel(
+    private fun newViewModel(
+        applier: AppLanguageApplier = FakeAppLanguageApplier(),
+        soundEffects: SoundEffectsRepository = FakeSoundEffectsRepository()
+    ): SettingsViewModel = SettingsViewModel(
         FakeTemperatureUnitRepository(),
         FakeThemeModeRepository(),
-        applier
+        applier,
+        soundEffects
     )
 
     // --- dil ---
@@ -160,5 +167,25 @@ class SettingsViewModelTest {
         applier.current = AppLanguage.TURKISH // API 33+ sistem ayarlarından değişim
         viewModel.refreshAppLanguage()
         assertEquals(AppLanguage.TURKISH, viewModel.appLanguage.value)
+    }
+
+    // --- ses efektleri ---
+
+    @Test
+    fun `ses efektleri varsayilan olarak acik`() = runTest {
+        val viewModel = newViewModel()
+
+        assertTrue(viewModel.soundEffectsEnabled.value)
+    }
+
+    @Test
+    fun `ses efektleri kapatilinca akista yayilir`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.soundEffectsEnabled.test {
+            assertTrue(awaitItem())
+            viewModel.onSoundEffectsEnabledChanged(false)
+            assertFalse(awaitItem())
+        }
     }
 }

@@ -16,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepositor
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsRoute
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeAppLanguageApplier
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeSoundEffectsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
@@ -91,7 +92,8 @@ class SharedLocationFlowTest {
         val settingsViewModel = SettingsViewModel(
             repository = FakeTemperatureUnitRepository(),
             themeModeRepository = FakeThemeModeRepository(),
-            appLanguageApplier = FakeAppLanguageApplier()
+            appLanguageApplier = FakeAppLanguageApplier(),
+            soundEffectsRepository = FakeSoundEffectsRepository()
         )
 
         composeRule.setContent {
@@ -157,7 +159,8 @@ class SharedLocationFlowTest {
         val settingsViewModel = SettingsViewModel(
             repository = FakeTemperatureUnitRepository(),
             themeModeRepository = FakeThemeModeRepository(),
-            appLanguageApplier = FakeAppLanguageApplier()
+            appLanguageApplier = FakeAppLanguageApplier(),
+            soundEffectsRepository = FakeSoundEffectsRepository()
         )
         // MainViewModel, AYNI FakeCityRepository örneğine bağlı: kart düşmesi gözlemlenir.
         val mainViewModel = MainViewModel(

@@ -8,6 +8,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLangu
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.AppLanguageApplier
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.SoundEffectsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
@@ -25,7 +26,8 @@ import kotlinx.coroutines.launch
 class SettingsViewModel @Inject constructor(
     private val repository: TemperatureUnitRepository,
     private val themeModeRepository: ThemeModeRepository,
-    private val appLanguageApplier: AppLanguageApplier
+    private val appLanguageApplier: AppLanguageApplier,
+    private val soundEffectsRepository: SoundEffectsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = repository.unit
@@ -78,5 +80,13 @@ class SettingsViewModel @Inject constructor(
     fun onAppLanguageSelected(language: AppLanguage) {
         appLanguageApplier.apply(language)
         _appLanguage.value = language
+    }
+
+    // --- ses efektleri ---
+
+    val soundEffectsEnabled: StateFlow<Boolean> = soundEffectsRepository.enabled
+
+    fun onSoundEffectsEnabledChanged(enabled: Boolean) {
+        viewModelScope.launch { soundEffectsRepository.setEnabled(enabled) }
     }
 }

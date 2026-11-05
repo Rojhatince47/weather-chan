@@ -21,6 +21,9 @@
     <string name="settings_unit_section">Unit</string>
     <string name="settings_theme_section">Theme</string>
     <string name="settings_language_section">Language</string>
+    <string name="settings_sound_section">Sound</string>
+    <string name="settings_sound_effects">Character tap sounds</string>
+    <string name="settings_sound_effects_description">Short, wordless sounds when you tap Weather-chan. The same in every language.</string>
     <string name="settings_location_section">Location</string>
     <string name="settings_open_city_list">My cities</string>
     <string name="language_system">System</string>
