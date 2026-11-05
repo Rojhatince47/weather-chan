@@ -14,6 +14,8 @@ import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.AmbientWeatherEffect
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.rememberCompanionAmbientPlayer
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.rememberCompanionAudioPlayer
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.DetailUiState
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.detail.ForecastContent
@@ -43,6 +45,19 @@ fun EvSayfasiRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val soundEffectsEnabled by settingsViewModel.soundEffectsEnabled.collectAsStateWithLifecycle()
+
+    val ambientPlayer = rememberCompanionAmbientPlayer()
+    val currentCity = uiState.pages.getOrNull(uiState.currentPage)
+    val currentWeather = currentCity?.let { city ->
+        (uiState.forecasts[city.id]?.content as? UiState.Success)?.data?.currentWeather
+    }
+    AmbientWeatherEffect(
+        cityId = currentCity?.id,
+        condition = currentWeather?.condition,
+        isDay = currentWeather?.isDay ?: true,
+        enabled = soundEffectsEnabled,
+        player = ambientPlayer
+    )
 
     // Liste ya da şehir ekleme ekranı kapandığında seçilen şehrin kimliği
     // buradan okunur; pager o sayfaya kaydırır ve anahtar temizlenir ki

@@ -22,7 +22,7 @@
     <string name="settings_theme_section">Tema</string>
     <string name="settings_language_section">Dil</string>
     <string name="settings_sound_section">Ses</string>
-    <string name="settings_sound_effects">Karakter dokunuş sesleri</string>
+    <string name="settings_sound_effects">Sesler</string>
     <string name="settings_location_section">Konum</string>
     <string name="settings_open_city_list">Şehirlerim</string>
     <string name="language_system">Sistem</string>
