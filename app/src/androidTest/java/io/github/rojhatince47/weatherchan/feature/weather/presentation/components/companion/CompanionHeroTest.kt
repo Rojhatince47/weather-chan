@@ -209,8 +209,10 @@ class CompanionHeroTest {
 
     private fun allTapLines(): List<String> = listOf(
         R.array.companion_tap_surprised,
-        R.array.companion_tap_playful,
-        R.array.companion_tap_soft
+        R.array.companion_tap_giggle,
+        R.array.companion_tap_laugh,
+        R.array.companion_tap_hum,
+        R.array.companion_tap_relieved
     ).flatMap { composeRule.activity.resources.getStringArray(it).toList() }
 
     private class RecordingAudio : CompanionAudioPlayer {

@@ -36,8 +36,10 @@ class CompanionStringsTest {
     fun `dokunus havuzlari iki dilde dolu ve rakamsiz`() {
         val keys = listOf(
             "companion_tap_surprised",
-            "companion_tap_playful",
-            "companion_tap_soft"
+            "companion_tap_giggle",
+            "companion_tap_laugh",
+            "companion_tap_hum",
+            "companion_tap_relieved"
         )
         paths.forEach { path ->
             val arrays = arraysOf(path)

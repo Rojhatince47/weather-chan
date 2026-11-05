@@ -4,11 +4,13 @@ import androidx.annotation.ArrayRes
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 
-/** Dokunuş tepkisinin metin havuzu. */
+/** Dokunuş tepkisinin metin havuzu. Her tepkinin kendi replikleri vardır. */
 internal enum class CompanionTextVibe(@ArrayRes val arrayRes: Int) {
     SURPRISED(R.array.companion_tap_surprised),
-    PLAYFUL(R.array.companion_tap_playful),
-    SOFT(R.array.companion_tap_soft)
+    GIGGLE(R.array.companion_tap_giggle),
+    LAUGH(R.array.companion_tap_laugh),
+    HUM(R.array.companion_tap_hum),
+    RELIEVED(R.array.companion_tap_relieved)
 }
 
 /**
@@ -27,9 +29,9 @@ internal data class CompanionReaction(
  */
 internal val companionReactions: List<CompanionReaction> = listOf(
     CompanionReaction(CompanionPose.SURPRISED, clipIndex = 3, textVibe = CompanionTextVibe.SURPRISED),
-    CompanionReaction(CompanionPose.TAP_GIGGLE, clipIndex = 0, textVibe = CompanionTextVibe.PLAYFUL),
-    CompanionReaction(CompanionPose.TAP_HUM, clipIndex = 2, textVibe = CompanionTextVibe.SOFT),
-    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.PLAYFUL),
+    CompanionReaction(CompanionPose.TAP_GIGGLE, clipIndex = 0, textVibe = CompanionTextVibe.GIGGLE),
+    CompanionReaction(CompanionPose.TAP_HUM, clipIndex = 2, textVibe = CompanionTextVibe.HUM),
+    CompanionReaction(CompanionPose.TAP_LAUGH, clipIndex = 1, textVibe = CompanionTextVibe.LAUGH),
     // 3.11 iç çekme görseli + 6. ses (burun gülüşü) = rahatlamış gülüş.
-    CompanionReaction(CompanionPose.TAP_SIGH, clipIndex = 5, textVibe = CompanionTextVibe.SOFT)
+    CompanionReaction(CompanionPose.TAP_SIGH, clipIndex = 5, textVibe = CompanionTextVibe.RELIEVED)
 )

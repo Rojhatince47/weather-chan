@@ -164,17 +164,28 @@
         <item>The sky\'s a bit gray, but it\'s still a lovely day.</item>
     </string-array>
     <string-array name="companion_tap_surprised">
-        <item>Eek, you startled me!</item>
-        <item>What happened? Is something wrong?</item>
+        <item>Eek! You startled me!</item>
+        <item>What happened, is something wrong?</item>
+        <item>Did you just appear?</item>
     </string-array>
-    <string-array name="companion_tap_playful">
-        <item>You\'ll mess up my hair, hey!</item>
-        <item>Hehe, you\'re such a tease!</item>
-        <item>Hold on, that tickles!</item>
-        <item>Don\'t do that again, okay?</item>
+    <string-array name="companion_tap_giggle">
+        <item>Hehe... that tickled.</item>
+        <item>Stop, I\'m going to laugh.</item>
+        <item>You tease...</item>
     </string-array>
-    <string-array name="companion_tap_soft">
-        <item>Mmm... let\'s stay a little longer.</item>
-        <item>Ohh... that felt nice.</item>
+    <string-array name="companion_tap_laugh">
+        <item>Hahaha! Stop, stop...</item>
+        <item>I\'m dying of laughter!</item>
+        <item>Ow, my stomach hurts!</item>
+    </string-array>
+    <string-array name="companion_tap_hum">
+        <item>Mmm... so cozy.</item>
+        <item>Let\'s stay like this a little longer.</item>
+        <item>That warms my heart.</item>
+    </string-array>
+    <string-array name="companion_tap_relieved">
+        <item>Ohh... that felt good.</item>
+        <item>Fine, I give up.</item>
+        <item>I\'m relieved, but still giggling.</item>
     </string-array>
 </resources>

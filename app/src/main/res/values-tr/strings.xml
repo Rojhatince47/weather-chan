@@ -164,17 +164,28 @@
         <item>Gökyüzü biraz kapalı; yine de güzel bir gün.</item>
     </string-array>
     <string-array name="companion_tap_surprised">
-        <item>Aaa, korkuttun beni!</item>
-        <item>Ne oldu? Bir şey mi var?</item>
+        <item>Aaa! Korkuttun beni!</item>
+        <item>Ne oldu, bir şey mi var?</item>
+        <item>Bir anda mı geldin?</item>
     </string-array>
-    <string-array name="companion_tap_playful">
-        <item>Saçımı bozacaksın, hiç!</item>
-        <item>Hihi, şımarık!</item>
-        <item>Dur, gıdıklanıyorum!</item>
-        <item>Bir daha yapma, tamam mı?</item>
+    <string-array name="companion_tap_giggle">
+        <item>Hihi... gıdıklandım.</item>
+        <item>Dur, güleceğim şimdi.</item>
+        <item>Şımarık...</item>
     </string-array>
-    <string-array name="companion_tap_soft">
-        <item>Mmm... biraz daha kalalım.</item>
+    <string-array name="companion_tap_laugh">
+        <item>Hahaha! Dur, dur...</item>
+        <item>Gülmekten öldüm!</item>
+        <item>Ay, karnıma ağrı girdi!</item>
+    </string-array>
+    <string-array name="companion_tap_hum">
+        <item>Mmm... huzurlu.</item>
+        <item>Böyle biraz daha kalalım.</item>
+        <item>İçim ısındı.</item>
+    </string-array>
+    <string-array name="companion_tap_relieved">
         <item>Ohh... iyi geldi.</item>
+        <item>Pes ettim, tamam.</item>
+        <item>Rahatladım ama yine de gülüyorum.</item>
     </string-array>
 </resources>
