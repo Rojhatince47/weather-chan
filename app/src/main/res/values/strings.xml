@@ -124,6 +124,18 @@
     <string name="notif_channel_summary">Daily summary</string>
     <string name="notif_channel_companion">Companion messages</string>
 
+    <string name="notif_title_severe">Heads up!</string>
+    <string name="notif_title_rain">Grab your umbrella</string>
+    <string name="notif_title_summary">Today\'s weather</string>
+    <string name="notif_title_companion">Weather-chan</string>
+    <string name="notif_severe_storm">Thunder\'s rolling! Stay inside if you can — I\'m right here.</string>
+    <string name="notif_severe_snow">The snow\'s coming down hard. Think twice before heading out, okay?</string>
+    <string name="notif_severe_wind">The wind is fierce. If you\'re outside, get somewhere solid.</string>
+    <string name="notif_severe_cold">Freezing cold! Layer up and don\'t stay out long.</string>
+    <string name="notif_severe_hot">Scorching heat! Drink plenty of water and stay in the shade.</string>
+    <string name="notif_rain_soon">Rain\'s starting soon — take your umbrella.</string>
+    <string name="notif_summary">Today in %1$s: high %2$d°, low %3$d°, %%%4$d chance of rain.</string>
+
     <string-array name="advice_storm">
         <item>Thunder\'s rolling in — stay indoors if you can, okay?</item>
         <item>There\'s a storm out there; even an umbrella won\'t help much.</item>
