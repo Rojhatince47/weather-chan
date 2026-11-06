@@ -40,6 +40,11 @@
     <string name="settings_notif_on">Açık · %1$s</string>
     <string name="settings_summary_separator">" · "</string>
     <string name="settings_row_open">Aç</string>
+
+    <string name="widget_chat_name">Weather-chan</string>
+    <string name="widget_info_name">Hava durumu</string>
+    <string name="widget_character_description">Weather-chan</string>
+    <string name="widget_no_data">Veri yok — dokunup aç</string>
     <string name="language_system">Sistem</string>
     <string name="language_turkish">Türkçe</string>
     <string name="language_english">English</string>

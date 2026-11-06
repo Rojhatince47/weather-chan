@@ -37,6 +37,30 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".feature.widget.presentation.WeatherChatWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_chat_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weather_chat_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".feature.widget.presentation.WeatherInfoWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_info_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weather_info_widget_info" />
+        </receiver>
+
         <!-- WorkManager, HiltWorkerFactory'yi kullanabilsin diye varsayılan
              başlatıcı kapatılır; uygulama Configuration.Provider uygular. -->
         <provider

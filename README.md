@@ -14,6 +14,8 @@ bir tavsiye motorundan gelen kısa, samimi öneriler sunar.
 - Havaya göre değişen arka plan paleti ve ambiyans animasyonları
 - **Weather-chan**: yedi poz, dokunuşa tepki, kısa sesler ve havaya göre
   tavsiye balonu
+- Ana ekran widget'ları: Weather-chan (2x2/4x2) ve karaktere yer vermeyen
+  bilgi widget'ı; sıcaklık, durum, şehir ve saatlik şerit
 - Yükleme, boş, hata ve yenileme durumlarının tamamı ele alınır
 
 Weather-chan'in tavsiyeleri kural tabanlıdır; LLM, API veya ağ bağlantısı
@@ -22,14 +24,14 @@ kullanmaz. Metinler TR/EN kaynaklardan gelir, seçim deterministiktir.
 ## Teknoloji
 
 Kotlin · Jetpack Compose (Material 3) · Clean Architecture · Coroutines &
-StateFlow · Hilt · Retrofit · DataStore · Navigation Compose
+StateFlow · Hilt · Retrofit · DataStore · Navigation Compose · WorkManager ·
+Glance (widget)
 
 ## Veri kaynağı
 
 Birincil kaynak [Open-Meteo](https://open-meteo.com/)'dur ve API anahtarı
-gerektirmez. Birincil kaynak başarısız olursa `wttr.in` yedeği devreye girer.
-Yedek kaynak gece/gündüz bilgisini sabit tuttuğu için yalnız yedek veride
-gece pozu oluşmaz; bu bilinen bir veri sınırıdır.
+gerektirmez. Birincil kaynak başarısız olursa `wttr.in` yedeği devreye girer;
+yedekte gece/gündüz, gözlem saati ile gün doğumu/batımından hesaplanır.
 
 ## Çalıştırma
 
