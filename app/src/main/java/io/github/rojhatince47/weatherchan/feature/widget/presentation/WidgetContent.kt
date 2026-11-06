@@ -54,18 +54,16 @@ private fun rememberWidgetMetrics(): WidgetMetrics {
     val wide = size.width >= 250.dp
     val stacked = !wide && size.height >= 200.dp
 
-    val character = (
-        minDim * when {
-            wide -> 0.48f
-            stacked -> 0.5f
-            else -> 0.45f
-        }
-        ).coerceIn(64.dp, 150.dp)
-    val temperature = (minDim.value * 0.15f).coerceIn(22f, 42f).sp
-    val label = (minDim.value * 0.075f).coerceIn(12f, 20f).sp
-    val city = (minDim.value * 0.06f).coerceIn(11f, 16f).sp
-    val hour = (minDim.value * 0.058f).coerceIn(10f, 15f).sp
-    val glyph = (minDim.value * 0.08f).coerceIn(13f, 22f).sp
+    val character = if (wide) {
+        (size.height * 0.68f).coerceIn(80.dp, 240.dp)
+    } else {
+        (minDim * 0.68f).coerceIn(72.dp, 190.dp)
+    }
+    val temperature = (minDim.value * if (wide) 0.12f else 0.13f).coerceIn(22f, 40f).sp
+    val label = (minDim.value * 0.07f).coerceIn(11f, 18f).sp
+    val city = (minDim.value * 0.055f).coerceIn(10f, 15f).sp
+    val hour = (minDim.value * 0.052f).coerceIn(9f, 14f).sp
+    val glyph = (minDim.value * 0.072f).coerceIn(12f, 20f).sp
     val bigGlyph = (minDim.value * 0.2f).coerceIn(24f, 56f).sp
     return WidgetMetrics(character, temperature, label, city, hour, glyph, bigGlyph)
 }
@@ -75,8 +73,6 @@ internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
     val condition = snapshot.conditionOrCloudy()
     val size = LocalSize.current
     val wide = size.width >= 250.dp
-    // Kare ve uzun widget'ta karakter üstte; küçük karelerde yan yana.
-    val stacked = !wide && size.height >= 200.dp
     val metrics = rememberWidgetMetrics()
     val context = LocalContext.current
 
@@ -104,23 +100,8 @@ internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
             return@Column
         }
 
-        when {
-            wide -> {
-                Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
-                    Image(
-                        provider = ImageProvider(poseDrawable(snapshot.pose)),
-                        contentDescription = context.getString(
-                            R.string.widget_character_description
-                        ),
-                        modifier = GlanceModifier.size(metrics.character)
-                    )
-                    TextPill(snapshot, condition, metrics, modifier = GlanceModifier.padding(start = 10.dp))
-                }
-                if (snapshot.hourly.isNotEmpty()) {
-                    ChatHourlyStrip(snapshot, metrics)
-                }
-            }
-            stacked -> {
+        if (wide) {
+            Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
                 Image(
                     provider = ImageProvider(poseDrawable(snapshot.pose)),
                     contentDescription = context.getString(
@@ -128,20 +109,32 @@ internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
                     ),
                     modifier = GlanceModifier.size(metrics.character)
                 )
-                TextPill(snapshot, condition, metrics)
+                TextPill(
+                    snapshot = snapshot,
+                    condition = condition,
+                    metrics = metrics,
+                    showCity = true,
+                    modifier = GlanceModifier.padding(start = 10.dp)
+                )
             }
-            else -> {
-                Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
-                    Image(
-                        provider = ImageProvider(poseDrawable(snapshot.pose)),
-                        contentDescription = context.getString(
-                            R.string.widget_character_description
-                        ),
-                        modifier = GlanceModifier.size(metrics.character)
-                    )
-                    TextPill(snapshot, condition, metrics, modifier = GlanceModifier.padding(start = 8.dp))
-                }
+            if (snapshot.hourly.isNotEmpty()) {
+                ChatHourlyStrip(snapshot, metrics)
             }
+        } else {
+            // Kare widget'ta karakter ana öğe; yazı altta ince şeritte.
+            Image(
+                provider = ImageProvider(poseDrawable(snapshot.pose)),
+                contentDescription = context.getString(
+                    R.string.widget_character_description
+                ),
+                modifier = GlanceModifier.size(metrics.character)
+            )
+            TextPill(
+                snapshot = snapshot,
+                condition = condition,
+                metrics = metrics,
+                showCity = false
+            )
         }
     }
 }
@@ -152,6 +145,7 @@ private fun TextPill(
     snapshot: WidgetSnapshot,
     condition: WeatherCondition,
     metrics: WidgetMetrics,
+    showCity: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
     Column(
@@ -176,13 +170,15 @@ private fun TextPill(
                 fontSize = metrics.label
             )
         )
-        Text(
-            text = snapshot.cityName,
-            style = TextStyle(
-                color = ColorProvider(Color.White),
-                fontSize = metrics.city
+        if (showCity) {
+            Text(
+                text = snapshot.cityName,
+                style = TextStyle(
+                    color = ColorProvider(Color.White),
+                    fontSize = metrics.city
+                )
             )
-        )
+        }
     }
 }
 
