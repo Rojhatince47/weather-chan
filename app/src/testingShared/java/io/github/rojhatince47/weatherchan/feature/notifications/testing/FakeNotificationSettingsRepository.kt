@@ -15,6 +15,8 @@ class FakeNotificationSettingsRepository(
     private val state = MutableStateFlow(initial)
     override val settings: StateFlow<NotificationSettings> = state.asStateFlow()
 
+    override suspend fun read(): NotificationSettings = state.value
+
     override suspend fun setMasterEnabled(enabled: Boolean) {
         state.value = state.value.copy(masterEnabled = enabled)
     }

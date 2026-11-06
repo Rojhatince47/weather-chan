@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 
 @Singleton
@@ -25,6 +26,8 @@ class DataStoreNotificationSettingsRepository @Inject constructor(
 
     override val settings: StateFlow<NotificationSettings> = preferences.settings()
         .stateIn(scope, SharingStarted.Eagerly, NotificationSettings())
+
+    override suspend fun read(): NotificationSettings = preferences.settings().first()
 
     override suspend fun setMasterEnabled(enabled: Boolean) {
         preferences.writeMasterEnabled(enabled)

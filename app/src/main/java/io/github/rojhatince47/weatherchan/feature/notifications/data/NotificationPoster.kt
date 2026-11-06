@@ -11,6 +11,7 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationPayload
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.PlannedNotification
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.repository.NotificationPresenter
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.textArrayRes
 import javax.inject.Inject
@@ -23,22 +24,22 @@ import javax.inject.Inject
  */
 class NotificationPoster @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : NotificationPresenter {
 
-    fun post(planned: PlannedNotification, city: City) {
+    override fun post(notification: PlannedNotification, city: City) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
-        val text = resolveText(planned, city)
-        val notification = NotificationCompat.Builder(context, channelOf(planned.type))
+        val text = resolveText(notification, city)
+        val androidNotification = NotificationCompat.Builder(context, channelOf(notification.type))
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(context.getString(NotificationTexts.titleRes(planned.type)))
+            .setContentTitle(context.getString(NotificationTexts.titleRes(notification.type)))
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setContentIntent(tapIntent(planned.type))
+            .setContentIntent(tapIntent(notification.type))
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(notificationId(planned.type), notification)
+        NotificationManagerCompat.from(context).notify(notificationId(notification.type), androidNotification)
     }
 
     private fun resolveText(planned: PlannedNotification, city: City): String = when (val payload = planned.payload) {
