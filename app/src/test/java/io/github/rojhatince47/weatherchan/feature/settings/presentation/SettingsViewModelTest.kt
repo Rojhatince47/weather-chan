@@ -2,6 +2,9 @@ package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
 import app.cash.turbine.test
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.repository.NotificationSettingsRepository
+import io.github.rojhatince47.weatherchan.feature.notifications.testing.FakeNotificationSettingsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
@@ -132,12 +135,14 @@ class SettingsViewModelTest {
 
     private fun newViewModel(
         applier: AppLanguageApplier = FakeAppLanguageApplier(),
-        soundEffects: SoundEffectsRepository = FakeSoundEffectsRepository()
+        soundEffects: SoundEffectsRepository = FakeSoundEffectsRepository(),
+        notifications: NotificationSettingsRepository = FakeNotificationSettingsRepository()
     ): SettingsViewModel = SettingsViewModel(
         FakeTemperatureUnitRepository(),
         FakeThemeModeRepository(),
         applier,
-        soundEffects
+        soundEffects,
+        notifications
     )
 
     // --- dil ---
@@ -186,6 +191,30 @@ class SettingsViewModelTest {
             assertTrue(awaitItem())
             viewModel.onSoundEffectsEnabledChanged(false)
             assertFalse(awaitItem())
+        }
+    }
+
+    // --- bildirimler ---
+
+    @Test
+    fun `bildirimler varsayilan olarak acik`() = runTest {
+        val viewModel = newViewModel()
+
+        assertTrue(viewModel.notificationSettings.value.masterEnabled)
+    }
+
+    @Test
+    fun `bildirim anahtari ve tur secimi akisa yayilir`() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.notificationSettings.test {
+            assertTrue(awaitItem().masterEnabled)
+
+            viewModel.onNotificationTypeChanged(NotificationType.RAIN_SOON, false)
+            assertFalse(awaitItem().typeEnabled.getValue(NotificationType.RAIN_SOON))
+
+            viewModel.onNotificationMasterChanged(false)
+            assertFalse(awaitItem().masterEnabled)
         }
     }
 }

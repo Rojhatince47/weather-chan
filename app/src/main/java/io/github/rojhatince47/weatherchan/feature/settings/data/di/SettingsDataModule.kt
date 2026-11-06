@@ -11,6 +11,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.rojhatince47.weatherchan.core.di.SettingsDataStore
+import io.github.rojhatince47.weatherchan.feature.notifications.data.repository.DataStoreNotificationSettingsRepository
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.repository.NotificationSettingsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.AppCompatAppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreSoundEffectsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.data.repository.DataStoreTemperatureUnitRepository
@@ -38,6 +40,9 @@ abstract class SettingsDataModule {
 
     @Binds
     abstract fun bindSoundEffectsRepository(impl: DataStoreSoundEffectsRepository): SoundEffectsRepository
+
+    @Binds
+    abstract fun bindNotificationSettingsRepository(impl: DataStoreNotificationSettingsRepository): NotificationSettingsRepository
 
     companion object {
         @Provides

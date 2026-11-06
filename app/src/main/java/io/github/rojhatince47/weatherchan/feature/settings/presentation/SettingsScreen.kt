@@ -11,6 +11,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -20,10 +21,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -37,6 +44,8 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationSettings
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
@@ -45,6 +54,8 @@ import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.to
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.rememberLocationAction
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Birim ve tema ayarları.
@@ -70,6 +81,10 @@ fun SettingsScreen(
     onBack: () -> Unit,
     soundEffectsEnabled: Boolean = true,
     onSoundEffectsEnabledChange: (Boolean) -> Unit = {},
+    notificationSettings: NotificationSettings = NotificationSettings(),
+    onNotificationMasterChange: (Boolean) -> Unit = {},
+    onNotificationTypeChange: (NotificationType, Boolean) -> Unit = { _, _ -> },
+    onNotificationSummaryTimeChange: (LocalTime) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -204,9 +219,124 @@ fun SettingsScreen(
                     onCheckedChange = null
                 )
             }
+            SectionTitle(
+                text = stringResource(R.string.settings_notifications),
+                modifier = Modifier.padding(top = HavaSpacing.md)
+            )
+            NotificationToggleRow(
+                label = stringResource(R.string.settings_notif_master),
+                checked = notificationSettings.masterEnabled,
+                enabled = true,
+                testTag = "settings_notif_master",
+                onCheckedChange = onNotificationMasterChange
+            )
+            notificationTypes.forEach { (type, labelRes) ->
+                NotificationToggleRow(
+                    label = stringResource(labelRes),
+                    checked = notificationSettings.typeEnabled.getValue(type),
+                    enabled = notificationSettings.masterEnabled,
+                    testTag = "settings_notif_${type.name.lowercase()}",
+                    onCheckedChange = { onNotificationTypeChange(type, it) }
+                )
+            }
+            SummaryTimeRow(
+                time = notificationSettings.summaryTime,
+                enabled = notificationSettings.masterEnabled,
+                onChange = onNotificationSummaryTimeChange
+            )
         }
     }
 }
+
+/** Tür sırası arayüzdeki sıradır; ayarlar ekranı bu listeyi gezer. */
+private val notificationTypes = listOf(
+    NotificationType.SEVERE_WEATHER to R.string.settings_notif_severe,
+    NotificationType.RAIN_SOON to R.string.settings_notif_rain,
+    NotificationType.DAILY_SUMMARY to R.string.settings_notif_summary,
+    NotificationType.COMPANION to R.string.settings_notif_companion
+)
+
+@Composable
+private fun NotificationToggleRow(label: String, checked: Boolean, enabled: Boolean, testTag: String, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .testTag(testTag)
+            .padding(vertical = HavaSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(HavaSpacing.sm)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SummaryTimeRow(time: LocalTime, enabled: Boolean, onChange: (LocalTime) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = HavaSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.settings_notif_summary_time),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(
+            onClick = { showDialog = true },
+            enabled = enabled,
+            modifier = Modifier.testTag("settings_notif_summary_time")
+        ) {
+            Text(time.format(timeFormat))
+        }
+    }
+    if (showDialog) {
+        val pickerState = rememberTimePickerState(
+            initialHour = time.hour,
+            initialMinute = time.minute,
+            is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onChange(LocalTime.of(pickerState.hour, pickerState.minute))
+                        showDialog = false
+                    }
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            text = { TimePicker(state = pickerState) }
+        )
+    }
+}
+
+private val timeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 @Composable
 private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
@@ -232,6 +362,7 @@ fun SettingsRoute(
     val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
     val appLanguage by settingsViewModel.appLanguage.collectAsStateWithLifecycle()
     val soundEffectsEnabled by settingsViewModel.soundEffectsEnabled.collectAsStateWithLifecycle()
+    val notificationSettings by settingsViewModel.notificationSettings.collectAsStateWithLifecycle()
     val evUiState by evViewModel.uiState.collectAsStateWithLifecycle()
     // Ekran her açılışında seçim dış kaynakla (sistem ayarları) tazelenir.
     LaunchedEffect(Unit) { settingsViewModel.refreshAppLanguage() }
@@ -259,6 +390,10 @@ fun SettingsRoute(
         onBack = onBack,
         soundEffectsEnabled = soundEffectsEnabled,
         onSoundEffectsEnabledChange = settingsViewModel::onSoundEffectsEnabledChanged,
+        notificationSettings = notificationSettings,
+        onNotificationMasterChange = settingsViewModel::onNotificationMasterChanged,
+        onNotificationTypeChange = settingsViewModel::onNotificationTypeChanged,
+        onNotificationSummaryTimeChange = settingsViewModel::onNotificationSummaryTimeChanged,
         modifier = modifier
     )
 }

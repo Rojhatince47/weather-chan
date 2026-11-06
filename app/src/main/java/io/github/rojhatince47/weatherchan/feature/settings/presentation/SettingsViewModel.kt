@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationSettings
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.repository.NotificationSettingsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
@@ -13,6 +16,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.Tem
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.TemperatureUnitUiModel
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +31,8 @@ class SettingsViewModel @Inject constructor(
     private val repository: TemperatureUnitRepository,
     private val themeModeRepository: ThemeModeRepository,
     private val appLanguageApplier: AppLanguageApplier,
-    private val soundEffectsRepository: SoundEffectsRepository
+    private val soundEffectsRepository: SoundEffectsRepository,
+    private val notificationSettingsRepository: NotificationSettingsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState<TemperatureUnitUiModel>> = repository.unit
@@ -88,5 +93,21 @@ class SettingsViewModel @Inject constructor(
 
     fun onSoundEffectsEnabledChanged(enabled: Boolean) {
         viewModelScope.launch { soundEffectsRepository.setEnabled(enabled) }
+    }
+
+    // --- bildirimler ---
+
+    val notificationSettings: StateFlow<NotificationSettings> = notificationSettingsRepository.settings
+
+    fun onNotificationMasterChanged(enabled: Boolean) {
+        viewModelScope.launch { notificationSettingsRepository.setMasterEnabled(enabled) }
+    }
+
+    fun onNotificationTypeChanged(type: NotificationType, enabled: Boolean) {
+        viewModelScope.launch { notificationSettingsRepository.setTypeEnabled(type, enabled) }
+    }
+
+    fun onNotificationSummaryTimeChanged(time: LocalTime) {
+        viewModelScope.launch { notificationSettingsRepository.setSummaryTime(time) }
     }
 }
