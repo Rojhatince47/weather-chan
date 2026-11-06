@@ -88,6 +88,29 @@ class WeatherUiMapperTest {
     )
 
     @Test
+    fun `yuşde yuzde yuz gosterilmez`() {
+        val hundred = forecast().copy(
+            hourlyForecast = listOf(
+                HourlyForecast(
+                    localDateTime = LocalDateTime.of(2026, 10, 8, 9, 0),
+                    hourOfDay = 9,
+                    temperatureCelsius = 15,
+                    condition = WeatherCondition.RAIN,
+                    precipitationProbabilityPercent = 100
+                )
+            )
+        )
+
+        val ui = mapper.toForecastDetailUiModel(
+            hundred,
+            windowStart = LocalDateTime.of(2026, 10, 8, 0, 0),
+            today = dayZero
+        )
+
+        assertEquals("%99", ui.hourlyForecast.single().precipitationProbabilityText)
+    }
+
+    @Test
     fun `maps city weather to ui model`() {
         val cityWeather = cityWeather()
         val uiModel = mapper.toCityWeatherUiModel(cityWeather)

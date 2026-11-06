@@ -9,10 +9,12 @@ import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.Sev
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceContext
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.HourlyOutlook
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherAdviceEngine
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.PrecipitationProbability
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 /**
@@ -115,12 +117,22 @@ class NotificationPlanner @Inject constructor(
 
         val daily = input.forecast.dailyForecast.firstOrNull() ?: return null
         val today = input.cityNow.toLocalDate()
-        val rainChance = input.forecast.hourlyForecast
-            .filter { it.localDateTime.toLocalDate() == today }
-            .maxOfOrNull { it.precipitationProbabilityPercent } ?: 0
+        val from = input.cityNow.truncatedTo(ChronoUnit.HOURS)
+        // Yalnız günün kalan saatleri: sabah geçmiş bir yağmurun yüzdesi
+        // akşam özetine taşınmaz, kullanıcı da uygulamada aynı aralığı görür.
+        val remaining = input.forecast.hourlyForecast.filter {
+            it.localDateTime.toLocalDate() == today && !it.localDateTime.isBefore(from)
+        }
+        val peak = remaining.maxByOrNull { it.precipitationProbabilityPercent }
         return PlannedNotification(
             type = NotificationType.DAILY_SUMMARY,
-            payload = NotificationPayload.Summary(daily, rainChance)
+            payload = NotificationPayload.Summary(
+                daily = daily,
+                rainChancePercent = PrecipitationProbability.forDisplay(
+                    peak?.precipitationProbabilityPercent ?: 0
+                ),
+                peakHour = peak?.hourOfDay
+            )
         )
     }
 

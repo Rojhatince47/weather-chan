@@ -25,7 +25,8 @@ class NotificationStringsTest {
         "notif_severe_cold",
         "notif_severe_hot",
         "notif_rain_soon",
-        "notif_summary"
+        "notif_summary",
+        "notif_summary_peak"
     )
 
     @Test
@@ -43,9 +44,14 @@ class NotificationStringsTest {
     @Test
     fun `ozet metni dort yer tutucu tasir`() {
         paths.forEach { path ->
-            val summary = stringsOf(path).getValue("notif_summary")
+            val strings = stringsOf(path)
+            val summary = strings.getValue("notif_summary")
             listOf("%1\$s", "%2\$s", "%3\$s", "%4\$d").forEach { placeholder ->
                 assertTrue("$path: notif_summary $placeholder icermeli", summary.contains(placeholder))
+            }
+            val peak = strings.getValue("notif_summary_peak")
+            listOf("%1\$s", "%2\$s", "%3\$s", "%4\$d", "%5\$02d").forEach { placeholder ->
+                assertTrue("$path: notif_summary_peak $placeholder icermeli", peak.contains(placeholder))
             }
         }
     }

@@ -49,13 +49,27 @@ class NotificationPoster @Inject constructor(
     private fun resolveText(planned: PlannedNotification, city: City): String = when (val payload = planned.payload) {
         is NotificationPayload.Summary -> {
             val unit = temperatureUnitRepository.unit.value
-            context.getString(
-                R.string.notif_summary,
-                city.name,
-                SummaryTemperatureFormatter.temperature(payload.daily.maxTemperatureCelsius, unit),
-                SummaryTemperatureFormatter.temperature(payload.daily.minTemperatureCelsius, unit),
-                payload.rainChancePercent
-            )
+            val high = SummaryTemperatureFormatter.temperature(payload.daily.maxTemperatureCelsius, unit)
+            val low = SummaryTemperatureFormatter.temperature(payload.daily.minTemperatureCelsius, unit)
+            val peakHour = payload.peakHour
+            if (peakHour != null) {
+                context.getString(
+                    R.string.notif_summary_peak,
+                    city.name,
+                    high,
+                    low,
+                    payload.rainChancePercent,
+                    peakHour
+                )
+            } else {
+                context.getString(
+                    R.string.notif_summary,
+                    city.name,
+                    high,
+                    low,
+                    payload.rainChancePercent
+                )
+            }
         }
         is NotificationPayload.Companion -> {
             val lines = context.resources.getStringArray(payload.category.textArrayRes())

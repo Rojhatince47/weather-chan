@@ -9,6 +9,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherA
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.CityWeather
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
+import io.github.rojhatince47.weatherchan.feature.weather.domain.model.PrecipitationProbability
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.hourlyWindow
 import java.time.DayOfWeek
@@ -101,7 +102,7 @@ class WeatherUiMapper @Inject constructor(
                     temperatureText = formatTemperature(hourly.temperatureCelsius, unit),
                     temperatureValue = temperatureValue(hourly.temperatureCelsius, unit),
                     icon = iconFor(hourly.condition, hourly.isDay),
-                    precipitationProbabilityText = "%${hourly.precipitationProbabilityPercent}"
+                    precipitationProbabilityText = "%${PrecipitationProbability.forDisplay(hourly.precipitationProbabilityPercent)}"
                 )
             },
             dailyForecast = forecast.dailyForecast.map { daily ->

@@ -20,7 +20,12 @@ sealed interface NotificationPayload {
 
     data object RainSoon : NotificationPayload
 
-    data class Summary(val daily: DailyForecast, val rainChancePercent: Int) : NotificationPayload
+    data class Summary(
+        val daily: DailyForecast,
+        val rainChancePercent: Int,
+        /** Günün kalanında en yüksek ihtimalin saati; yoksa null. */
+        val peakHour: Int? = null
+    ) : NotificationPayload
 
     data class Companion(
         val category: AdviceCategory,

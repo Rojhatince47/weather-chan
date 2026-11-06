@@ -387,6 +387,40 @@ class NotificationPlannerTest {
     }
 
     @Test
+    fun `ozet yuzde yuz gostermez ve kalan gunu kullanir`() {
+        val now = LocalDateTime.of(2026, 11, 6, 20, 0)
+        val hourly = listOf(
+            hour(LocalDateTime.of(2026, 11, 6, 10, 0), WeatherCondition.RAIN, 100),
+            hour(LocalDateTime.of(2026, 11, 6, 21, 0), WeatherCondition.RAIN, 100),
+            hour(LocalDateTime.of(2026, 11, 6, 22, 0), WeatherCondition.CLOUDY, 40)
+        )
+
+        val output = planner.plan(input(now, forecast = forecast(hourly = hourly)))
+
+        val summary = output.notifications.single { it.type == NotificationType.DAILY_SUMMARY }
+        val payload = summary.payload as NotificationPayload.Summary
+        assertEquals(99, payload.rainChancePercent)
+        assertEquals(21, payload.peakHour)
+    }
+
+    @Test
+    fun `ozet gecmis saatlerin yuzdesini tasimaz`() {
+        val now = LocalDateTime.of(2026, 11, 6, 20, 0)
+        val hourly = listOf(
+            hour(LocalDateTime.of(2026, 11, 6, 10, 0), WeatherCondition.RAIN, 100),
+            hour(LocalDateTime.of(2026, 11, 6, 21, 0), WeatherCondition.CLOUDY, 40)
+        )
+
+        val output = planner.plan(input(now, forecast = forecast(hourly = hourly)))
+
+        val payload = output.notifications
+            .single { it.type == NotificationType.DAILY_SUMMARY }
+            .payload as NotificationPayload.Summary
+        assertEquals(40, payload.rainChancePercent)
+        assertEquals(21, payload.peakHour)
+    }
+
+    @Test
     fun `kar yaklasirken yagmur uyarisi yok`() {
         val now = LocalDateTime.of(2026, 11, 6, 10, 0)
         val output = planner.plan(

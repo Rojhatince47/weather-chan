@@ -136,7 +136,8 @@
     <string name="notif_severe_cold">Dondurucu soğuk! Kat kat giyin, uzun süre dışarıda kalma.</string>
     <string name="notif_severe_hot">Kavurucu sıcak! Bol su iç, gölgeden ayrılma.</string>
     <string name="notif_rain_soon">Birazdan yağmur başlıyor; şemsiyeni yanına al.</string>
-    <string name="notif_summary">%1$s bugün: en yüksek %2$s, en düşük %3$s, yağmur ihtimali %%%4$d.</string>
+    <string name="notif_summary">%1$s bugün: en yüksek %2$s, en düşük %3$s, yağış ihtimali %%%4$d.</string>
+    <string name="notif_summary_peak">%1$s bugün: en yüksek %2$s, en düşük %3$s. Yağış ihtimali %%%4$d (en yüksek %5$02d:00 civarı).</string>
 
     <string-array name="advice_storm">
         <item>Gök gürlüyor, mümkünse bugün evde kal tamam mı?</item>
