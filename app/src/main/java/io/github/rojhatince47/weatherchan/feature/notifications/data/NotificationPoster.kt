@@ -8,10 +8,12 @@ import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.rojhatince47.weatherchan.MainActivity
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.SummaryTemperatureFormatter
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationPayload
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.PlannedNotification
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.repository.NotificationPresenter
+import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.TemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.textArrayRes
 import javax.inject.Inject
@@ -23,7 +25,8 @@ import javax.inject.Inject
  * yazar, bildirim gölü birikmez. Ses kanalın varsayılanıdır (sistem tonu).
  */
 class NotificationPoster @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val temperatureUnitRepository: TemperatureUnitRepository
 ) : NotificationPresenter {
 
     override fun post(notification: PlannedNotification, city: City) {
@@ -43,13 +46,16 @@ class NotificationPoster @Inject constructor(
     }
 
     private fun resolveText(planned: PlannedNotification, city: City): String = when (val payload = planned.payload) {
-        is NotificationPayload.Summary -> context.getString(
-            R.string.notif_summary,
-            city.name,
-            payload.daily.maxTemperatureCelsius,
-            payload.daily.minTemperatureCelsius,
-            payload.rainChancePercent
-        )
+        is NotificationPayload.Summary -> {
+            val unit = temperatureUnitRepository.unit.value
+            context.getString(
+                R.string.notif_summary,
+                city.name,
+                SummaryTemperatureFormatter.temperature(payload.daily.maxTemperatureCelsius, unit),
+                SummaryTemperatureFormatter.temperature(payload.daily.minTemperatureCelsius, unit),
+                payload.rainChancePercent
+            )
+        }
         is NotificationPayload.Companion -> {
             val lines = context.resources.getStringArray(payload.category.textArrayRes())
             lines.random()

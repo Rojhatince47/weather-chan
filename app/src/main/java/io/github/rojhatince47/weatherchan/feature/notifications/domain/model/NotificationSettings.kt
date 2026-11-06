@@ -5,8 +5,9 @@ import java.time.LocalTime
 /**
  * Bildirim tercihleri. Varsayılan **hepsi açık**: kullanıcı isterse kapatır.
  *
- * [summaryTime] cihazın yerel saatidir; sessiz saat (23:00–08:00) kuralı
- * özeti de kapsar, yani 08:00 öncesi bir seçim ilk kontrolde gönderilir.
+ * [summaryTime] cihazın yerel saatidir. Sessiz saat (23:00–08:00) içine
+ * denk gelen bir seçim 08:00'e ertelenir; karar motoru bunu kendisi
+ * normalleştirir, arayüz ayrıca kısıtlamaz.
  */
 data class NotificationSettings(
     val masterEnabled: Boolean = true,

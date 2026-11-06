@@ -12,6 +12,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.WeatherA
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -31,26 +32,35 @@ class NotificationPlanner @Inject constructor(
 ) {
 
     fun plan(input: PlannerInput): PlannerOutput {
-        val history = input.history.forDay(input.localNow.toLocalDate())
-        if (!input.settings.masterEnabled) return PlannerOutput(emptyList(), history)
+        // Gün döndüyse sayaçlar sıfırlanır ve **tüm** kurallar sıfırlanmış
+        // geçmişi görür; dünün sayacı/cooldown'ı bugünü kilitlemez.
+        val effective = input.copy(history = input.history.forDay(input.localNow.toLocalDate()))
+        if (!effective.settings.masterEnabled) return PlannerOutput(emptyList(), effective.history)
 
         val planned = mutableListOf<PlannedNotification>()
-        severe(input)?.let(planned::add)
-        if (!isQuietHour(input.localNow)) {
-            rainSoon(input)?.let(planned::add)
-            summary(input)?.let(planned::add)
+        fun add(candidate: PlannedNotification?) {
+            if (candidate == null) return
+            // Global tavan: dört türün toplamı günde 4'ü geçmez.
+            if (effective.history.totalToday() + planned.size >= MAX_TOTAL_PER_DAY) return
+            planned += candidate
+        }
+
+        add(severe(effective))
+        if (!isQuietHour(effective.localNow)) {
+            add(rainSoon(effective))
+            add(summary(effective))
             // Karakter mesajı aynı turda başka bildirimle binmez ve o gün
             // şiddetli/yağmur uyarısından sonra gelmez. Günlük özet engel
             // değildir: özet sabah gider, karakter gün içinde tek başına.
-            val alertsToday = history.countOf(NotificationType.SEVERE_WEATHER) +
-                history.countOf(NotificationType.RAIN_SOON)
+            val alertsToday = effective.history.countOf(NotificationType.SEVERE_WEATHER) +
+                effective.history.countOf(NotificationType.RAIN_SOON)
             if (planned.isEmpty() && alertsToday == 0) {
-                companion(input)?.let(planned::add)
+                add(companion(effective))
             }
         }
 
-        val updated = planned.fold(history) { acc, notification ->
-            acc.record(notification.type, input.now)
+        val updated = planned.fold(effective.history) { acc, notification ->
+            acc.record(notification.type, effective.now)
         }
         return PlannerOutput(planned, updated)
     }
@@ -86,7 +96,9 @@ class NotificationPlanner @Inject constructor(
         val start = input.forecast.hourlyForecast
             .filter { it.localDateTime.isAfter(input.localNow) && !it.localDateTime.isAfter(deadline) }
             .filter {
-                it.condition.isWet() &&
+                // Yalnız yağmur/çisenti "şemsiyeni al" uyarısı üretir; kar ve
+                // fırtına şiddetli hava kuralının konusudur.
+                it.condition.isRain() &&
                     it.precipitationProbabilityPercent >= RAIN_SOON_THRESHOLD
             }
             .minByOrNull { it.localDateTime } ?: return null
@@ -104,7 +116,7 @@ class NotificationPlanner @Inject constructor(
     private fun summary(input: PlannerInput): PlannedNotification? {
         if (!input.settings.isEnabled(NotificationType.DAILY_SUMMARY)) return null
         if (input.history.countOf(NotificationType.DAILY_SUMMARY) >= MAX_SUMMARY_PER_DAY) return null
-        if (input.localNow.toLocalTime() < input.settings.summaryTime) return null
+        if (input.localNow.toLocalTime() < effectiveSummaryTime(input.settings.summaryTime)) return null
 
         val daily = input.forecast.dailyForecast.firstOrNull() ?: return null
         val today = input.localNow.toLocalDate()
@@ -152,7 +164,15 @@ class NotificationPlanner @Inject constructor(
     }
 
     /** 23:00–08:00 aralığı sessizdir; yalnız şiddetli uyarı geçer. */
-    private fun isQuietHour(localNow: LocalDateTime): Boolean = localNow.hour >= QUIET_START_HOUR || localNow.hour < QUIET_END_HOUR
+    private fun isQuietHour(localNow: LocalDateTime): Boolean = isQuietHour(localNow.toLocalTime())
+
+    private fun isQuietHour(time: LocalTime): Boolean = time.hour >= QUIET_START_HOUR || time.hour < QUIET_END_HOUR
+
+    /**
+     * Sessiz saat içine denk gelen özet saati 08:00'e çekilir; aksi halde
+     * 23:30 gibi bir seçim hiçbir gün gönderilemezdi.
+     */
+    private fun effectiveSummaryTime(configured: LocalTime): LocalTime = if (isQuietHour(configured)) SUMMARY_DEFERRED_TIME else configured
 
     private fun WeatherCondition.isWet(): Boolean = when (this) {
         WeatherCondition.RAIN,
@@ -162,7 +182,10 @@ class NotificationPlanner @Inject constructor(
         else -> false
     }
 
+    private fun WeatherCondition.isRain(): Boolean = this == WeatherCondition.RAIN || this == WeatherCondition.LIGHT_SHOWERS
+
     private companion object {
+        const val MAX_TOTAL_PER_DAY = 4
         const val MAX_SEVERE_PER_DAY = 2
         const val MAX_RAIN_PER_DAY = 1
         const val MAX_SUMMARY_PER_DAY = 1
@@ -175,6 +198,7 @@ class NotificationPlanner @Inject constructor(
 
         const val QUIET_START_HOUR = 23
         const val QUIET_END_HOUR = 8
+        val SUMMARY_DEFERRED_TIME: LocalTime = LocalTime.of(QUIET_END_HOUR, 0)
         val COMPANION_HOURS = 10..20
 
         const val RAIN_LOOKAHEAD_HOURS = 2L

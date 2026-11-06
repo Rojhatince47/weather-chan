@@ -10,6 +10,7 @@ import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.Not
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.PlannedNotification
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.SevereReason
+import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeTemperatureUnitRepository
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyForecast
@@ -31,7 +32,7 @@ class NotificationPosterTest {
         assumeTrue(NotificationManagerCompat.from(context).areNotificationsEnabled())
         NotificationChannels.create(context)
 
-        val poster = NotificationPoster(context)
+        val poster = NotificationPoster(context, FakeTemperatureUnitRepository())
         poster.post(
             PlannedNotification(
                 NotificationType.SEVERE_WEATHER,
@@ -53,7 +54,7 @@ class NotificationPosterTest {
         assumeTrue(NotificationManagerCompat.from(context).areNotificationsEnabled())
         NotificationChannels.create(context)
 
-        val poster = NotificationPoster(context)
+        val poster = NotificationPoster(context, FakeTemperatureUnitRepository())
         poster.post(
             PlannedNotification(
                 NotificationType.DAILY_SUMMARY,
@@ -72,6 +73,7 @@ class NotificationPosterTest {
         val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString()
 
         assertTrue("şehir metinde olmalı: $text", text.contains("İstanbul"))
+        assertTrue("sıcaklık birimi metinde olmalı: $text", text.contains("°C"))
         assertTrue("yağmur yüzdesi metinde olmalı: $text", text.contains("30"))
         assertTrue("ham yer tutucu kalmamalı: $text", !text.contains("%%"))
         manager.cancelAll()

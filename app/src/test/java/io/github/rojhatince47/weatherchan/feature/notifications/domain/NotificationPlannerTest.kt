@@ -357,6 +357,76 @@ class NotificationPlannerTest {
     }
 
     @Test
+    fun `kar yaklasirken yagmur uyarisi yok`() {
+        val now = LocalDateTime.of(2026, 11, 6, 10, 0)
+        val output = planner.plan(
+            input(
+                localNow = now,
+                forecast = forecast(
+                    hourly = listOf(hour(now.plusHours(1), WeatherCondition.SNOW, 90))
+                )
+            )
+        )
+
+        assertTrue(output.notifications.none { it.type == NotificationType.RAIN_SOON })
+    }
+
+    @Test
+    fun `dunun sayaclari bugunu engellemez`() {
+        val now = LocalDateTime.of(2026, 11, 7, 15, 0)
+        val yesterday = NotificationHistory(LocalDate.of(2026, 11, 6))
+            .withCount(NotificationType.SEVERE_WEATHER, 2)
+            .withCount(NotificationType.COMPANION, 1)
+
+        val output = planner.plan(
+            input(
+                localNow = now,
+                history = yesterday,
+                forecast = forecast(condition = WeatherCondition.THUNDERSTORM)
+            )
+        )
+
+        assertTrue(output.notifications.any { it.type == NotificationType.SEVERE_WEATHER })
+    }
+
+    @Test
+    fun `gunluk tavan dort bildirimde kapanir`() {
+        val now = LocalDateTime.of(2026, 11, 6, 15, 0)
+        val full = NotificationHistory(now.toLocalDate())
+            .withCount(NotificationType.SEVERE_WEATHER, 1)
+            .withCount(NotificationType.RAIN_SOON, 1)
+            .withCount(NotificationType.DAILY_SUMMARY, 1)
+            .withCount(NotificationType.COMPANION, 1)
+            .withLast(
+                NotificationType.SEVERE_WEATHER,
+                now.minusHours(7).atZone(zone).toInstant()
+            )
+
+        val output = planner.plan(
+            input(
+                localNow = now,
+                history = full,
+                forecast = forecast(condition = WeatherCondition.THUNDERSTORM)
+            )
+        )
+
+        assertTrue(output.notifications.isEmpty())
+        assertEquals(4, output.history.totalToday())
+    }
+
+    @Test
+    fun `gece yarisina ayarli ozet 08 00 de gider`() {
+        val output = planner.plan(
+            input(
+                localNow = LocalDateTime.of(2026, 11, 6, 8, 5),
+                settings = settings(summaryTime = LocalTime.of(23, 30))
+            )
+        )
+
+        assertEquals(listOf(NotificationType.DAILY_SUMMARY), output.notifications.map { it.type })
+    }
+
+    @Test
     fun `siddetli nedenleri sirayla secilir`() {
         val now = LocalDateTime.of(2026, 11, 6, 15, 0)
 

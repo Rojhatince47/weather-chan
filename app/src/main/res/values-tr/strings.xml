@@ -129,12 +129,12 @@
     <string name="notif_title_summary">Bugünün havası</string>
     <string name="notif_title_companion">Weather-chan</string>
     <string name="notif_severe_storm">Gök gürlüyor! Mümkünse içeride kal, ben de buradayım.</string>
-    <string name="notif_severe_snow">Kar bastırdı. Yola çıkmadan bir daha düşün, tamam mı?</string>
+    <string name="notif_severe_snow">Kar yağıyor. Yola çıkmadan bir daha düşün, tamam mı?</string>
     <string name="notif_severe_wind">Rüzgâr çok sert. Dışarıdaysan sağlam bir yere sığın.</string>
     <string name="notif_severe_cold">Dondurucu soğuk! Kat kat giyin, uzun süre dışarıda kalma.</string>
     <string name="notif_severe_hot">Kavurucu sıcak! Bol su iç, gölgeden ayrılma.</string>
     <string name="notif_rain_soon">Birazdan yağmur başlıyor; şemsiyeni yanına al.</string>
-    <string name="notif_summary">Bugün %1$s: en yüksek %2$d°, en düşük %3$d°, yağmur ihtimali %%%4$d.</string>
+    <string name="notif_summary">%1$s bugün: en yüksek %2$s, en düşük %3$s, yağmur ihtimali %%%4$d.</string>
 
     <string-array name="advice_storm">
         <item>Gök gürlüyor, mümkünse bugün evde kal tamam mı?</item>

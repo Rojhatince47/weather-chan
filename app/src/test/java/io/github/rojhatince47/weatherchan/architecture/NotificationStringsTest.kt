@@ -44,7 +44,7 @@ class NotificationStringsTest {
     fun `ozet metni dort yer tutucu tasir`() {
         paths.forEach { path ->
             val summary = stringsOf(path).getValue("notif_summary")
-            listOf("%1\$s", "%2\$d", "%3\$d", "%4\$d").forEach { placeholder ->
+            listOf("%1\$s", "%2\$s", "%3\$s", "%4\$d").forEach { placeholder ->
                 assertTrue("$path: notif_summary $placeholder icermeli", summary.contains(placeholder))
             }
         }
