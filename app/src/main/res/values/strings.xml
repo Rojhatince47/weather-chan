@@ -134,7 +134,7 @@
     <string name="notif_severe_cold">Freezing cold! Layer up and don\'t stay out long.</string>
     <string name="notif_severe_hot">Scorching heat! Drink plenty of water and stay in the shade.</string>
     <string name="notif_rain_soon">Rain\'s starting soon — take your umbrella.</string>
-    <string name="notif_summary">Today in %1$s: high %2$d°, low %3$d°, %%%4$d chance of rain.</string>
+    <string name="notif_summary">Today in %1$s: high %2$d°, low %3$d°, %4$d%% chance of rain.</string>
 
     <string-array name="advice_storm">
         <item>Thunder\'s rolling in — stay indoors if you can, okay?</item>

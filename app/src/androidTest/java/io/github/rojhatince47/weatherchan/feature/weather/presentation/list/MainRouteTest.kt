@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performTouchInput
 import io.github.rojhatince47.weatherchan.core.common.result.AppResult
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.city.domain.repository.CityRepository
+import io.github.rojhatince47.weatherchan.feature.notifications.testing.FakeNotificationSettingsRepository
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
@@ -69,7 +70,8 @@ class MainRouteTest {
             unitRepository,
             RouteThemeRepository(),
             RouteAppLanguageApplier(),
-            FakeSoundEffectsRepository()
+            FakeSoundEffectsRepository(),
+            FakeNotificationSettingsRepository()
         )
         val evViewModel = EvSayfasiViewModel(
             cityRepository = fakeCities,
@@ -141,7 +143,8 @@ class MainRouteTest {
             unitRepository,
             RouteThemeRepository(),
             RouteAppLanguageApplier(),
-            FakeSoundEffectsRepository()
+            FakeSoundEffectsRepository(),
+            FakeNotificationSettingsRepository()
         )
         val evViewModel = EvSayfasiViewModel(
             cityRepository = fakeCities,
