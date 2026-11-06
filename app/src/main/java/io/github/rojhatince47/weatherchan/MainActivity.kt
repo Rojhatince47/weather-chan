@@ -9,6 +9,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.notifications.presentation.NotificationPermissionRequester
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 
 @AndroidEntryPoint
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
             val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
 
             HavaTheme(themeMode = themeMode) {
+                NotificationPermissionRequester()
                 HavaApp(settingsViewModel = settingsViewModel)
             }
         }

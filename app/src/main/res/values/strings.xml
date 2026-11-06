@@ -113,6 +113,10 @@
     <string name="companion_pose_tap_hum">humming</string>
     <string name="companion_pose_tap_sigh">sighing</string>
 
+    <string name="notif_channel_alerts">Alerts</string>
+    <string name="notif_channel_summary">Daily summary</string>
+    <string name="notif_channel_companion">Companion messages</string>
+
     <string-array name="advice_storm">
         <item>Thunder\'s rolling in — stay indoors if you can, okay?</item>
         <item>There\'s a storm out there; even an umbrella won\'t help much.</item>
