@@ -1,28 +1,21 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.unit.Density
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
+import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationSettings
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.AppLanguage
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.ThemeMode
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.model.toUiModel
-import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import io.github.rojhatince47.weatherchan.testing.HavaTestActivity
+import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,299 +27,127 @@ class SettingsScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<HavaTestActivity>()
 
-    /** Konum bölümü için tek biçim yardımcı: `locationState` provider'dır. */
     private fun setSettingsScreen(
-        locationState: () -> LocationState = { LocationState.Idle },
-        locationAdded: Boolean = false,
-        onAddLocation: () -> Unit = {},
-        onRetryLocation: () -> Unit = {},
-        onOpenCityList: () -> Unit = {}
+        unit: TemperatureUnit = TemperatureUnit.CELSIUS,
+        themeMode: ThemeMode = ThemeMode.SYSTEM,
+        appLanguage: AppLanguage = AppLanguage.TURKISH,
+        soundEffectsEnabled: Boolean = true,
+        notifications: NotificationSettings = NotificationSettings(),
+        onUnitSelected: (TemperatureUnit) -> Unit = {},
+        onSoundEffectsEnabledChange: (Boolean) -> Unit = {},
+        onOpenCities: () -> Unit = {},
+        onOpenNotifications: () -> Unit = {},
+        onOpenAppearance: () -> Unit = {},
+        onBack: () -> Unit = {}
     ) {
         composeRule.setContent {
             HavaTheme {
                 SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = locationState(),
-                    locationAdded = locationAdded,
-                    onAddLocation = onAddLocation,
-                    onRetryLocation = onRetryLocation,
-                    onUnitSelected = {},
-                    onThemeModeSelected = {},
-                    onAppLanguageSelected = {},
-                    onOpenCityList = onOpenCityList,
-                    onBack = {}
+                    unit = unit.toUiModel(),
+                    themeMode = themeMode,
+                    appLanguage = appLanguage,
+                    soundEffectsEnabled = soundEffectsEnabled,
+                    notificationSettings = notifications,
+                    onUnitSelected = onUnitSelected,
+                    onSoundEffectsEnabledChange = onSoundEffectsEnabledChange,
+                    onOpenCities = onOpenCities,
+                    onOpenNotifications = onOpenNotifications,
+                    onOpenAppearance = onOpenAppearance,
+                    onBack = onBack
                 )
             }
         }
     }
 
     @Test
-    fun konumBolumuIdledeGorunurVeEkler() {
-        var clicked = false
-        setSettingsScreen(locationState = { LocationState.Idle }, onAddLocation = { clicked = true })
-        composeRule.onNodeWithText("Konum").assertIsDisplayed()
-        composeRule.onNodeWithText("Konumumu ekle").performClick()
-        assertTrue(clicked)
-    }
+    fun kokBesSatiriGosterir() {
+        setSettingsScreen()
 
-    @Test
-    fun konumBolumuUnavailabledaTekrarDeneGosterir() {
-        var retried = false
-        setSettingsScreen(locationState = { LocationState.Unavailable }, onRetryLocation = { retried = true })
-        composeRule.onNodeWithTag("add_location_row").assertIsDisplayed()
-        composeRule.onNodeWithText("Tekrar dene").performClick()
-        assertTrue(retried)
-    }
-
-    @Test
-    fun konumBolumuLoadingdeGostergeGosterir() {
-        setSettingsScreen(locationState = { LocationState.Loading })
-        composeRule.onNodeWithTag("location_loading").assertIsDisplayed()
-        composeRule.onNodeWithTag("add_location_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun konumBolumuKatEklendigindeGizlenir() {
-        setSettingsScreen(locationAdded = true)
-        composeRule.onNodeWithText("Konum").assertDoesNotExist()
-        composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
-    }
-
-    @Test
-    fun konumBolumuResolvedOluncaGizlenir() {
-        setSettingsScreen(locationState = { LocationState.Resolved })
-        composeRule.onNodeWithText("Konum").assertDoesNotExist()
-        composeRule.onNodeWithText("Konumumu ekle").assertDoesNotExist()
-    }
-
-    @Test
-    fun konumBolumuCanliOlarakGizlenir() {
-        var locationState by mutableStateOf<LocationState>(LocationState.Idle)
-        setSettingsScreen(locationState = { locationState })
-        composeRule.onNodeWithText("Konumumu ekle").assertIsDisplayed()
-        locationState = LocationState.Resolved
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Konumumu ekle").fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.onNodeWithText("Şehirler ve konum").assertIsDisplayed()
+        composeRule.onNodeWithText("Birim").assertIsDisplayed()
+        composeRule.onNodeWithText("Sesler").assertIsDisplayed()
+        composeRule.onNodeWithText("Bildirimler").assertIsDisplayed()
+        composeRule.onNodeWithText("Görünüm ve dil").assertIsDisplayed()
     }
 
     @Test
     fun birimSecimiCagrilir() {
         var selected: TemperatureUnit? = null
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = LocationState.Idle,
-                    locationAdded = false,
-                    onAddLocation = {},
-                    onRetryLocation = {},
-                    onAppLanguageSelected = {},
-                    onUnitSelected = { selected = it },
-                    onThemeModeSelected = {},
-                    onOpenCityList = {},
-                    onBack = {}
-                )
-            }
-        }
-        composeRule.onNodeWithText("Birim").assertIsDisplayed()
-        // Seçili durum eşlemesi: Santigrat veriliyken °C seçili görünür.
+        setSettingsScreen(onUnitSelected = { selected = it })
+
         composeRule.onNodeWithText("°C").assertIsSelected()
         composeRule.onNodeWithText("°F").performClick()
         assertEquals(TemperatureUnit.FAHRENHEIT, selected)
     }
 
     @Test
-    fun temaSecimiCagrilir() {
-        var selected: ThemeMode? = null
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = LocationState.Idle,
-                    locationAdded = false,
-                    onAddLocation = {},
-                    onRetryLocation = {},
-                    onUnitSelected = {},
-                    onAppLanguageSelected = {},
-                    onThemeModeSelected = { selected = it },
-                    onOpenCityList = {},
-                    onBack = {}
-                )
-            }
-        }
-        composeRule.onNodeWithText("Tema").assertIsDisplayed()
-        composeRule.onNodeWithText("Koyu").performScrollTo().performClick()
-        assertEquals(ThemeMode.DARK, selected)
+    fun sesEfektleriAnahtariKapatilabilir() {
+        var enabled = true
+        setSettingsScreen(
+            soundEffectsEnabled = enabled,
+            onSoundEffectsEnabledChange = { enabled = it }
+        )
+
+        val switch = composeRule.onNodeWithTag("settings_sound_effects")
+        switch.assertIsOn()
+        switch.performClick()
+        assertFalse(enabled)
+    }
+
+    @Test
+    fun bildirimOzetiKapaliykenKapaliDer() {
+        setSettingsScreen(
+            notifications = NotificationSettings(masterEnabled = false)
+        )
+
+        composeRule.onNodeWithText("Kapalı").assertIsDisplayed()
+    }
+
+    @Test
+    fun bildirimOzetiAcikkenSaatiGosterir() {
+        setSettingsScreen(
+            notifications = NotificationSettings(summaryTime = LocalTime.of(8, 0))
+        )
+
+        composeRule.onNodeWithText("Açık · 08:00").assertIsDisplayed()
+    }
+
+    @Test
+    fun gorunumOzetiTemaVeDiliGosterir() {
+        setSettingsScreen(
+            themeMode = ThemeMode.DARK,
+            appLanguage = AppLanguage.TURKISH
+        )
+
+        composeRule.onNodeWithText("Koyu · Türkçe").assertIsDisplayed()
+    }
+
+    @Test
+    fun satirlarGezinmeCagrilariniTetikler() {
+        var cities = false
+        var notifications = false
+        var appearance = false
+        setSettingsScreen(
+            onOpenCities = { cities = true },
+            onOpenNotifications = { notifications = true },
+            onOpenAppearance = { appearance = true }
+        )
+
+        composeRule.onNodeWithTag("settings_row_cities").performClick()
+        composeRule.onNodeWithTag("settings_row_notifications").performClick()
+        composeRule.onNodeWithTag("settings_row_appearance").performClick()
+
+        assertTrue(cities)
+        assertTrue(notifications)
+        assertTrue(appearance)
     }
 
     @Test
     fun geriDugmesiGeriDonderir() {
         var back = false
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = LocationState.Idle,
-                    locationAdded = false,
-                    onAddLocation = {},
-                    onRetryLocation = {},
-                    onUnitSelected = {},
-                    onAppLanguageSelected = {},
-                    onThemeModeSelected = {},
-                    onOpenCityList = {},
-                    onBack = { back = true }
-                )
-            }
-        }
+        setSettingsScreen(onBack = { back = true })
+
         composeRule.onNodeWithTag("action_back").performClick()
         assertTrue(back)
-    }
-
-    @Test
-    fun languageSelectionInvokesCallback() {
-        var selected: AppLanguage? = null
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = LocationState.Idle,
-                    locationAdded = false,
-                    onAddLocation = {},
-                    onRetryLocation = {},
-                    onUnitSelected = {},
-                    onThemeModeSelected = {},
-                    onAppLanguageSelected = { selected = it },
-                    onOpenCityList = {},
-                    onBack = {}
-                )
-            }
-        }
-        composeRule.onNodeWithText("English").performScrollTo().performClick()
-        assertEquals(AppLanguage.ENGLISH, selected)
-    }
-
-    @Test
-    fun dilIngilizceyeGecinceMetinlerIngilizceDoner() {
-        // Host etkinliği Türkçe açılır; İngilizce, etkinlik yeniden
-        // kurulduğunda kaynaklardan çözümlenir.
-        HavaTestActivity.overrideLocaleTag = "en"
-        try {
-            composeRule.activityRule.scenario.recreate()
-            composeRule.setContent {
-                HavaTheme {
-                    SettingsScreen(
-                        unit = TemperatureUnit.CELSIUS.toUiModel(),
-                        themeMode = ThemeMode.SYSTEM,
-                        appLanguage = AppLanguage.ENGLISH,
-                        locationState = LocationState.Idle,
-                        locationAdded = false,
-                        onAddLocation = {},
-                        onRetryLocation = {},
-                        onUnitSelected = {},
-                        onThemeModeSelected = {},
-                        onAppLanguageSelected = {},
-                        onOpenCityList = {},
-                        onBack = {}
-                    )
-                }
-            }
-            composeRule.onNodeWithText("Language").assertIsDisplayed()
-            composeRule.onNodeWithText("Theme").assertIsDisplayed()
-        } finally {
-            HavaTestActivity.overrideLocaleTag = null
-        }
-    }
-
-    @Test
-    fun ayarlarinEnUstundeSehirlerimButonuGorunurVeTiklanircaCagriAlir() {
-        var opened = false
-        setSettingsScreen(onOpenCityList = { opened = true })
-        val button = composeRule.onNodeWithText("Şehirlerim")
-        button.assertIsDisplayed()
-        // AC1 sıra: buton, Konum başlığının üzerindedir (dikey eksen).
-        val buttonY = button.fetchSemanticsNode().positionInRoot.y
-        val konumY = composeRule.onNodeWithText("Konum").fetchSemanticsNode().positionInRoot.y
-        assertTrue(buttonY < konumY)
-        button.performClick()
-        assertTrue(opened)
-    }
-
-    @Test
-    fun ayarlarinEnUstundeSehirlerimButonuBuyukYaziTipindeVar() {
-        // MainScreenTest.mainScreenSurvivesLargeFontScale deseni (fontScale 2.0f).
-        composeRule.setContent {
-            HavaTheme {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(
-                        density = LocalDensity.current.density,
-                        fontScale = 2.0f
-                    )
-                ) {
-                    SettingsScreen(
-                        unit = TemperatureUnit.CELSIUS.toUiModel(),
-                        themeMode = ThemeMode.SYSTEM,
-                        appLanguage = AppLanguage.SYSTEM,
-                        locationState = LocationState.Idle,
-                        locationAdded = false,
-                        onAddLocation = {},
-                        onRetryLocation = {},
-                        onUnitSelected = {},
-                        onThemeModeSelected = {},
-                        onAppLanguageSelected = {},
-                        onOpenCityList = {},
-                        onBack = {}
-                    )
-                }
-            }
-        }
-        composeRule.onNodeWithText("Şehirlerim").assertExists()
-    }
-
-    @Test
-    fun sehirlerimButonuKonumKartiEklendigindeDeGorunur() {
-        setSettingsScreen(locationAdded = true)
-        composeRule.onNodeWithText("Şehirlerim").assertExists()
-    }
-
-    @Test
-    fun sesEfektleriAnahtariVarsayilanAcikVeKapatilabilir() {
-        var enabled by mutableStateOf(true)
-        composeRule.setContent {
-            HavaTheme {
-                SettingsScreen(
-                    unit = TemperatureUnit.CELSIUS.toUiModel(),
-                    themeMode = ThemeMode.SYSTEM,
-                    appLanguage = AppLanguage.SYSTEM,
-                    locationState = LocationState.Idle,
-                    locationAdded = false,
-                    onAddLocation = {},
-                    onRetryLocation = {},
-                    onUnitSelected = {},
-                    onThemeModeSelected = {},
-                    onAppLanguageSelected = {},
-                    onOpenCityList = {},
-                    onBack = {},
-                    soundEffectsEnabled = enabled,
-                    onSoundEffectsEnabledChange = { enabled = it }
-                )
-            }
-        }
-        composeRule.onNodeWithText("Ses").performScrollTo().assertIsDisplayed()
-        val switch = composeRule.onNodeWithTag("settings_sound_effects").performScrollTo()
-        switch.assertIsOn()
-        switch.performClick()
-        assertFalse(enabled)
-        switch.assertIsOff()
     }
 }

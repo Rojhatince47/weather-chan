@@ -14,7 +14,7 @@ import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaTheme
 import io.github.rojhatince47.weatherchan.feature.city.testing.FakeCityRepository
 import io.github.rojhatince47.weatherchan.feature.notifications.testing.FakeNotificationSettingsRepository
-import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsRoute
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsCitiesRoute
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeAppLanguageApplier
 import io.github.rojhatince47.weatherchan.feature.settings.testing.FakeSoundEffectsRepository
@@ -103,11 +103,10 @@ class SharedLocationFlowTest {
                 Column {
                     // Ayarlar üstte (tıklanabilir); Ev aşağıda (assertExists —
                     // kırpılsa da semantik ağacı korunur).
-                    SettingsRoute(
+                    SettingsCitiesRoute(
                         onBack = {},
                         onOpenCityList = {},
-                        evViewModel = sharedViewModel,
-                        settingsViewModel = settingsViewModel
+                        evViewModel = sharedViewModel
                     )
                     EvSayfasiRoute(
                         onAddCityClick = {},
@@ -180,11 +179,10 @@ class SharedLocationFlowTest {
                 // Route'lar aynı anda MOUNT EDİLMEZ: aynı düğümler AmbiguousNodes
                 // fırlatırdı. Tıklanacak olan açıktır.
                 if (showSettings) {
-                    SettingsRoute(
+                    SettingsCitiesRoute(
                         onBack = {},
                         onOpenCityList = {},
-                        evViewModel = sharedViewModel,
-                        settingsViewModel = settingsViewModel
+                        evViewModel = sharedViewModel
                     )
                 } else {
                     MainRoute(

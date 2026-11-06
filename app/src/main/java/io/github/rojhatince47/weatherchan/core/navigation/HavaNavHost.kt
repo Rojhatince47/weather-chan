@@ -5,6 +5,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsAppearanceRoute
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsCitiesRoute
+import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsNotificationsRoute
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsRoute
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.addcity.AddCityRoute
@@ -75,12 +78,38 @@ fun HavaNavHost(
             // tema değişikliği anında tüm ekranlara yayılır.
             SettingsRoute(
                 onBack = { navController.popBackStack() },
+                onOpenCities = {
+                    navController.navigate(SettingsCitiesDestination) { launchSingleTop = true }
+                },
+                onOpenNotifications = {
+                    navController.navigate(SettingsNotificationsDestination) { launchSingleTop = true }
+                },
+                onOpenAppearance = {
+                    navController.navigate(SettingsAppearanceDestination) { launchSingleTop = true }
+                },
+                settingsViewModel = settingsViewModel
+            )
+        }
+        composable<SettingsCitiesDestination> {
+            SettingsCitiesRoute(
+                onBack = { navController.popBackStack() },
                 // Şehirlerim'e geçiş; launchSingleTop çift dokunuşta ikinci
                 // Liste yığını açtırmaz (AC3).
                 onOpenCityList = {
                     navController.navigate(ListDestination) { launchSingleTop = true }
                 },
-                evViewModel = evViewModel,
+                evViewModel = evViewModel
+            )
+        }
+        composable<SettingsAppearanceDestination> {
+            SettingsAppearanceRoute(
+                onBack = { navController.popBackStack() },
+                settingsViewModel = settingsViewModel
+            )
+        }
+        composable<SettingsNotificationsDestination> {
+            SettingsNotificationsRoute(
+                onBack = { navController.popBackStack() },
                 settingsViewModel = settingsViewModel
             )
         }

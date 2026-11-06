@@ -34,6 +34,12 @@
     <string name="settings_notif_permission_action">Open settings</string>
     <string name="settings_location_section">Location</string>
     <string name="settings_open_city_list">My cities</string>
+    <string name="settings_row_cities">Cities &amp; location</string>
+    <string name="settings_row_appearance">Appearance &amp; language</string>
+    <string name="settings_notif_off">Off</string>
+    <string name="settings_notif_on">On · %1$s</string>
+    <string name="settings_summary_separator">" · "</string>
+    <string name="settings_row_open">Open</string>
     <string name="language_system">System</string>
     <string name="language_turkish">Türkçe</string>
     <string name="language_english">English</string>

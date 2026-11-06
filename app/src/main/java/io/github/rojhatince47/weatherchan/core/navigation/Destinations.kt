@@ -12,4 +12,13 @@ data object AddCityDestination
 data object SettingsDestination
 
 @Serializable
+data object SettingsCitiesDestination
+
+@Serializable
+data object SettingsAppearanceDestination
+
+@Serializable
+data object SettingsNotificationsDestination
+
+@Serializable
 data object EvSayfasiDestination

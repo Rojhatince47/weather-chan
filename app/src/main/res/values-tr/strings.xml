@@ -34,6 +34,12 @@
     <string name="settings_notif_permission_action">Ayarları aç</string>
     <string name="settings_location_section">Konum</string>
     <string name="settings_open_city_list">Şehirlerim</string>
+    <string name="settings_row_cities">Şehirler ve konum</string>
+    <string name="settings_row_appearance">Görünüm ve dil</string>
+    <string name="settings_notif_off">Kapalı</string>
+    <string name="settings_notif_on">Açık · %1$s</string>
+    <string name="settings_summary_separator">" · "</string>
+    <string name="settings_row_open">Aç</string>
     <string name="language_system">Sistem</string>
     <string name="language_turkish">Türkçe</string>
     <string name="language_english">English</string>
