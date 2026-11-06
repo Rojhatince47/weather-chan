@@ -32,7 +32,36 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.Companio
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.widget.domain.WidgetSnapshot
 
-private const val WIDE_WIDTH_DP = 200
+private data class WidgetMetrics(
+    val character: androidx.compose.ui.unit.Dp,
+    val temperature: androidx.compose.ui.unit.TextUnit,
+    val label: androidx.compose.ui.unit.TextUnit,
+    val city: androidx.compose.ui.unit.TextUnit,
+    val hour: androidx.compose.ui.unit.TextUnit,
+    val glyph: androidx.compose.ui.unit.TextUnit,
+    val bigGlyph: androidx.compose.ui.unit.TextUnit
+)
+
+/**
+ * İçerik boyutu widget'ın gerçek hücresine göre ölçeklenir. 2x2 hücre
+ * cihazdan cihaza 150–250 dp arasında değişir; sabit dp kullanmak küçük
+ * telefonlarda taşırır, büyüklerde boşluk bırakır.
+ */
+@Composable
+private fun rememberWidgetMetrics(): WidgetMetrics {
+    val size = LocalSize.current
+    val minDim = if (size.width < size.height) size.width else size.height
+    val wide = size.width >= 250.dp
+
+    val character = (minDim * if (wide) 0.38f else 0.45f).coerceIn(64.dp, 132.dp)
+    val temperature = (minDim.value * 0.16f).coerceIn(22f, 42f).sp
+    val label = (minDim.value * 0.075f).coerceIn(12f, 20f).sp
+    val city = (minDim.value * 0.06f).coerceIn(11f, 16f).sp
+    val hour = (minDim.value * 0.058f).coerceIn(10f, 15f).sp
+    val glyph = (minDim.value * 0.08f).coerceIn(13f, 22f).sp
+    val bigGlyph = (minDim.value * 0.2f).coerceIn(24f, 56f).sp
+    return WidgetMetrics(character, temperature, label, city, hour, glyph, bigGlyph)
+}
 
 @Composable
 internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
@@ -42,14 +71,16 @@ internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
         isDark = snapshot?.isDay == false,
         isDay = snapshot?.isDay ?: true
     )
-    val wide = LocalSize.current.width >= WIDE_WIDTH_DP.dp
+    val size = LocalSize.current
+    val wide = size.width >= 250.dp
+    val metrics = rememberWidgetMetrics()
     val context = LocalContext.current
 
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(colors.container)
-            .padding(12.dp)
+            .padding(10.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically
@@ -65,42 +96,75 @@ internal fun ChatWidgetContent(snapshot: WidgetSnapshot?) {
             return@Column
         }
 
-        Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
+        if (wide) {
+            Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
+                Image(
+                    provider = ImageProvider(poseDrawable(snapshot.pose)),
+                    contentDescription = context.getString(R.string.widget_character_description),
+                    modifier = GlanceModifier.size(metrics.character)
+                )
+                Column(
+                    modifier = GlanceModifier.padding(start = 10.dp),
+                    verticalAlignment = Alignment.Vertical.CenterVertically
+                ) {
+                    Text(
+                        text = temperatureText(snapshot),
+                        style = TextStyle(
+                            color = ColorProvider(colors.onContainer),
+                            fontSize = metrics.temperature,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1
+                    )
+                    Text(
+                        text = context.getString(conditionLabelRes(condition)),
+                        style = TextStyle(
+                            color = ColorProvider(colors.onContainer),
+                            fontSize = metrics.label
+                        )
+                    )
+                    Text(
+                        text = snapshot.cityName,
+                        style = TextStyle(
+                            color = ColorProvider(colors.onContainer),
+                            fontSize = metrics.city
+                        )
+                    )
+                }
+            }
+        } else {
+            // Kare widget'ta dikey yığın: dar sütunda "11°C" satır kaydırmaz.
             Image(
                 provider = ImageProvider(poseDrawable(snapshot.pose)),
                 contentDescription = context.getString(R.string.widget_character_description),
-                modifier = GlanceModifier.size(if (wide) 56.dp else 72.dp)
+                modifier = GlanceModifier.size(metrics.character)
             )
-            Column(
-                modifier = GlanceModifier.padding(start = 10.dp),
-                verticalAlignment = Alignment.Vertical.CenterVertically
-            ) {
-                Text(
-                    text = temperatureText(snapshot),
-                    style = TextStyle(
-                        color = ColorProvider(colors.onContainer),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                text = temperatureText(snapshot),
+                style = TextStyle(
+                    color = ColorProvider(colors.onContainer),
+                    fontSize = metrics.temperature,
+                    fontWeight = FontWeight.Bold
+                ),
+                maxLines = 1
+            )
+            Text(
+                text = context.getString(conditionLabelRes(condition)),
+                style = TextStyle(
+                    color = ColorProvider(colors.onContainer),
+                    fontSize = metrics.label
                 )
-                Text(
-                    text = context.getString(conditionLabelRes(condition)),
-                    style = TextStyle(
-                        color = ColorProvider(colors.onContainer),
-                        fontSize = 12.sp
-                    )
+            )
+            Text(
+                text = snapshot.cityName,
+                style = TextStyle(
+                    color = ColorProvider(colors.onContainer),
+                    fontSize = metrics.city
                 )
-                Text(
-                    text = snapshot.cityName,
-                    style = TextStyle(
-                        color = ColorProvider(colors.onContainer),
-                        fontSize = 11.sp
-                    )
-                )
-            }
+            )
         }
         if (wide && snapshot.hourly.isNotEmpty()) {
-            HourlyStrip(snapshot, colors.onContainer)
+            HourlyStrip(snapshot, colors.onContainer, metrics)
         }
     }
 }
@@ -113,15 +177,18 @@ internal fun InfoWidgetContent(snapshot: WidgetSnapshot?) {
         isDark = snapshot?.isDay == false,
         isDay = snapshot?.isDay ?: true
     )
-    val wide = LocalSize.current.width >= WIDE_WIDTH_DP.dp
+    val size = LocalSize.current
+    val wide = size.width >= 250.dp
+    val metrics = rememberWidgetMetrics()
     val context = LocalContext.current
 
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(colors.container)
-            .padding(12.dp)
+            .padding(10.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically
     ) {
         if (snapshot == null) {
@@ -135,11 +202,20 @@ internal fun InfoWidgetContent(snapshot: WidgetSnapshot?) {
             return@Column
         }
 
+        if (!wide) {
+            Text(
+                text = conditionGlyph(condition, snapshot.isDay),
+                style = TextStyle(
+                    color = ColorProvider(colors.onContainer),
+                    fontSize = metrics.bigGlyph
+                )
+            )
+        }
         Text(
             text = temperatureText(snapshot),
             style = TextStyle(
                 color = ColorProvider(colors.onContainer),
-                fontSize = 26.sp,
+                fontSize = metrics.temperature,
                 fontWeight = FontWeight.Bold
             )
         )
@@ -147,24 +223,24 @@ internal fun InfoWidgetContent(snapshot: WidgetSnapshot?) {
             text = context.getString(conditionLabelRes(condition)),
             style = TextStyle(
                 color = ColorProvider(colors.onContainer),
-                fontSize = 12.sp
+                fontSize = metrics.label
             )
         )
         Text(
             text = snapshot.cityName,
             style = TextStyle(
                 color = ColorProvider(colors.onContainer),
-                fontSize = 11.sp
+                fontSize = metrics.city
             )
         )
         if (wide && snapshot.hourly.isNotEmpty()) {
-            HourlyStrip(snapshot, colors.onContainer)
+            HourlyStrip(snapshot, colors.onContainer, metrics)
         }
     }
 }
 
 @Composable
-private fun HourlyStrip(snapshot: WidgetSnapshot, contentColor: Color) {
+private fun HourlyStrip(snapshot: WidgetSnapshot, contentColor: Color, metrics: WidgetMetrics) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
@@ -177,20 +253,20 @@ private fun HourlyStrip(snapshot: WidgetSnapshot, contentColor: Color) {
                 WeatherCondition.valueOf(hour.condition)
             }.getOrDefault(WeatherCondition.CLOUDY)
             Column(
-                modifier = GlanceModifier.padding(horizontal = 6.dp),
+                modifier = GlanceModifier.padding(horizontal = 8.dp),
                 horizontalAlignment = Alignment.Horizontal.CenterHorizontally
             ) {
                 Text(
                     text = "%02d".format(hour.hourOfDay),
-                    style = TextStyle(color = ColorProvider(contentColor), fontSize = 10.sp)
+                    style = TextStyle(color = ColorProvider(contentColor), fontSize = metrics.hour)
                 )
                 Text(
                     text = conditionGlyph(condition, snapshot.isDay),
-                    style = TextStyle(color = ColorProvider(contentColor), fontSize = 14.sp)
+                    style = TextStyle(color = ColorProvider(contentColor), fontSize = metrics.glyph)
                 )
                 Text(
                     text = temperatureText(hour.temperatureCelsius, snapshot.unit),
-                    style = TextStyle(color = ColorProvider(contentColor), fontSize = 11.sp)
+                    style = TextStyle(color = ColorProvider(contentColor), fontSize = metrics.label)
                 )
             }
         }
