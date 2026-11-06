@@ -9,6 +9,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.DailyFore
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.textArrayRes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NotificationTextsTest {
@@ -43,7 +44,7 @@ class NotificationTextsTest {
     fun `yagmur ve ozet kendi metinlerine gider`() {
         assertEquals(
             R.string.notif_rain_soon,
-            NotificationTexts.textRes(NotificationPayload.RainSoon(startsWithinHours = 1))
+            NotificationTexts.textRes(NotificationPayload.RainSoon)
         )
         assertEquals(
             R.string.notif_summary,
@@ -54,6 +55,16 @@ class NotificationTextsTest {
                 )
             )
         )
+    }
+
+    @Test
+    fun `karakter satiri tohuma gore deterministik`() {
+        val first = NotificationTexts.companionLineIndex(size = 3, seed = 7)
+        val second = NotificationTexts.companionLineIndex(size = 3, seed = 7)
+
+        assertEquals(first, second)
+        assertTrue(first in 0 until 3)
+        assertTrue(NotificationTexts.companionLineIndex(size = 3, seed = 8) in 0 until 3)
     }
 
     @Test

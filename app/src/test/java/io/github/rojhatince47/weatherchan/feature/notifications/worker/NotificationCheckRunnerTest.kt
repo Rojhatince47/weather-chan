@@ -106,6 +106,25 @@ class NotificationCheckRunnerTest {
     }
 
     @Test
+    fun `kota hatasinda retry yok`() = runTest {
+        coEvery { weather.forecast(any()) } returns AppResult.Failure(AppError.Server(429))
+        val runner = runner()
+
+        assertEquals(NotificationCheckRunner.CheckOutcome.SKIPPED, runner.run())
+        assertTrue(presenter.posted.isEmpty())
+    }
+
+    @Test
+    fun `gonderilemeyen bildirim gecmise yazilmaz`() = runTest {
+        coEvery { weather.forecast(any()) } returns AppResult.Success(stormForecast())
+        presenter.accept = false
+        val runner = runner()
+
+        assertEquals(NotificationCheckRunner.CheckOutcome.SUCCESS, runner.run())
+        assertEquals(0, historyStore.stored.totalToday())
+    }
+
+    @Test
     fun `planlanan bildirimler post edilir ve gecmis yazilir`() = runTest {
         coEvery { weather.forecast(any()) } returns AppResult.Success(stormForecast())
         val runner = runner()
@@ -127,10 +146,13 @@ class NotificationCheckRunnerTest {
     }
 
     private class RecordingPresenter : NotificationPresenter {
+        var accept = true
         val posted = mutableListOf<PlannedNotification>()
 
-        override fun post(notification: PlannedNotification, city: City) {
+        override fun post(notification: PlannedNotification, city: City): Boolean {
+            if (!accept) return false
             posted += notification
+            return true
         }
     }
 

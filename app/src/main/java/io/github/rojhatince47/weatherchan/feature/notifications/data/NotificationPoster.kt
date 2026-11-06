@@ -29,8 +29,8 @@ class NotificationPoster @Inject constructor(
     private val temperatureUnitRepository: TemperatureUnitRepository
 ) : NotificationPresenter {
 
-    override fun post(notification: PlannedNotification, city: City) {
-        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+    override fun post(notification: PlannedNotification, city: City): Boolean {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
 
         val text = resolveText(notification, city)
         val androidNotification = NotificationCompat.Builder(context, channelOf(notification.type))
@@ -43,6 +43,7 @@ class NotificationPoster @Inject constructor(
             .build()
 
         NotificationManagerCompat.from(context).notify(notificationId(notification.type), androidNotification)
+        return true
     }
 
     private fun resolveText(planned: PlannedNotification, city: City): String = when (val payload = planned.payload) {
@@ -58,7 +59,7 @@ class NotificationPoster @Inject constructor(
         }
         is NotificationPayload.Companion -> {
             val lines = context.resources.getStringArray(payload.category.textArrayRes())
-            lines.random()
+            lines[NotificationTexts.companionLineIndex(lines.size, payload.variantSeed)]
         }
         else -> context.getString(NotificationTexts.textRes(payload))
     }

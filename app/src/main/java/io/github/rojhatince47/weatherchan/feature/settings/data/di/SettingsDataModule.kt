@@ -2,8 +2,11 @@ package io.github.rojhatince47.weatherchan.feature.settings.data.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -23,7 +26,7 @@ import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.Tem
 import io.github.rojhatince47.weatherchan.feature.settings.domain.repository.ThemeModeRepository
 import javax.inject.Singleton
 
-private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "hava_settings")
+private const val SETTINGS_DATA_STORE_NAME = "hava_settings"
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,6 +51,10 @@ abstract class SettingsDataModule {
         @Provides
         @Singleton
         @SettingsDataStore
-        fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> = context.settingsDataStore
+        fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            // Bozuk dosya uygulamayı kilitlemesin; boş tercihlerle devam edilir.
+            corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+            produceFile = { context.preferencesDataStoreFile(SETTINGS_DATA_STORE_NAME) }
+        )
     }
 }

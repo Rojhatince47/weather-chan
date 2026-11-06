@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.notifications.presentation
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -25,8 +27,14 @@ fun NotificationPermissionRequester() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
 
     val context = LocalContext.current
-    // Yapılandırma değişiminde tekrar sormamak için oturumlar arası saklanır.
-    var requested by rememberSaveable { mutableStateOf(false) }
+    val preferences = remember {
+        context.getSharedPreferences(PERMISSION_PREFERENCES, Context.MODE_PRIVATE)
+    }
+    // Kalıcı "bir kez soruldu" bilgisi: reddeden kullanıcı her açılışta
+    // yeniden sorulmaz; izin sonradan sistem ayarlarından verilebilir.
+    var requested by rememberSaveable {
+        mutableStateOf(preferences.getBoolean(KEY_PERMISSION_ASKED, false))
+    }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { /* Sonuç işçi tarafında sorgulanır; burada tepki yok. */ }
@@ -38,8 +46,12 @@ fun NotificationPermissionRequester() {
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
         if (!granted && !requested) {
+            preferences.edit().putBoolean(KEY_PERMISSION_ASKED, true).apply()
             requested = true
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }
+
+private const val PERMISSION_PREFERENCES = "notifications_permission"
+private const val KEY_PERMISSION_ASKED = "asked"

@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OpenMeteoForecastDto(
+    @SerialName("utc_offset_seconds") val utcOffsetSeconds: Int = 0,
     @SerialName("current") val current: OpenMeteoCurrentDto = OpenMeteoCurrentDto(),
     @SerialName("hourly") val hourly: OpenMeteoHourlyDto = OpenMeteoHourlyDto(),
     @SerialName("daily") val daily: OpenMeteoDailyDto = OpenMeteoDailyDto()

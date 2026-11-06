@@ -73,12 +73,14 @@ class NotificationPlannerTest {
 
     private fun input(
         localNow: LocalDateTime,
+        cityNow: LocalDateTime = localNow,
         settings: NotificationSettings = settings(),
         history: NotificationHistory = NotificationHistory(localNow.toLocalDate()),
         forecast: Forecast = forecast()
     ): PlannerInput = PlannerInput(
         now = localNow.atZone(zone).toInstant(),
         localNow = localNow,
+        cityNow = cityNow,
         settings = settings,
         history = history,
         forecast = forecast
@@ -354,6 +356,34 @@ class NotificationPlannerTest {
             output.notifications.map { it.type }
         )
         assertTrue(output.history.sentCounts.values.sum() <= 4)
+    }
+
+    @Test
+    fun `sehir saat dilimi farkliysa yagmur penceresi sehir saatine gore`() {
+        val deviceNow = LocalDateTime.of(2026, 11, 6, 10, 0)
+        val cityNow = LocalDateTime.of(2026, 11, 6, 3, 0)
+
+        val soon = planner.plan(
+            input(
+                localNow = deviceNow,
+                cityNow = cityNow,
+                forecast = forecast(
+                    hourly = listOf(hour(cityNow.plusHours(1), WeatherCondition.RAIN, 70))
+                )
+            )
+        )
+        assertTrue(soon.notifications.any { it.type == NotificationType.RAIN_SOON })
+
+        val later = planner.plan(
+            input(
+                localNow = deviceNow,
+                cityNow = cityNow,
+                forecast = forecast(
+                    hourly = listOf(hour(cityNow.plusHours(8), WeatherCondition.RAIN, 70))
+                )
+            )
+        )
+        assertTrue(later.notifications.none { it.type == NotificationType.RAIN_SOON })
     }
 
     @Test

@@ -45,7 +45,8 @@ class OpenMeteoWeatherMapper @Inject constructor() {
                     maxTemperatureCelsius = dto.daily.temperatureMax.getOrNull(index)?.roundToInt() ?: 0,
                     condition = toCondition(dto.daily.weatherCode.getOrNull(index))
                 )
-            }
+            },
+            utcOffsetSeconds = dto.utcOffsetSeconds
         )
     }
 

@@ -13,7 +13,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCo
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 /**
@@ -92,9 +91,9 @@ class NotificationPlanner @Inject constructor(
         // Zaten yağıyorsa "birazdan başlayacak" denmez.
         if (input.forecast.currentWeather.condition.isWet()) return null
 
-        val deadline = input.localNow.plusHours(RAIN_LOOKAHEAD_HOURS)
+        val deadline = input.cityNow.plusHours(RAIN_LOOKAHEAD_HOURS)
         val start = input.forecast.hourlyForecast
-            .filter { it.localDateTime.isAfter(input.localNow) && !it.localDateTime.isAfter(deadline) }
+            .filter { it.localDateTime.isAfter(input.cityNow) && !it.localDateTime.isAfter(deadline) }
             .filter {
                 // Yalnız yağmur/çisenti "şemsiyeni al" uyarısı üretir; kar ve
                 // fırtına şiddetli hava kuralının konusudur.
@@ -103,13 +102,9 @@ class NotificationPlanner @Inject constructor(
             }
             .minByOrNull { it.localDateTime } ?: return null
 
-        val startsWithin = ChronoUnit.HOURS
-            .between(input.localNow, start.localDateTime)
-            .toInt()
-            .coerceIn(1, RAIN_LOOKAHEAD_HOURS.toInt())
         return PlannedNotification(
             type = NotificationType.RAIN_SOON,
-            payload = NotificationPayload.RainSoon(startsWithin)
+            payload = NotificationPayload.RainSoon
         )
     }
 
@@ -119,7 +114,7 @@ class NotificationPlanner @Inject constructor(
         if (input.localNow.toLocalTime() < effectiveSummaryTime(input.settings.summaryTime)) return null
 
         val daily = input.forecast.dailyForecast.firstOrNull() ?: return null
-        val today = input.localNow.toLocalDate()
+        val today = input.cityNow.toLocalDate()
         val rainChance = input.forecast.hourlyForecast
             .filter { it.localDateTime.toLocalDate() == today }
             .maxOfOrNull { it.precipitationProbabilityPercent } ?: 0
@@ -137,7 +132,7 @@ class NotificationPlanner @Inject constructor(
         val advice = adviceEngine.advise(adviceContextOf(input))
         return PlannedNotification(
             type = NotificationType.COMPANION,
-            payload = NotificationPayload.Companion(advice.category)
+            payload = NotificationPayload.Companion(advice.category, advice.variantSeed)
         )
     }
 
@@ -150,11 +145,11 @@ class NotificationPlanner @Inject constructor(
             isDay = current.isDay,
             windSpeedKmh = current.windSpeedKmh,
             upcomingHours = input.forecast.hourlyForecast
-                .filter { it.localDateTime.isAfter(input.localNow) }
+                .filter { it.localDateTime.isAfter(input.cityNow) }
                 .take(RAIN_LOOKAHEAD_HOURS.toInt())
                 .map { HourlyOutlook(it.precipitationProbabilityPercent, it.condition) },
-            epochDay = input.localNow.toLocalDate().toEpochDay(),
-            hourOfDay = input.localNow.hour
+            epochDay = input.cityNow.toLocalDate().toEpochDay(),
+            hourOfDay = input.cityNow.hour
         )
     }
 

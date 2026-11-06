@@ -24,12 +24,14 @@
     <string name="settings_sound_section">Sound</string>
     <string name="settings_sound_effects">Sounds</string>
     <string name="settings_notifications">Notifications</string>
-    <string name="settings_notif_master">Notifications on</string>
+    <string name="settings_notif_master">Notifications</string>
     <string name="settings_notif_severe">Severe weather</string>
     <string name="settings_notif_rain">Rain alerts</string>
     <string name="settings_notif_summary">Daily summary</string>
     <string name="settings_notif_companion">Companion messages</string>
     <string name="settings_notif_summary_time">Summary time</string>
+    <string name="settings_notif_permission_missing">Notification permission is off</string>
+    <string name="settings_notif_permission_action">Open settings</string>
     <string name="settings_location_section">Location</string>
     <string name="settings_open_city_list">My cities</string>
     <string name="language_system">System</string>

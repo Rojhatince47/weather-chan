@@ -4,6 +4,8 @@ import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationPayload
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.NotificationType
 import io.github.rojhatince47.weatherchan.feature.notifications.domain.model.SevereReason
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.lineIndex
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.textArrayRes
 
 /**
@@ -32,4 +34,7 @@ object NotificationTexts {
         is NotificationPayload.Summary -> R.string.notif_summary
         is NotificationPayload.Companion -> payload.category.textArrayRes()
     }
+
+    /** Karakter repliği seçimi ana ekranla aynı deterministik kuralı kullanır. */
+    fun companionLineIndex(size: Int, seed: Int): Int = lineIndex(size, seed)
 }

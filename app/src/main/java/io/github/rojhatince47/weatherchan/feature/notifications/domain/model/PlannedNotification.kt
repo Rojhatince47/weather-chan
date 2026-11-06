@@ -18,11 +18,14 @@ enum class SevereReason {
 sealed interface NotificationPayload {
     data class Severe(val reason: SevereReason) : NotificationPayload
 
-    data class RainSoon(val startsWithinHours: Int) : NotificationPayload
+    data object RainSoon : NotificationPayload
 
     data class Summary(val daily: DailyForecast, val rainChancePercent: Int) : NotificationPayload
 
-    data class Companion(val category: AdviceCategory) : NotificationPayload
+    data class Companion(
+        val category: AdviceCategory,
+        val variantSeed: Int = 0
+    ) : NotificationPayload
 }
 
 data class PlannedNotification(
@@ -40,6 +43,8 @@ data class PlannedNotification(
 data class PlannerInput(
     val now: Instant,
     val localNow: LocalDateTime,
+    /** Şehrin yerel saati; saatlik damgalar bu dilimdedir. */
+    val cityNow: LocalDateTime = localNow,
     val settings: NotificationSettings,
     val history: NotificationHistory,
     val forecast: Forecast

@@ -24,12 +24,14 @@
     <string name="settings_sound_section">Ses</string>
     <string name="settings_sound_effects">Sesler</string>
     <string name="settings_notifications">Bildirimler</string>
-    <string name="settings_notif_master">Bildirimler açık</string>
+    <string name="settings_notif_master">Bildirimler</string>
     <string name="settings_notif_severe">Şiddetli hava</string>
     <string name="settings_notif_rain">Yağmur uyarısı</string>
     <string name="settings_notif_summary">Günlük özet</string>
     <string name="settings_notif_companion">Karakter mesajları</string>
     <string name="settings_notif_summary_time">Özet saati</string>
+    <string name="settings_notif_permission_missing">Bildirim izni kapalı</string>
+    <string name="settings_notif_permission_action">Ayarları aç</string>
     <string name="settings_location_section">Konum</string>
     <string name="settings_open_city_list">Şehirlerim</string>
     <string name="language_system">Sistem</string>

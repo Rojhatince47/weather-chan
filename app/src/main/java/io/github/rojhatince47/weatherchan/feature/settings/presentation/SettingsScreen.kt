@@ -1,5 +1,11 @@
 package io.github.rojhatince47.weatherchan.feature.settings.presentation
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,12 +39,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
@@ -56,6 +66,7 @@ import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.reme
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Birim ve tema ayarları.
@@ -85,6 +96,8 @@ fun SettingsScreen(
     onNotificationMasterChange: (Boolean) -> Unit = {},
     onNotificationTypeChange: (NotificationType, Boolean) -> Unit = { _, _ -> },
     onNotificationSummaryTimeChange: (LocalTime) -> Unit = {},
+    notificationsPermissionGranted: Boolean = true,
+    onOpenNotificationSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -223,6 +236,27 @@ fun SettingsScreen(
                 text = stringResource(R.string.settings_notifications),
                 modifier = Modifier.padding(top = HavaSpacing.md)
             )
+            if (!notificationsPermissionGranted) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = HavaSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_notif_permission_missing),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(
+                        onClick = onOpenNotificationSettings,
+                        modifier = Modifier.testTag("settings_notif_permission")
+                    ) {
+                        Text(stringResource(R.string.settings_notif_permission_action))
+                    }
+                }
+            }
             NotificationToggleRow(
                 label = stringResource(R.string.settings_notif_master),
                 checked = notificationSettings.masterEnabled,
@@ -235,7 +269,7 @@ fun SettingsScreen(
                     label = stringResource(labelRes),
                     checked = notificationSettings.typeEnabled.getValue(type),
                     enabled = notificationSettings.masterEnabled,
-                    testTag = "settings_notif_${type.name.lowercase()}",
+                    testTag = "settings_notif_${type.name.lowercase(Locale.ROOT)}",
                     onCheckedChange = { onNotificationTypeChange(type, it) }
                 )
             }
@@ -338,6 +372,12 @@ private fun SummaryTimeRow(time: LocalTime, enabled: Boolean, onChange: (LocalTi
 
 private val timeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
+private fun isNotificationPermissionGranted(context: Context): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+    ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
+
 @Composable
 private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(
@@ -363,6 +403,14 @@ fun SettingsRoute(
     val appLanguage by settingsViewModel.appLanguage.collectAsStateWithLifecycle()
     val soundEffectsEnabled by settingsViewModel.soundEffectsEnabled.collectAsStateWithLifecycle()
     val notificationSettings by settingsViewModel.notificationSettings.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var notificationsPermissionGranted by remember {
+        mutableStateOf(isNotificationPermissionGranted(context))
+    }
+    // Sistem ayarlarından dönüşte durum tazelenir.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        notificationsPermissionGranted = isNotificationPermissionGranted(context)
+    }
     val evUiState by evViewModel.uiState.collectAsStateWithLifecycle()
     // Ekran her açılışında seçim dış kaynakla (sistem ayarları) tazelenir.
     LaunchedEffect(Unit) { settingsViewModel.refreshAppLanguage() }
@@ -394,6 +442,13 @@ fun SettingsRoute(
         onNotificationMasterChange = settingsViewModel::onNotificationMasterChanged,
         onNotificationTypeChange = settingsViewModel::onNotificationTypeChanged,
         onNotificationSummaryTimeChange = settingsViewModel::onNotificationSummaryTimeChanged,
+        notificationsPermissionGranted = notificationsPermissionGranted,
+        onOpenNotificationSettings = {
+            context.startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            )
+        },
         modifier = modifier
     )
 }

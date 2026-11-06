@@ -5,5 +5,6 @@ import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 
 /** Planlanan bildirimi kullanıcıya ulaştıran port; Android tarafı poster. */
 interface NotificationPresenter {
-    fun post(notification: PlannedNotification, city: City)
+    /** @return bildirim gerçekten gösterildiyse true. */
+    fun post(notification: PlannedNotification, city: City): Boolean
 }

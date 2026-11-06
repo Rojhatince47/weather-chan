@@ -22,7 +22,9 @@ internal data class ForecastDto(
     @SerialName("city") val city: CityDto,
     @SerialName("current") val current: CurrentWeatherDto,
     @SerialName("hourly") val hourly: List<HourlyForecastDto> = emptyList(),
-    @SerialName("daily") val daily: List<DailyForecastDto> = emptyList()
+    @SerialName("daily") val daily: List<DailyForecastDto> = emptyList(),
+    // Eski kayıtlarda yok; varsayılan 0 cihaz dilimi kabul edilir.
+    @SerialName("utcOffsetSeconds") val utcOffsetSeconds: Int = 0
 )
 
 @Serializable
@@ -59,7 +61,8 @@ internal fun Forecast.toDto(): ForecastDto = ForecastDto(
     city = city.toDto(),
     current = currentWeather.toDto(),
     hourly = hourlyForecast.map { it.toDto() },
-    daily = dailyForecast.map { it.toDto() }
+    daily = dailyForecast.map { it.toDto() },
+    utcOffsetSeconds = utcOffsetSeconds
 )
 
 private fun ForecastDto.toDomain(): Forecast = Forecast(
@@ -74,7 +77,8 @@ private fun ForecastDto.toDomain(): Forecast = Forecast(
         isDay = current.isDay
     ),
     hourlyForecast = hourly.map { it.toDomain() },
-    dailyForecast = daily.map { it.toDomain() }
+    dailyForecast = daily.map { it.toDomain() },
+    utcOffsetSeconds = utcOffsetSeconds
 )
 
 private fun HourlyForecast.toDto(): HourlyForecastDto = HourlyForecastDto(

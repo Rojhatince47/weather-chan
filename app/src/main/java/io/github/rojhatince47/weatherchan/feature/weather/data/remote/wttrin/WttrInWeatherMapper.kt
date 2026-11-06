@@ -77,9 +77,16 @@ class WttrInWeatherMapper @Inject constructor() {
                     maxTemperatureCelsius = day.maxTempC.toDoubleOrNull()?.roundToInt() ?: 0,
                     condition = toCondition(day.hourly.getOrNull(4)?.weatherCode?.toIntOrNull())
                 )
-            }
+            },
+            utcOffsetSeconds = approximateOffsetSeconds(city)
         )
     }
+
+    /**
+     * wttr.in UTC farkı vermez; boylamdan yaklaşık dilim hesaplanır
+     * (15° ≈ 1 saat). Open-Meteo varken bu yol kullanılmaz.
+     */
+    private fun approximateOffsetSeconds(city: City): Int = (city.coordinates.longitude / 15.0).roundToInt() * 3600
 
     fun toCity(dto: WttrInDto, fallbackName: String): City {
         val area = dto.nearestArea.firstOrNull() ?: WttrInAreaDto()
