@@ -246,7 +246,7 @@ internal fun CharacterOnlyContent(snapshot: WidgetSnapshot?) {
                 contentDescription = context.getString(R.string.widget_character_description),
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .padding(8.dp),
+                    .padding(2.dp),
                 contentScale = androidx.glance.layout.ContentScale.Fit
             )
         }
@@ -258,18 +258,14 @@ internal fun TalkingWidgetContent(snapshot: WidgetSnapshot?) {
     val context = LocalContext.current
     val size = LocalSize.current
     val minDim = if (size.width < size.height) size.width else size.height
-    val wide = size.width >= 250.dp
-    val character = if (wide) {
-        (size.height * 0.55f).coerceIn(80.dp, 200.dp)
-    } else {
-        (minDim * 0.52f).coerceIn(64.dp, 150.dp)
-    }
+    // Konuşma balonu için yer ayır; kalan yüksekliği karaktere ver.
+    val character = (size.height - 84.dp).coerceIn(64.dp, 280.dp)
     val textSize = (minDim.value * 0.055f).coerceIn(11f, 15f).sp
 
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(6.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically
