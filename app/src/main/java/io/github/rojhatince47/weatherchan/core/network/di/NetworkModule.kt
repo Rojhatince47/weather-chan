@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.rojhatince47.weatherchan.BuildConfig
 import io.github.rojhatince47.weatherchan.core.network.GeocodingRetrofit
 import io.github.rojhatince47.weatherchan.core.network.OpenMeteoRetrofit
 import io.github.rojhatince47.weatherchan.core.network.WttrInRetrofit
@@ -29,7 +30,13 @@ object NetworkModule {
     fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(
             HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                // URL'ler konum koordinatı içerir (latitude/longitude);
+                // release'de logcat'e yazılmamalı.
+                level = if (BuildConfig.DEBUG) {
+                    HttpLoggingInterceptor.Level.BASIC
+                } else {
+                    HttpLoggingInterceptor.Level.NONE
+                }
             }
         )
         .build()
