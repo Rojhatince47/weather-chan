@@ -20,12 +20,17 @@ import kotlinx.coroutines.delay
 internal interface CompanionAmbientPlayer {
     fun play(clip: CompanionAmbientClip)
 
+    /** Çalan klibi hemen keser; koşul/şehir değişiminde çağrılır. */
+    fun stop()
+
     fun release()
 }
 
 /** Test/preview varsayılanı: hiçbir ses çıkarmaz. */
 internal object NoOpCompanionAmbientPlayer : CompanionAmbientPlayer {
     override fun play(clip: CompanionAmbientClip) = Unit
+
+    override fun stop() = Unit
 
     override fun release() = Unit
 }
@@ -86,14 +91,43 @@ internal fun rememberCompanionAmbientPlayer(): CompanionAmbientPlayer {
             override fun play(clip: CompanionAmbientClip) {
                 val resId = CompanionAmbientAssets.resFor(clip)
                 val sampleId = sampleIdForClip(listOf(resId), 0, sampleIdByResId, loaded) ?: return
-                if (lastStreamId != 0) runCatching { player.stop(lastStreamId) }
+                stop()
                 lastStreamId = runCatching {
                     player.play(sampleId, 0.20f, 0.20f, 1, 0, 1f)
                 }.getOrDefault(0)
             }
 
+            override fun stop() {
+                if (lastStreamId == 0) return
+                runCatching { player.stop(lastStreamId) }
+                lastStreamId = 0
+            }
+
             override fun release() = Unit
         }
+    }
+}
+
+/**
+ * Çevre sesi döngüsü: önce kısa gecikme, sonra klip; aralıklarla tekrar.
+ * Her iptalde (koşul değişimi, arka plan) çalan ses durdurulur.
+ */
+internal suspend fun runAmbientLoop(
+    player: CompanionAmbientPlayer,
+    clip: CompanionAmbientClip,
+    firstDelayMs: Long = 1_200,
+    nextIntervalMs: () -> Long = { Random.nextLong(20_000L, 35_000L) }
+) {
+    player.stop()
+    try {
+        delay(firstDelayMs)
+        player.play(clip)
+        while (true) {
+            delay(nextIntervalMs())
+            player.play(clip)
+        }
+    } finally {
+        player.stop()
     }
 }
 
@@ -111,15 +145,13 @@ internal fun AmbientWeatherEffect(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(enabled, cityId, condition, isDay, player, lifecycleOwner) {
+        // Koşul/şehir değiştiğinde eski klip yeni klip başlayana kadar
+        // çalmaya devam etmesin.
+        player.stop()
         if (!enabled || cityId == null || condition == null) return@LaunchedEffect
         val clip = ambientClipFor(condition, isDay)
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            delay(1_200)
-            player.play(clip)
-            while (true) {
-                delay(Random.nextLong(20_000L, 35_000L))
-                player.play(clip)
-            }
+            runAmbientLoop(player, clip)
         }
     }
 }
