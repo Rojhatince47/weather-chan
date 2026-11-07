@@ -65,6 +65,11 @@
     <string name="location_add_action">Konumumu ekle</string>
     <string name="location_unavailable">Konum alınamadı. Listeye bir şehir arayabilir veya konumunuzu tekrar deneyebilirsiniz.</string>
     <string name="location_retry">Tekrar dene</string>
+    <string name="location_problem_permission">Konum izni kapalı</string>
+    <string name="location_problem_services">Cihaz konumu kapalı</string>
+    <string name="location_problem_unknown">Konum alınamadı, tekrar deneyin</string>
+    <string name="location_action_settings">Ayarları aç</string>
+    <string name="location_action_location_settings">Konum ayarları</string>
     <string name="location_locating">Konumunuz bulunuyor…</string>
     <string name="location_loading">Konum okunuyor…</string>
     <string name="location_permission_rationale">Hava durumunuzu bulunduğunuz yere göre görmek için konum iznine ihtiyacımız var.</string>

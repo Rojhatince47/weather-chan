@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.rojhatince47.weatherchan.core.ui.component.rememberLocationProblem
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
 import io.github.rojhatince47.weatherchan.feature.settings.presentation.SettingsViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
@@ -86,6 +87,7 @@ fun MainRoute(
         onAddLocation = onLocationAction,
         onRetryLocation = onLocationAction,
         onAddCityClick = onAddCityClick,
+        locationProblem = rememberLocationProblem(),
         modifier = modifier,
         snackbarHostState = snackbarHostState
     )

@@ -3,10 +3,6 @@ package io.github.rojhatince47.weatherchan.feature.weather.presentation.home
 import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -16,7 +12,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
+import io.github.rojhatince47.weatherchan.core.common.location.hasLocationPermission
+import io.github.rojhatince47.weatherchan.core.common.location.isLocationEnabled
+import io.github.rojhatince47.weatherchan.core.common.location.openAppSettings
+import io.github.rojhatince47.weatherchan.core.common.location.openLocationSettings
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationPermissionState
 
 /** Konum izinleri: kesin + kaba. Kaba tek başına da yeterlidir. */
@@ -30,33 +29,33 @@ private val LOCATION_PERMISSIONS = arrayOf(
  * hangi eylemi seçeceği.
  */
 internal enum class LocationAction {
-    /** İzin var ama konum okunamadı (GPS kapalı, sinyal yok): yeniden oku. */
+    /** İzin var, konum servisi açık: konumu yeniden oku. */
     ReadLocation,
 
     /** İzin yok ama sistem diyaloğu hâlâ gösterilebilir: izni yeniden iste. */
     RequestPermission,
 
     /** Kalıcı redd: sistem diyaloğu gösterilmez, tek yol uygulama ayarları. */
-    OpenAppSettings
+    OpenAppSettings,
+
+    /** İzin var ama cihaz konumu kapalı: konum ayarlarını aç. */
+    OpenLocationSettings
 }
 
 /**
- * Konum eylemi **o anki** gerçek izin durumundan seçilir.
+ * Konum eylemi **o anki** gerçek izin ve cihaz konumu durumundan seçilir.
  *
- * Regresyon (cihazda gözlendi): izin reddedildikten sonra "Tekrar dene"
- * hiçbir şey yapmıyordu. Düğme yalnız konumu yeniden okuyordu;
- * `AndroidLocationProvider` izin yoksa null döndüğü için bu okuma tanımı
- * gereği başarısız olur, izin diyaloğu ise bir daha gösterilmezdi (ilk
- * soruşta kalıcı bayrak yazılır, durum `NotAsked`'a dönmez).
+ * Regresyon (cihazda gözlendi): izin reddedildikten sonra ya da cihaz
+ * konumu kapalıyken "Tekrar dene" sessizce başarısız oluyordu; kullanıcıya
+ * hiçbir geri dönüş yoktu. Karar tablosu:
  *
- * Karar tablosu:
- * - izin VAR → oku (başarısızlık GPS/sinyal kaynaklıdır, yeniden denemek anlamlı)
- * - izin YOK + diyalog gösterilebilir → izni yeniden iste (bir kez reddedilmiş
- *   durum; Android ikinci reddedene kadar diyaloğu göstermeye devam eder)
- * - izin YOK + diyalog kapalı → ayarları aç (kalıcı redd; `requestPermissions`
- *   sessizce anında reddedilir, düğme yine hiçbir şey yapmaz)
+ * - izin VAR + konum KAPALI → konum ayarlarını aç (okumak tanımı gereği başarısız)
+ * - izin VAR + konum AÇIK → oku (başarısızlık sinyal kaynaklıdır, yeniden denemek anlamlı)
+ * - izin YOK + diyalog gösterilebilir → izni yeniden iste
+ * - izin YOK + diyalog kapalı → uygulama ayarlarını aç (kalıcı redd)
  */
-internal fun locationActionFor(hasPermission: Boolean, canShowRationale: Boolean): LocationAction = when {
+internal fun locationActionFor(hasPermission: Boolean, canShowRationale: Boolean, servicesEnabled: Boolean): LocationAction = when {
+    hasPermission && !servicesEnabled -> LocationAction.OpenLocationSettings
     hasPermission -> LocationAction.ReadLocation
     canShowRationale -> LocationAction.RequestPermission
     else -> LocationAction.OpenAppSettings
@@ -104,26 +103,24 @@ internal fun rememberLocationAction(
         }
     }
 
-    // Eylem, **o anki** gerçek izin durumundan seçilir: izin yokken konum
-    // okumak tanımı gereği başarısız olur; yeniden okumak değil izni geri
-    // kazanmak gerekir.
+    // Eylem, **o anki** gerçek izin ve konum servisi durumundan seçilir:
+    // izin yokken konum okumak ya da konum kapalıyken yeniden denemek tanımı
+    // gereği başarısız olur; kullanıcı ayarlara yönlendirilir.
     return {
-        when (locationActionFor(context.hasLocationPermission(), context.canShowLocationRationale())) {
+        when (
+            locationActionFor(
+                hasPermission = context.hasLocationPermission(),
+                canShowRationale = context.canShowLocationRationale(),
+                servicesEnabled = context.isLocationEnabled()
+            )
+        ) {
             LocationAction.ReadLocation -> onReadLocation()
             LocationAction.RequestPermission -> permissionLauncher.launch(LOCATION_PERMISSIONS)
             LocationAction.OpenAppSettings -> context.openAppSettings()
+            LocationAction.OpenLocationSettings -> context.openLocationSettings()
         }
     }
 }
-
-/**
- * Anlık izin denetimi. Kalıcı olmayabilir — kullanıcı ayarlardan izni geri
- * alabilir; bu yüzden durum önbelleğe değil her seferinde sorgulanır.
- */
-private fun Context.hasLocationPermission(): Boolean = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-    PackageManager.PERMISSION_GRANTED ||
-    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-    PackageManager.PERMISSION_GRANTED
 
 /**
  * Sistem, kullanıcıdan bir kez daha izin istenebilir mi? Bir reddden sonra
@@ -134,14 +131,4 @@ private fun Context.canShowLocationRationale(): Boolean {
     val activity = this as? Activity ?: return false
     return activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
         activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
-}
-
-/** Kalıcı reddedilen izin için kullanıcıyı uygulamanın ayar sayfasına götürür. */
-private fun Context.openAppSettings() {
-    startActivity(
-        Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", packageName, null)
-        )
-    )
 }

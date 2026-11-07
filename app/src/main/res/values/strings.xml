@@ -65,6 +65,11 @@
     <string name="location_add_action">Add my location</string>
     <string name="location_unavailable">Location unavailable. You can search for a city, or try again.</string>
     <string name="location_retry">Try again</string>
+    <string name="location_problem_permission">Location permission is off</string>
+    <string name="location_problem_services">Device location is off</string>
+    <string name="location_problem_unknown">Couldn\'t get location, try again</string>
+    <string name="location_action_settings">Open settings</string>
+    <string name="location_action_location_settings">Location settings</string>
     <string name="location_locating">Finding your location…</string>
     <string name="location_loading">Reading location…</string>
     <string name="location_permission_rationale">We need location permission to show the weather for where you are.</string>

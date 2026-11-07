@@ -8,7 +8,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.common.location.LocationProblem
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
+import io.github.rojhatince47.weatherchan.core.ui.component.rememberLocationProblem
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.EvSayfasiViewModel
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.home.rememberLocationAction
 import io.github.rojhatince47.weatherchan.feature.weather.presentation.list.LocationState
@@ -22,7 +24,8 @@ fun SettingsCitiesScreen(
     onRetryLocation: () -> Unit,
     onOpenCityList: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    locationProblem: LocationProblem = LocationProblem.NONE
 ) {
     SettingsPageScaffold(
         title = stringResource(R.string.settings_row_cities),
@@ -45,7 +48,8 @@ fun SettingsCitiesScreen(
                 else -> AddLocationRow(
                     locationState = locationState,
                     onAddLocation = onAddLocation,
-                    onRetryLocation = onRetryLocation
+                    onRetryLocation = onRetryLocation,
+                    locationProblem = locationProblem
                 )
             }
         }
@@ -68,6 +72,7 @@ fun SettingsCitiesRoute(onBack: () -> Unit, onOpenCityList: () -> Unit, evViewMo
         onRetryLocation = onLocationAction,
         onOpenCityList = onOpenCityList,
         onBack = onBack,
-        modifier = modifier
+        modifier = modifier,
+        locationProblem = rememberLocationProblem()
     )
 }

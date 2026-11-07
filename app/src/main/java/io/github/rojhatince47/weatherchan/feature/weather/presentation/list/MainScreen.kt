@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.common.location.LocationProblem
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.text.UiText
@@ -62,6 +63,7 @@ fun MainScreen(
     onAddLocation: () -> Unit,
     onRetryLocation: () -> Unit,
     onAddCityClick: () -> Unit,
+    locationProblem: LocationProblem = LocationProblem.NONE,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     // rememberSaveable: detay ekranından geri dönüldüğünde liste
@@ -166,6 +168,7 @@ fun MainScreen(
                                         locationState = locationState,
                                         onAddLocation = onAddLocation,
                                         onRetryLocation = onRetryLocation,
+                                        locationProblem = locationProblem,
                                         modifier = Modifier
                                             .padding(top = HavaSpacing.md)
                                             .padding(horizontal = HavaSpacing.lg)

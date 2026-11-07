@@ -9,6 +9,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.rojhatince47.weatherchan.core.navigation.SELECTED_CITY_ID
+import io.github.rojhatince47.weatherchan.core.ui.component.rememberLocationProblem
 import io.github.rojhatince47.weatherchan.core.ui.state.UiState
 import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
 import io.github.rojhatince47.weatherchan.core.ui.theme.resolveIsDark
@@ -133,6 +134,7 @@ fun EvSayfasiRoute(
         locationState = uiState.locationState,
         onAddLocation = onLocationAction,
         onRetryLocation = onLocationAction,
+        locationProblem = rememberLocationProblem(),
         modifier = modifier
     )
 }

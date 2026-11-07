@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import io.github.rojhatince47.weatherchan.R
+import io.github.rojhatince47.weatherchan.core.common.location.LocationProblem
 import io.github.rojhatince47.weatherchan.core.ui.component.AddLocationRow
 import io.github.rojhatince47.weatherchan.core.ui.theme.HavaSpacing
 import io.github.rojhatince47.weatherchan.core.ui.theme.WeatherBackgroundPalette
@@ -74,6 +75,7 @@ fun EvSayfasiScreen(
     locationState: LocationState,
     onAddLocation: () -> Unit,
     onRetryLocation: () -> Unit,
+    locationProblem: LocationProblem = LocationProblem.NONE,
     modifier: Modifier = Modifier
 ) {
     val openListText = stringResource(R.string.home_open_list)
@@ -155,6 +157,7 @@ fun EvSayfasiScreen(
                             locationState = locationState,
                             onAddLocation = onAddLocation,
                             onRetryLocation = onRetryLocation,
+                            locationProblem = locationProblem,
                             modifier = Modifier
                                 .padding(top = HavaSpacing.md)
                                 .padding(horizontal = HavaSpacing.lg)
