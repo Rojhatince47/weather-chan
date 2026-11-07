@@ -17,10 +17,7 @@ class WeatherInfoWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val snapshot = EntryPointAccessors
-            .fromApplication(context, WidgetEntryPoint::class.java)
-            .snapshotStore()
-            .read()
+        val snapshot = readWidgetSnapshot(context)
         provideContent { InfoWidgetContent(snapshot) }
     }
 }

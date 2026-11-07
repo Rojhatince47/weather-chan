@@ -87,6 +87,14 @@
                 android:resource="@xml/weather_talking_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".feature.widget.presentation.WidgetPackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- WorkManager, HiltWorkerFactory'yi kullanabilsin diye varsayılan
              başlatıcı kapatılır; uygulama Configuration.Provider uygular. -->
         <provider
