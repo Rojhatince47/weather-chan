@@ -218,6 +218,39 @@ private fun ChatHourlyStrip(snapshot: WidgetSnapshot, metrics: WidgetMetrics) {
 }
 
 @Composable
+internal fun CharacterOnlyContent(snapshot: WidgetSnapshot?) {
+    val context = LocalContext.current
+    androidx.glance.layout.Box(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
+        contentAlignment = Alignment.Center
+    ) {
+        if (snapshot == null) {
+            Text(
+                text = context.getString(R.string.widget_no_data),
+                style = TextStyle(
+                    color = ColorProvider(Color.White),
+                    fontSize = 12.sp
+                ),
+                modifier = GlanceModifier
+                    .background(ImageProvider(R.drawable.widget_scrim))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            )
+        } else {
+            Image(
+                provider = ImageProvider(poseDrawable(snapshot.pose)),
+                contentDescription = context.getString(R.string.widget_character_description),
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                contentScale = androidx.glance.layout.ContentScale.Fit
+            )
+        }
+    }
+}
+
+@Composable
 internal fun InfoWidgetContent(snapshot: WidgetSnapshot?) {
     val condition = snapshot.conditionOrCloudy()
     val colors = ConditionPalette.of(

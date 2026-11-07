@@ -40,6 +40,9 @@ object WidgetScheduler {
 
     fun enqueueImmediate(context: Context) {
         val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+            // Widget oturumu bağlanmadan güncelleme çağrılırsa ilk kare boş
+            // kalabiliyor; kısa gecikme yerleşimin oturmasını bekler.
+            .setInitialDelay(2, TimeUnit.SECONDS)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)

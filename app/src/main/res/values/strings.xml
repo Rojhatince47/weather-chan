@@ -44,6 +44,7 @@
     <string name="widget_chat_name">Weather-chan</string>
     <string name="widget_info_name">Weather</string>
     <string name="widget_character_description">Weather-chan</string>
+    <string name="widget_character_only_name">Weather-chan (character only)</string>
     <string name="widget_no_data">No data — tap to open</string>
     <string name="language_system">System</string>
     <string name="language_turkish">Türkçe</string>
