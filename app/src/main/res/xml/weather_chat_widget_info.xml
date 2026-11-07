@@ -10,4 +10,5 @@
     android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
+    android:previewImage="@drawable/widget_preview_chat"
     android:widgetCategory="home_screen" />
