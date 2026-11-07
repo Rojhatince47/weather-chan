@@ -28,8 +28,11 @@ import io.github.rojhatince47.weatherchan.MainActivity
 import io.github.rojhatince47.weatherchan.R
 import io.github.rojhatince47.weatherchan.core.ui.theme.ConditionPalette
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.WeatherCondition
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.lineIndex
+import io.github.rojhatince47.weatherchan.feature.weather.presentation.components.companion.textArrayRes
 import io.github.rojhatince47.weatherchan.feature.widget.domain.WidgetSnapshot
 
 private data class WidgetMetrics(
@@ -247,6 +250,64 @@ internal fun CharacterOnlyContent(snapshot: WidgetSnapshot?) {
                 contentScale = androidx.glance.layout.ContentScale.Fit
             )
         }
+    }
+}
+
+@Composable
+internal fun TalkingWidgetContent(snapshot: WidgetSnapshot?) {
+    val context = LocalContext.current
+    val size = LocalSize.current
+    val minDim = if (size.width < size.height) size.width else size.height
+    val wide = size.width >= 250.dp
+    val character = if (wide) {
+        (size.height * 0.55f).coerceIn(80.dp, 200.dp)
+    } else {
+        (minDim * 0.52f).coerceIn(64.dp, 150.dp)
+    }
+    val textSize = (minDim.value * 0.055f).coerceIn(11f, 15f).sp
+
+    Column(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+        verticalAlignment = Alignment.Vertical.CenterVertically
+    ) {
+        if (snapshot == null) {
+            Text(
+                text = context.getString(R.string.widget_no_data),
+                style = TextStyle(color = ColorProvider(Color.White), fontSize = 12.sp),
+                modifier = GlanceModifier
+                    .background(ImageProvider(R.drawable.widget_scrim))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            )
+            return@Column
+        }
+
+        Image(
+            provider = ImageProvider(poseDrawable(snapshot.pose)),
+            contentDescription = context.getString(R.string.widget_character_description),
+            modifier = GlanceModifier.size(character),
+            contentScale = androidx.glance.layout.ContentScale.Fit
+        )
+        val category = runCatching {
+            AdviceCategory.valueOf(snapshot.adviceCategory)
+        }.getOrDefault(AdviceCategory.CLEAR)
+        val lines = context.resources.getStringArray(category.textArrayRes())
+        val line = lines[lineIndex(lines.size, snapshot.adviceSeed)]
+        Text(
+            text = line,
+            style = TextStyle(
+                color = ColorProvider(Color.White),
+                fontSize = textSize
+            ),
+            maxLines = 3,
+            modifier = GlanceModifier
+                .padding(top = 4.dp)
+                .background(ImageProvider(R.drawable.widget_scrim))
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        )
     }
 }
 

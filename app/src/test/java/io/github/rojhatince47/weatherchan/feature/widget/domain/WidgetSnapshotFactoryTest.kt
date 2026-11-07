@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.widget.domain
 
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Coordinates
@@ -55,6 +56,8 @@ class WidgetSnapshotFactoryTest {
             forecast = forecast(temperature = 18, isDay = false),
             unit = TemperatureUnit.FAHRENHEIT,
             pose = CompanionPose.CHEERFUL,
+            adviceCategory = AdviceCategory.CLEAR,
+            adviceSeed = 7,
             now = now
         )
 
@@ -84,6 +87,8 @@ class WidgetSnapshotFactoryTest {
             ),
             unit = TemperatureUnit.CELSIUS,
             pose = CompanionPose.CALM,
+            adviceCategory = AdviceCategory.CLOUDY,
+            adviceSeed = 3,
             now = now
         )
 
@@ -98,6 +103,8 @@ class WidgetSnapshotFactoryTest {
             forecast = forecast(),
             unit = TemperatureUnit.CELSIUS,
             pose = CompanionPose.CALM,
+            adviceCategory = AdviceCategory.CLOUDY,
+            adviceSeed = 3,
             now = now
         )
 

@@ -45,6 +45,7 @@
     <string name="widget_info_name">Hava durumu</string>
     <string name="widget_character_description">Weather-chan</string>
     <string name="widget_character_only_name">Weather-chan (sadece karakter)</string>
+    <string name="widget_talking_name">Weather-chan (konuşan)</string>
     <string name="widget_no_data">Veri yok — dokunup aç</string>
     <string name="language_system">Sistem</string>
     <string name="language_turkish">Türkçe</string>

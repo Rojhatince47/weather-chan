@@ -15,7 +15,9 @@ internal data class WidgetSnapshotDto(
     @SerialName("isDay") val isDay: Boolean,
     @SerialName("pose") val pose: String,
     @SerialName("hourly") val hourly: List<WidgetHourDto> = emptyList(),
-    @SerialName("updatedAtEpochMillis") val updatedAtEpochMillis: Long
+    @SerialName("updatedAtEpochMillis") val updatedAtEpochMillis: Long,
+    @SerialName("adviceCategory") val adviceCategory: String = "CLEAR",
+    @SerialName("adviceSeed") val adviceSeed: Int = 0
 )
 
 @Serializable
@@ -33,7 +35,9 @@ internal fun WidgetSnapshot.toDto(): WidgetSnapshotDto = WidgetSnapshotDto(
     isDay = isDay,
     pose = pose,
     hourly = hourly.map { WidgetHourDto(it.hourOfDay, it.temperatureCelsius, it.condition) },
-    updatedAtEpochMillis = updatedAtEpochMillis
+    updatedAtEpochMillis = updatedAtEpochMillis,
+    adviceCategory = adviceCategory,
+    adviceSeed = adviceSeed
 )
 
 internal fun WidgetSnapshotDto.toDomain(): WidgetSnapshot = WidgetSnapshot(
@@ -44,5 +48,7 @@ internal fun WidgetSnapshotDto.toDomain(): WidgetSnapshot = WidgetSnapshot(
     isDay = isDay,
     pose = pose,
     hourly = hourly.map { WidgetHourSnapshot(it.hourOfDay, it.temperatureCelsius, it.condition) },
-    updatedAtEpochMillis = updatedAtEpochMillis
+    updatedAtEpochMillis = updatedAtEpochMillis,
+    adviceCategory = adviceCategory,
+    adviceSeed = adviceSeed
 )

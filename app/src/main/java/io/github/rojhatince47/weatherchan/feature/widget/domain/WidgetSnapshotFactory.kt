@@ -1,6 +1,7 @@
 package io.github.rojhatince47.weatherchan.feature.widget.domain
 
 import io.github.rojhatince47.weatherchan.feature.settings.domain.model.TemperatureUnit
+import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.AdviceCategory
 import io.github.rojhatince47.weatherchan.feature.weather.domain.advice.CompanionPose
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.City
 import io.github.rojhatince47.weatherchan.feature.weather.domain.model.Forecast
@@ -19,6 +20,8 @@ object WidgetSnapshotFactory {
         forecast: Forecast,
         unit: TemperatureUnit,
         pose: CompanionPose,
+        adviceCategory: AdviceCategory,
+        adviceSeed: Int,
         now: Instant,
         hourlyCount: Int = DEFAULT_HOURLY_COUNT
     ): WidgetSnapshot {
@@ -47,7 +50,9 @@ object WidgetSnapshotFactory {
             isDay = forecast.currentWeather.isDay,
             pose = pose.name,
             hourly = hourly,
-            updatedAtEpochMillis = now.toEpochMilli()
+            updatedAtEpochMillis = now.toEpochMilli(),
+            adviceCategory = adviceCategory.name,
+            adviceSeed = adviceSeed
         )
     }
 

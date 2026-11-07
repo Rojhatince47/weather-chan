@@ -63,6 +63,8 @@ internal fun hasWidgets(context: Context): Boolean {
         ComponentName(context, WeatherInfoWidgetReceiver::class.java)
     ) + manager.getAppWidgetIds(
         ComponentName(context, WeatherCharacterWidgetReceiver::class.java)
+    ) + manager.getAppWidgetIds(
+        ComponentName(context, WeatherTalkingWidgetReceiver::class.java)
     )
     return ids.isNotEmpty()
 }

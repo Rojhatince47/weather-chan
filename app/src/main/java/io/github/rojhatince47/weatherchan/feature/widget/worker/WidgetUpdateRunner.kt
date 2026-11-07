@@ -72,6 +72,8 @@ class WidgetUpdateRunner @Inject constructor(
                 forecast = forecast,
                 unit = unitRepository.unit.value,
                 pose = advice.pose,
+                adviceCategory = advice.category,
+                adviceSeed = advice.variantSeed,
                 now = now
             )
         )

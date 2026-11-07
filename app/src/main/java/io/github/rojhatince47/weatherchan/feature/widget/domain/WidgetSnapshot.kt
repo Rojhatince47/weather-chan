@@ -14,7 +14,9 @@ data class WidgetSnapshot(
     val isDay: Boolean,
     val pose: String,
     val hourly: List<WidgetHourSnapshot> = emptyList(),
-    val updatedAtEpochMillis: Long
+    val updatedAtEpochMillis: Long,
+    val adviceCategory: String = "CLEAR",
+    val adviceSeed: Int = 0
 )
 
 data class WidgetHourSnapshot(
