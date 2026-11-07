@@ -16,6 +16,9 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 import kotlinx.coroutines.delay
 
+/** Çevre sesleri için genel ses düzeyi (0..1); arka planda kalmamalı. */
+private const val AMBIENT_VOLUME = 0.10f
+
 /** Hava durumuna göre kısa çevre sesi çalar; döngü yoktur. */
 internal interface CompanionAmbientPlayer {
     fun play(clip: CompanionAmbientClip)
@@ -93,7 +96,8 @@ internal fun rememberCompanionAmbientPlayer(): CompanionAmbientPlayer {
                 val sampleId = sampleIdForClip(listOf(resId), 0, sampleIdByResId, loaded) ?: return
                 stop()
                 lastStreamId = runCatching {
-                    player.play(sampleId, 0.20f, 0.20f, 1, 0, 1f)
+                    // Çevre sesi arka planda kalmalı; 0.20 fazla yüksekti.
+                    player.play(sampleId, AMBIENT_VOLUME, AMBIENT_VOLUME, 1, 0, 1f)
                 }.getOrDefault(0)
             }
 
